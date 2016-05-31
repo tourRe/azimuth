@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 import urllib2
 import json
 
@@ -17,10 +16,11 @@ address = "https://payg.angazadesign.com/api/"
 # "https://payg.angazadesign.com/api/payments?organization_qid=OR000028&offset=0&sort_by=recorded&limit=20&descending=true"
 
 org = str(input('Organization number: '))
+num = str(input('Number of lines: '))
 
 # opener calls
 call0 = artelia.open(address + "organizations/OR" + org)
-call1 = artelia.open(address + "payments?organization_qid=OR0000" + org +  "&offset=0&sort_by=recorded&limit=30&descending=true")
+call1 = artelia.open(address + "payments?organization_qid=OR0000" + org +  "&offset=0&sort_by=recorded&limit=" + num + "&descending=true")
 
 # converting json to dict
 str0 = call0.readline()
