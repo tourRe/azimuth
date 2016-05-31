@@ -20,7 +20,7 @@ org = str(input('Organization number: '))
 
 # opener calls
 call0 = artelia.open(address + "organizations/OR" + org)
-call1 = artelia.open(address + "payments?organization_qid=OR0000" + org +  "&offset=0&sort_by=recorded&limit=50&descending=true")
+call1 = artelia.open(address + "payments?organization_qid=OR0000" + org +  "&offset=0&sort_by=recorded&limit=30&descending=true")
 
 # converting json to dict
 str0 = call0.readline()
@@ -30,6 +30,7 @@ str1 = call1.readline()
 data1 = json.loads(str1)
 
 # printing payment data
+print data0['name']
 payments = data1['_embedded']['item']
 for i in range(0,len(payments)-1):
     data = payments[i]
