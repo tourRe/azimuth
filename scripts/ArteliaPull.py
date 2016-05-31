@@ -15,7 +15,7 @@ address = "https://payg.angazadesign.com/api/";
 # "https://payg.angazadesign.com/api/organizations/OR29"
 # "https://payg.angazadesign.com/api/payments?organization_qid=OR000028&offset=0&sort_by=recorded&limit=20&descending=true"
 
-org = input('Organization number: ');
+org = str(input('Organization number: '));
 
 # opener calls
 call_0 = artelia.open(address + "organizations/OR" + org);
