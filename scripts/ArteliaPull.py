@@ -27,19 +27,25 @@ org_products = org_dict['available_product_types']
 org_smsPrice = org_dict['sms_price']['value']
 
 dump={}
-invalid_keys=['za:intake_report','za:replacements_report','za:units','za:sms_messages_report','za:refunds', 'za:users','za:units_sold_by_type_data','za:revenue_data','type','za:call_sequences','za:credit_adjustments_received','za:logo','za:accounts_data','za:agents_by_units_sold_data','za:accounts_by_state_data']
+ko_keys=['za:intake_report','za:replacements_report','za:units','za:sms_messages_report','za:refunds', 'za:users','za:units_sold_by_type_data','za:revenue_data','type','za:call_sequences','za:credit_adjustments_received','za:logo','za:accounts_data','za:agents_by_units_sold_data','za:accounts_by_state_data']
 ok_keys = [u'za:activations', u'za:portals', u'za:sms_messages', u'za:ledger_register', u'za:summary_data', u'za:accounts', u'self', u'za:receipts', u'za:groups', u'za:registration_config', u'za:remittances', u'za:post_user', u'za:ledger_balance', u'za:metrics_data', u'za:post_accounts', u'za:payments', u'za:replacements', u'za:exchange_data']
+skip_keys = []
 
-for key in ok_keys:
-    if ((key in invalid_keys) or ('report' in key)):
+for key in org_dict['_links']:
+    if ((key in ko_keys) or ('report' in key)):
         print 'invalid ' + key
         print org_dict['_links'][key]['href']
         print org_dict['_links'][key]['href'].split('{')[0]
+    elif (key in skip_keys):
+        print 'skipping ' + key
     else:
         print 'fetching ' + key
-        print org_dict['_links'][key]['href']
-        print org_dict['_links'][key]['href'].split('{')[0]
-        dump['key']=to_dict(org_dict['_links'][key]['href'].split('{')[0])
+        show = input('execute? Y/N ')
+        if show == 'Y':
+            print org_dict['_links'][key]['href']
+            print org_dict['_links'][key]['href'].split('{')[0]
+            dump['key']=to_dict(org_dict['_links'][key]['href'].split('{')[0])
+            print dump['key']
 
 for key in dump:
     print 'high level key ' + key
