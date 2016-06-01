@@ -20,17 +20,23 @@ def to_dict(url):
 
 # 1.Organization
 org_dict = to_dict(address + "organizations/OR" + org)
-print org_dict['name']
+org_name = org_dict['name']
+org_products = org_dict['available_product_types']
+org_smsPrice = org_dict['sms_price']['value']
 
 # 2.Payments
 pay_dict = to_dict(address + "payments?organization_qid=OR0000" + org +  "&offset=0&sort_by=recorded&limit=" + num + "&descending=true")
 payments = pay_dict['_embedded']['item']
-for i in range(0,len(payments)-1):
-    data = payments[i]
-    print data['recorded']['value'] + " " + data['amount']['value'] + " " + data['currency']
 
 # 3.Accounts
 
 # 4.Agents
 
+# Outputs
+print org_name
+print 'available products: ' + str(org_products)
+print 'sms price: ' + str(org_smsPrice)
 
+for i in range(0,len(payments)-1):
+    data = payments[i]
+    print data['recorded']['value'] + " " + data['amount']['value'] + " " + data['currency']
