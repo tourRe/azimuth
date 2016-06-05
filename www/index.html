@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Azimuth Solar</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+
+
+<!-- Google Fonts -->
+<link href='http://fonts.googleapis.com/css?family=Roboto:400,900italic,700italic,900,700,500italic,500,400italic,300italic,300,100italic,100|Open+Sans:400,300,400italic,300italic,600,600italic,700italic,700,800|Source+Sans+Pro:400,200,200italic,300,300italic,400italic,600,600italic,700' rel='stylesheet' type='text/css'>
+
+
+<!-- Styles -->
+<link href="css/bootstrap.css" rel="stylesheet" type="text/css" />
+<link href="font-awesome/css/font-awesome.css" rel="stylesheet" type="text/css" />
+<link href="css/style.css" rel="stylesheet" type="text/css" />
+<link href="css/responsive.css" rel="stylesheet" type="text/css" />
+<link rel="stylesheet" href="layerslider/css/layerslider.css" type="text/css">
+<link rel="stylesheet" type="text/css" href="css/orange.css" title="orange" />
+
+<!--[if lt IE 9]>
+<link rel="stylesheet" type="text/css" href="css/ie.css" />
+<script type="text/javascript" language="javascript" src="js/html5shiv.js"></script>
+<![endif]-->
+
+
+<!-- Scripts -->
+<script src="js/jquery.1.9.1.js" type="text/javascript"></script>
+<script src='js/testimonials.js'></script>
+<script src='js/bootstrap.js'></script>
+<script src="js/html5lightbox.js"></script>
+<script src="js/jquery.carouFredSel-6.2.1-packed.js" type="text/javascript"></script>
+<script src='js/script.js'></script>
+<script defer src="js/jquery.flexslider.js"></script>
+<script defer src="js/jquery.mousewheel.js"></script>
+		
+		
+<!-- Scripts For Layer Slider  -->
+<script src="layerslider/js/greensock.js" type="text/javascript"></script>
+<!-- LayerSlider script files -->
+<script src="layerslider/js/layerslider.transitions.js" type="text/javascript"></script>
+<script src="layerslider/js/layerslider.kreaturamedia.jquery.js" type="text/javascript"></script>
+<script>
+$(document).ready(function(){
+jQuery("#layerslider").layerSlider({
+	responsive: true,
+	responsiveUnder: 1280,
+	layersContainer: 1170,
+	skin: 'fullwidth',
+	hoverPrevNext: true,
+	skinsPath: 'layerslider/skins/'
+});
+});
+</script>
+	
+<script>
+$(window).load(function(){
+  $('.stories-carousel').flexslider({
+	animation: "slide",
+	animationLoop: false,
+	controlNav: false,	
+    maxItems: 1,
+	pausePlay: false,
+	mousewheel:true,	
+	start: function(slider){
+	  $('body').removeClass('loading');
+	}
+	});
+	
+  $('.footer_carousel').flexslider({
+	animation: "slide",
+	animationLoop: false,
+	slideShow:false,
+	controlNav: true,	
+    maxItems: 1,
+	pausePlay: false,
+	mousewheel:true,
+	start: function(slider){
+	  $('body').removeClass('loading');
+	}
+	});
+	
+});
+</script>
+
+		
+</head>
+<body>
+<div class="theme-layout">
+
+<!-- Top Bar -->
+<!--
+<div id="top-bar" class="modern">
+	<div class="container">
+		<ul>
+			<li>
+				<i class="icon-home"></i>
+				425 Street Name, UK, London
+			</li>
+			<li>
+				<i class="icon-phone"></i>
+				(123) 456-7890
+			</li>
+			<li>
+				<i class="icon-envelope"></i>
+				contact@companymail.com
+			</li>
+		</ul> 
+		<div class="header-social">
+			<ul>
+				<li><a href="#" title=""><i class="icon-google-plus"></i></a></li>
+				<li><a href="#" title=""><i class="icon-facebook"></i></a></li>
+				<li><a href="#" title=""><i class="icon-skype"></i></a></li>
+				<li><a href="#" title=""><i class="icon-linkedin"></i></a></li>
+				<li><a href="#" title=""><i class="icon-twitter"></i></a></li>
+			</ul>
+		</div>
+	</div>
+</div>
+-->
+
+<!-- Header Bin
+<h1><i>A</i>zimtuh <i>S</i>olar</h1>
+<img src="images/company-logo.png" alt="Logo" />
+-->
+
+<header id="home" class="header2 sticky">
+	<div class="container">
+		<div class="logo">
+      <a href="#" title=""><h1><i>A</i>zimuth <i>S</i>olar</h1></a>
+    </div><!-- Logo -->
+    <!-- <a class="header-btn" href="#" title="">DONATE NOW</a> -->
+
+		<nav class="menu">
+			<ul id="menu-navigation">
+				<li><a href="#project"><i class="icon-circle"></i>About us</a></li>
+				<li><a href="#team"><i class="icon-circle"></i>Team</a></li>
+        <li><a href="mailto:info@azimuth-solar.com?Subject=Information%20about%20Azimuth%20Solar"><i class="icon-circle"></i>Contact</a></li>
+			</ul>   
+		</nav><!-- Menu -->
+
+
+
+	</div>		
+</header><!--header-->
+
+<div class="responsive-header">
+	<div class="responsive-logo">
+		<a href="#" title=""><img style="width: 100px;" src="images/company-logo.png" alt="Logo" /></a>
+	</div>
+	<span><i class="icon-align-justify"></i></span>
+	<ul>
+    <li><a href="elements.html">About us</a></li>
+    <li><a href="elements.html">Team</a></li>
+		<li><a href="elements.html">Contact</a></li>
+	</ul>   
+</div><!--Responsive header-->
+
+<div id="layerslider-container-fw">
+
+	<div id="layerslider" style="width: 100%; height: 530px; margin: 0px auto; ">
+	
+		<div class="ls-slide" data-ls="transition3d:53; timeshift:-1000;">			
+			<img src="images/back_freetown.jpg" class="ls-bg" alt="Slide background">
+        <h3 class="ls-l" style="top: 160px; left:130px; font-family:roboto; font-size:58px; font-weight:bold; color:#fff; line-height:60px; text-align:center;" data-ls="offsetxin:0;offsetyin:top;durationin:1500;delayin:1000;easingin:easeInOutQuart;fadein:false;scalexin:0;scaleyin:0;offsetxout:0;offsetyout:top;durationout:1000;fadeout:false;" >AFFORDABLE AND CLEAN <span>ENERGY</span></h3>
+				
+        <span class="ls-l slide3-subtitle2" style="top: 248px; left:130px; background:rgba(0,0,0,0.8); padding:13px; border-radius:3px; color:#fff; font-family:open sans; font-weight:900; font-size:26px; text-transform:uppercase; line-height:20px;" data-ls="offsetxin:0;offsetyin:bottom;durationin:1500;delayin:1300;easingin:easeInOutQuart;fadein:false;scalexin:0;scaleyin:0;offsetxout:0;offsetyout:top;durationout:1000;fadeout:false;">For <i style="font-style:normal;">Rural</i> and <i style="font-style:normal;">Peri-Urban</i> off-grid households</span>
+
+				<span class="ls-l slide3-subtitle" style="top: 310px; left:800px; padding:13px; border-radius:3px; color:#fff; font-family:open sans; font-weight:900; font-size:26px; text-transform:uppercase; line-height:20px;" data-ls="offsetxin:0;offsetyin:bottom;durationin:1500;delayin:1200;easingin:easeInOutQuart;fadein:false;scalexin:0;scaleyin:0;offsetxout:0;offsetyout:top;durationout:1000;fadeout:false;">In <i style="font-style:normal; color:#373737;">Sierra Leone</i></span>
+  </div><!-- Slide1 -->
+
+<!--
+		<div class="ls-slide" data-ls="transition3d:12;timeshift:-1000;">			
+			<img src="images/back_kerosene.jpg" class="ls-bg" alt="Slide background">
+				<h3 class="ls-l slide3" style="top:196px; left:100px; font-family: roboto; color: #FFFFFF; line-height:22px; font-size:32px; background:rgba(0,0,0,0.85); padding:18px 30px; border-radius:3px;" data-ls="offsetxin:0; scalexin:0; scaleyin:0; offsetxout:0; offsetyout:top; durationin:1500; durationout:800; showuntil:2000; fadeout:false;"> 
+						HELP <i>US</i> TO HELP OTHERS</h3>
+						
+				<h4 class="ls-l slide3" style="top:265px; left:100px; background:rgba(152,212,96,0.85); font-family: roboto; color: #FFFFFF; font-size:28px; line-height:26px; padding:10px 20px; border-radius:3px;" data-ls="offsetxin:0; scalexin:0; scaleyin:0; offsetxout:0; offsetyout:top; durationin:1500; durationout:800; delayin:500; showuntil:2500;fadeout:false;">
+          WHAT CAN WE <span>SAY...</span></h4>
+			
+				<h5 class="ls-l slide3" style="top:319px; left:100px; background:rgba(255,255,255,0.85); color:#595858; font-family:roboto; font-size:24px; line-height: 20px; padding:10px 20px; border-radius:3px;" data-ls="offsetxin:0; scalexin:0; scaleyin:0; offsetxout:0; offsetyout:top; durationin:1500; durationout:800; delayin:1000; showuntil:3000;fadeout:false;">
+						ABOUT THAT <span>IMAGE?</span></h5>
+		</div>
+-->
+    <!-- Slide2 -->
+		
+		<div class="ls-slide" data-ls="transition3d:35;timeshift:-1000;">			
+			<img src="images/back_village.jpg" class="ls-bg" alt="Slide background">
+
+				<span class="ls-l slide1"	style="top: 196px; left:248px; font-family:roboto; font-size:24px; font-weight:600; color:#000; padding:10px 20px 10px 20px; background:rgba(255,255,255,0.9); border-radius:4px 0 0px 4px; border-left:2px solid #93b631; position:relative; line-height:22px; float:left;" data-ls="offsetxin:0;offsetyin:top;durationin:1000;easingin:easeOutQuad;fadein:false;rotatein:10;offsetxout:0;durationout:1500;">INNOVATIVE <i>SOLAR ENERGY</i> PRODUCTS</span>
+        
+        <p class="ls-l slide1"	style="top: 250px; left:248px; font-family:roboto; font-size:18px; color:#fefefe;" data-ls="delayin:1000; scalein:4; durationin : 1000;">We distribute <strong>lamps</strong> and <strong>solar systems</strong> with long term financing options...</br>...enabling low income households to access life changing technology</p>
+
+		</div><!-- Slide3 -->
+
+		
+		<div class="ls-slide" data-ls="transition3d:75;timeshift:-1000;">			
+			<img src="images/back_battery.jpg" class="ls-bg" alt="Slide background">
+			
+			<h3 class="ls-l slide4" style="top:180px; left:150px; background:rgba(0,0,0,0.9); font-family:roboto; font-size:28px; font-weight:bold; color:#fefefe; padding:20px 60px 20px; border-radius:4px;" data-ls="offsetxin:bottom;durationin:2000;delayin:1000;easingin:easeInOutQuart;fadein:false;scalexin:100;scaleyin:0;offsetxout:right;durationout:1400;fadeout:false;">
+        <i>650 million</i> people lack access to electricity in sub-Saharan Africa</h3>
+
+      <span class="ls-l slide4-subtitle" style="top:280px; left:215px;border-radius: 4px 4px 0 0; color: #FFFFFF;font-family: open sans;font-size: 13px;font-weight: bold; padding: 5px 10px;" data-ls="offsetxin:bottom;durationin:2000;delayin:1500;easingin:easeInOutQuart;fadein:false;scalexin:100;scaleyin:0;offsetxout:right;durationout:1400;fadeout:false;">Want To Help? Join The <a style="color:white" href="https://www.lightingafrica.org/">Lighting Africa</a> Community</span>
+			
+		</div><!-- Slide4 -->
+
+    <!--
+		 <div class="ls-slide" data-ls="transition3d:63;timeshift:-1000;">			
+			<img src="http://placehold.it/1366x640" class="ls-bg" alt="Slide background">
+			<h3 class="ls-l slide5" style="top:80px; left:670px; font-family:open sans; font-size:36px; font-weight:700; color:#FFF;"  data-ls="offsetxin:0;offsetyin:top;durationin:750;delayin:1000;easingin:easeOutQuart;fadein:false;offsetxout:right;durationout:1000;easingout:easeInQuart;fadeout:false;">Supporting <span>889</span> People</h3>
+			<i class="ls-l slide5" style="top:130px; left:760px; font-family:open sans; font-size:20px; color:#FFF;"  data-ls="offsetxin:0;offsetyin:top;durationin:750;delayin:500;easingin:easeOutQuart;fadein:false;offsetxout:right;durationout:1000;easingout:easeInQuart;fadeout:false;">fundraising & charity...</i>
+			<h4 class="ls-l slide5-title" style="top:160px; left:560px; font-family:open sans; font-size:70px; font-weight:700; color:#FFF; line-height:55px; padding:50px 80px 80px; background:url(images/slider5-bg.png) no-repeat scroll 0 0 / 100% 100% transparent;" data-ls="offsetxin:0;offsetyin:0;durationin:1000;delayin:1400;easingin:easeOutQuart;fadein:false;easingout:easeInQuart;rotatexin:-90deg;">OPEN <span>H</span>EART</h4>
+			<span class="ls-l" style="top:280px; left:710px; font-family:open sans; font-size:18px; font-weight:400; color:#FFF; letter-spacing:3px;" data-ls="offsetxin:0;offsetyin:0;durationin:1000;delayin:1700;easingin:easeOutQuart;fadein:false;easingout:easeInQuart;rotatexin:-90deg;">DONATE FOR NEEDY PEOPLE</span>
+			<a class="ls-l slide-donate" style="top:350px; left:770px; font-family:open sans; font-size:12px; font-weight:400; color:#FFF; padding:10px 20px; border-radius:3px;"  data-ls="offsetxin:0;offsetyin:700;durationin:1000;delayin:2000;easingin:easeOutQuart;fadein:false;easingout:easeInQuart;rotatexin:-90deg;" href="#" title=""><i class="icon-heart"></i> DONATE NOW</a>
+		</div>
+    -->
+    <!-- Slide5 -->
+    
+    <!--
+		<div class="ls-slide" data-ls="transition3d:63;timeshift:-1000;">			
+			<img src="http://placehold.it/1366x640" class="ls-bg" alt="Slide background">
+			<div class="ls-l slide-icon" style="top:70px; left:50%;"  data-ls="scalexin:0;scaleyin:0;durationin:1000;delayin:400;easingin:easeOutQuart;fadein:false;easingout:easeInQuart;rotatein:-800deg;" ><img src="images/slide6-icon.png" alt="" /></div>
+			<h3 class="ls-l" style="top:190px; left:50%; color:#FFF; font-family:open sans; font-size:60px; font-weight:300;" data-ls="durationin:1500; delayin:1000; easingin:easeOutQuart; fadein:false; easingout:easeInQuart; rotatexin:-90deg;">LET'S BUILD <span style="font-weight:700;">THE WORLD.</span></h3>
+			<p class="ls-l" style="top:290px; left:50%; line-height:30px; color:#FFF; font-family:noto sans; font-size:14px; text-align:center;" data-ls="durationin:1500; delayin:1500; easingin:easeOutQuart; fadein:false; easingout:easeInQuart; rotatexin:-90deg;">With easy to use Drag and Drop Page Builder build professional looking page with best slider <br />Layer. Lorem ipsum dolor sit amet, consectetur</p>
+			<div class="ls-l slide-donate2" style="top:370px; left:50%; font-family:open sans; font-size:12px; font-weight:400; color:#FFF; padding:10px 20px; border-radius:3px;" data-ls="durationin:1500; delayin:2000; easingin:easeOutQuart; fadein:false; easingout:easeInQuart; rotatexin:-90deg;"><a href="#" title=""><i class="icon-heart"></i> DONATE NOW</a></div>
+		</div>
+    -->
+		
+	</div>
+</div><!-- Layer Slider -->			
+
+
+<section id="project" class="block">
+	<div class="container">
+		<div class="row">
+			<div class="col-md-12">
+				<div class="sec-heading">
+					<h2><strong>Our</strong> Project</h2>
+				</div><!-- Section Title -->
+					<div class="our-project-box">
+						<div class="row">
+							<div class="col-md-4">
+								<div class="row">
+									<div class="col-md-5">
+										<div class="icon-box">
+											<i class="icon-sun"></i>
+											<div class="need">
+												<p>LEARN <span>MORE</span></p>
+												<a href="#" title="">Our Report</a>
+											</div>
+										</div>
+									</div>
+									<div class="col-md-7">
+										<div class="project-detail">
+											<a>Solar Energy</a>
+											<p>We distribute solar lamps to fight widespread energy poverty in Sierra Leone.</p>			
+										</div>
+									</div>
+								</div>
+							</div>
+							<div class="col-md-4">
+								<div class="row">
+									<div class="col-md-5">
+										<div class="icon-box">
+											<i class="icon-bar-chart"></i>
+											<div class="need">
+												<p>LEARN <span>MORE</span></p>
+												<a href="#" title="">Our Report</a>
+											</div>
+										</div>
+									</div>
+									<div class="col-md-7">
+										<div class="project-detail">
+											<a>Financial Inclusion</a>
+											<p>Asset ownership and credit scoring of payments helps our customers access basic Financial Services.</p>			
+										</div>
+									</div>
+								</div>
+							</div>
+							<div class="col-md-4">
+								<div class="row">
+									<div class="col-md-5">
+										<div class="icon-box">
+											<i class="icon-time"></i>
+											<div class="need">
+												<p>LEARN <span>MORE</span></p>
+												<a href="#" title="">Our Report</a>
+											</div>
+										</div>
+									</div>
+									<div class="col-md-7">
+										<div class="project-detail">
+											<a>Durable Solution</a>
+											<p>Our batteries, solar panels and lights have a 5 year lifetime and deliver high quality lighting and energy.</p>			
+										</div>
+									</div>
+								</div>
+							</div>
+							<div class="col-md-4">
+								<div class="row">
+									<div class="col-md-5">
+										<div class="icon-box">
+											<i class="icon-leaf"></i>
+											<div class="need">
+												<p>LEARN <span>MORE</span></p>
+												<a href="#" title="">Our Report</a>
+											</div>
+										</div>
+									</div>
+									<div class="col-md-7">
+										<div class="project-detail">
+											<a>Environment benefits</a>
+											<p>Our products replace heavily polluting candles, kerosene lamps and cheap batteries.</p>			
+										</div>
+									</div>
+								</div>
+							</div>
+							<div class="col-md-4">
+								<div class="row">
+									<div class="col-md-5">
+										<div class="icon-box">
+											<i class="icon-heart"></i>
+											<div class="need">
+												<p>LEARN <span>MORE</span></p>
+												<a href="#" title="">Our Report</a>
+											</div>
+										</div>
+									</div>
+									<div class="col-md-7">
+										<div class="project-detail">
+											<a>Health Benefits</a>
+											<p>Solar lighting reduces indoor pollution, fire hazards and oil residues on food.</p>			
+										</div>
+									</div>
+								</div>
+							</div>
+							<div class="col-md-4">
+								<div class="row">
+									<div class="col-md-5">
+										<div class="icon-box">
+											<i class="icon-dollar"></i>
+											<div class="need">
+												<p>LEARN <span>MORE</span></p>
+												<a href="#" title="">Our Report</a>
+											</div>
+										</div>
+									</div>
+									<div class="col-md-7">
+										<div class="project-detail">
+											<a>Customer Savings</a>
+											<p>Our customers save money almost instantly thanks to low deposit costs and flexible repayment plans.</p>			
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div><!-- Projects -->
+				
+			</div><!-- Projects -->
+		</div>
+	</div>
+</section>	
+
+<section class="block remove-top" style="padding-bottom: 0px;">
+	<div class="container">
+		<div class="row">
+			<div class="col-md-12">
+				<div class="welcome-box">
+          <h2>We Bring <strong>Capital</strong> And <strong>Technology</strong> Together To Finance A Solar Energy Revolution And Improve People's Life.</h2>
+					<p>Help us finance the energy revolution in Sierra Leone.</p>
+					<a href="#" title=""><span style="padding-left: 30px;padding-right: 30px;">Learn how to contribute...</span></a>
+				</div>
+			</div>
+		</div>
+	</div>
+</section><!-- Welcome Message -->
+
+<section id="team" class="block">
+	<div class="container">
+		<div class="row">
+		<div class="col-md-12">
+			<div class="sec-heading">
+        <h2><strong>Our </strong><span>Team</span></h2>
+			</div>
+			<div class="staff">
+				<div class="row">
+					<div class="col-md-3">
+						<div class="staff-member">
+							<img src="images/head_nthabi.jpg" alt="" />
+							<div class="member-intro">
+								<h3>Nthabi Mosia</h3>
+								<span>Co-founder and CEO</span>
+							</div>
+							<div class="social-contacts">
+                <ul>
+									<li><a href="https://www.linkedin.com/in/nthabisengmosia" title="Nthabi"><img src="images/linked-in.jpg" alt="" /></a></li>
+								</ul>
+							</div>
+						</div>
+					</div><!--Staff Member-->
+					<div class="col-md-3">
+						<div class="staff-member">
+							<img src="images/head_alexandre.jpg" alt="" />
+							<div class="member-intro">
+								<h3>Alexandre Tourre</h3>
+								<span>Co-founder and CTO</span>
+							</div>
+							<div class="social-contacts">
+								<ul>
+									<li><a href="https://www.linkedin.com/in/alexandretourre" title="Alexandre"><img src="images/linked-in.jpg" alt="" /></a></li>
+                  <li><a href="http://tour.re" title="tour.re"><img src="images/web.png" alt="" /></a></li>
+								</ul>
+							</div>
+						</div>
+					</div><!--Staff Member-->
+          <div class="col-md-3">
+						<div class="staff-member">
+							<img src="images/head_eric.jpg" alt="" />
+							<div class="member-intro">
+								<h3>Eric Silverman</h3>
+								<span>Co-founder and COO</span>
+							</div>
+							<div class="social-contacts">
+								<ul>
+									<li><a href="https://www.linkedin.com/in/ericmsilverman" title="Eric"><img src="images/linked-in.jpg" alt="" /></a></li>
+								</ul>
+							</div>
+						</div>
+					</div><!--Staff Member-->
+<!--
+          <div class="col-md-3">
+						<div class="staff-member">
+							<img src="images/head_manuel.jpg" alt="" />
+							<div class="member-intro">
+								<h3>Peter Manuel Ludwig-Dehm</h3>
+								<span>Co-founder and CFO</span>
+							</div>
+							<div class="social-contacts">
+								<ul>
+									<li><a href="https://www.linkedin.com/in/petermanuelludwigdehm" title="Manuel"><img src="images/linked-in.jpg" alt="" /></a></li>
+								</ul>
+							</div>
+						</div>
+					</div>
+          -->
+          <!--Staff Member-->
+				</div>
+			</div><!--Staff -->
+		</div>
+		</div>
+	</div>
+</section>
+
+<section class="block remove-top">
+	<div class="container">
+		<div class="row">
+		<div class="col-md-6">
+				<div class="sec-heading">
+					<h2><strong>They</strong> Support Us</h2>
+				</div><!-- Section Title -->		
+				<div class="stories-carousel">
+					<ul class="slides">
+						<li>
+							<div class="row">
+								<div class="col-md-6">
+									<div class="story" style="padding-bottom: 1px;">
+										<div class="story-img">
+											<img src="images/logo_cbs.png" alt="" />
+											<h5>CBS Incubator</h5>
+											<a href="http://www8.gsb.columbia.edu/entrepreneurship/innovation/" title=""><span></span></a>
+										</div>
+										<p style="margin-bottom: 4px;">Innovation and Entrepreneurship @ Columbia is a cross-University program that nurtures and leverages ideas and technologies within Columbia University thathave the potential to generate returns in the form of new products or services, processes, licensing revenues, and strategic alliances. </p>
+									</div><!-- Story -->
+								</div>
+								<div class="col-md-6">
+									<div class="story">
+										<div class="story-img">
+											<img src="images/logo_dprize.png" alt="" />
+											<h5>D-Prize 2015 winner</h5>
+											<a href="http://www.d-prize.org/" title=""><span></span></a>
+										</div>
+										<p>The D-Prize is a social venture competition targeting poverty problems. Azimuth won the 2015 prize in the Solar Lamp and Energy category. </p>
+										<h6><i>$</i> 20,000<span>Grant Funding</span></h6>
+										<span><i class="icon-map-marker"></i>In New York City</span>
+									</div><!-- Story -->
+								</div>
+							</div>
+						</li>
+						<li>
+							<div class="row">
+								<div class="col-md-6">
+									<div class="story">
+										<div class="story-img">
+											<img src="images/logo_sipa.png" alt="" />
+											<h5>SIPA Entrepreneurship</h5>
+											<a href="https://sipa.columbia.edu/challenge-grant" title=""><span></span></a>
+										</div>
+										<p>Azimuth Solar is in the final round of Columbia University’s School of International and Public Affairs Entrepreneurship challenge, focusing on global urban environment improvement. </p>
+										<h6><i>$</i> 8,000<span>Grant Funding</span></h6>
+										<span><i class="icon-map-marker"></i>In New York City</span>
+									</div><!-- Story -->
+								</div>
+                <div class="col-md-6">
+									<div class="story" style="padding-bottom: 1px;">
+										<div class="story-img">
+											<img src="images/logo_hult.jpg" alt="" />
+											<h5>Hult Prize 2016</h5>
+											<a href="http://www.hultprize.org/" title=""><span></span></a>
+										</div>
+										<p style="margin-bottom: 4px;">The Hult Prize Foundation is a start-up accelerator for budding young social entrepreneurs emerging from the world’s universities. Lead by Muhammad Yunus and Bill Clinton, the planst's largest student competition will reward the winner with $1,000,000 in grant funding. </p>
+									</div><!-- Story -->
+								</div>
+							</div>
+						</li>
+					</ul>
+				</div>
+		</div>
+
+		<div class="col-md-6">
+				<div class="sec-heading">
+					<h2><strong>Recent</strong> News</h2>
+				</div>	<!-- Section Title -->
+				<div class="row">
+					<div class="col-md-12">
+						<div class="recent-event">
+							<div class="recent-event-img">
+								<img src="images/newstop_video.png" alt="" />
+								<a class="html5lightbox" href="http://player.vimeo.com/video/157193611?color=ffffff" title="Azimuth Solar realeases its promotional video!"><span><i class="icon-play"></i></span></a>
+							</div>
+							<h4><a href="https://vimeo.com/157193611" title="">Introduction to Azimuth Solar</a></h4>
+							<ul>
+								<li><a href="#" title=""><i class="icon-user"></i>by alexandre tourre</a></li>
+								<li><a href="#" title=""><i class="icon-map-marker"></i>in New York City</a></li>
+								<li><a href="#" title=""><i class="icon-calendar-empty"></i><span>February</span> 28, 2016</a></li>
+							</ul>
+						</div><!-- Latest Event -->
+					</div>
+					<div class="col-md-6">
+						<div class="recent-event previous-event">
+							<div class="recent-event-img">
+								<img src="images/newsbot_datascience.jpg" alt="" />
+								<a href="http://datascience.columbia.edu/bringing-affordable-renewable-lighting-sierra-leone" title=""><span><i class="icon-play"></i></span></a>
+							</div>
+							<h4><a href="http://datascience.columbia.edu/bringing-affordable-renewable-lighting-sierra-leone" title="">Azimuth featured by Columbia's Data Science Institute</a></h4>
+							<ul>
+                <!--<li><a href="#" title=""><i class="icon-map-marker"></i>in South africa</a></li>-->
+								<li><a href="#" title=""><i class="icon-calendar-empty"></i><span>February</span> 22, 2016</a></li>
+							</ul>
+						</div>
+            <!-- Previous Event -->
+          </div>
+					<div class="col-md-6">
+						<div class="recent-event  previous-event">
+							<div class="recent-event-img">
+								<img src="images/newsbot_survey.png" alt="" />
+								<a href="#" title=""><span><i class="icon-play"></i></span></a>
+							</div>
+							<h4><a href="single-post-image.html" title="">Azimuth Solar performs a 1,500 customers survey on Energy use</a></h4>
+							<ul>
+                <!--<li><a href="#" title=""><i class="icon-map-marker"></i>in South africa</a></li>-->
+								<li><a href="#" title=""><i class="icon-calendar-empty"></i><span>January</span> 16, 2016</a></li>
+							</ul>
+						</div>
+            <!-- Previous Event -->
+					</div>
+				</div>
+		</div>
+		</div>
+	</div>
+</section>
+</div>
+	
+<footer>
+	<div class="container">
+		<div class="row">
+			<!--
+      <div class="col-md-3">
+				<div class="footer-widget-title">
+					<h4><strong><span>P</span>eople</strong> Reviews</h4>
+				</div>
+				<div class="footer_carousel">
+					<ul class="slides">
+						<li>
+							<div class="review">
+								<i>T</i><p><span>his</span> group of students is awesome. They wouldn't be anything without me. </p>
+							</div>						
+							<div class="from">
+								<h6>Travis Bradford</h6>
+								<span>CE0, the world</span>
+							</div>
+						</li>
+						<li>
+							<div class="review">
+								<i>W</i><p><span>hat's</span> your time to breakeven? </p>
+							</div>						
+							<div class="from">
+								<h6>Merit Janow</h6>
+								<span>Dean, SIPA</span>
+							</div>
+						</li>
+					</ul>
+				</div>
+      </div>-->
+      <!-- Reviews Widget -->
+			<div class="col-md-3">
+				<div class="footer-widget-title">
+					<h4><strong><span>T</span>witter</strong> Feed</h4>
+				</div>
+        <a class="twitter-timeline" href="https://twitter.com/azimuthsolar" data-widget-id="702167761007546368">Tweets by @azimuthsolar</a>
+<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+"://platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");
+</script>
+			</div><!-- Twitter Feed -->
+      <div class="col-md-3">
+				<div class="footer-widget-title">
+					<h4><strong><span>M</span>edia</strong> Feed</h4>
+				</div>
+				<div class="flickr-images">
+					<a href="images/pics/NM_20160108_0160.jpg" title=""><img src="images/pics/NM_20160108_0160_small.jpg" alt="" /></a>
+          <a href="images/pics/NM_20160108_0178.jpg" title=""><img src="images/pics/NM_20160108_0178_small.jpg" alt="" /></a>
+          <a href="images/pics/NM_20160108_0181.jpg" title=""><img src="images/pics/NM_20160108_0181_small.jpg" alt="" /></a>
+          <a href="images/pics/NM_20160108_0233.jpg" title=""><img src="images/pics/NM_20160108_0233_small.jpg" alt="" /></a>
+          <a href="images/pics/NM_20160111_0246.jpg" title=""><img src="images/pics/NM_20160111_0246_small.jpg" alt="" /></a>
+          <a href="images/pics/NM_20160111_0271.jpg" title=""><img src="images/pics/NM_20160111_0271_small.jpg" alt="" /></a>
+          <a href="images/pics/NM_20160111_0282.jpg" title=""><img src="images/pics/NM_20160111_0282_small.jpg" alt="" /></a>
+          <a href="images/pics/NM_20160111_0300.jpg" title=""><img src="images/pics/NM_20160111_0300_small.jpg" alt="" /></a>
+          <a href="images/pics/NM_20160111_0246.jpg" title=""><img src="images/pics/NM_20160111_0246_small.jpg" alt="" /></a>
+				</div>
+			</div><!-- Flickr Widget -->
+
+			<div class="col-md-3">
+				<div class="footer-widget-title">
+					<h4><strong><span>C</span>ontact</strong> Us</h4>
+				</div>
+				<ul class="contact-details">
+					<li>
+						<span><i class="icon-home"></i>ADDRESS</span>
+						<p>#1234 Solar Road, Freetown, Sierra Leone</p>
+					</li>
+					<li>
+						<span><i class="icon-phone-sign"></i>PHONE NO</span>
+            <p>(US) +1 917 548 6514</br>(SL) +232 7 829 0747</p>
+					</li>
+					<li>
+						<span><i class="icon-envelope-alt"></i>EMAIL</span>
+            <p><a href="mailto:info@azimuth-solar.com?Subject=Information%20about%20Azimuth%20Solar">info@azimuth-solar.com</a></p>
+					</li>
+					<li>
+						<span><i class="icon-link"></i>WEB ADDRESS</span>
+            <p><a href="http://www.azimuth-solar.com">http://www.azimuth-solar.com</a></p>
+					</li>
+				</ul>
+			</div><!-- Contact Us Widget -->
+			<div class="col-md-3">
+				<div class="newsletter">
+					<h4 style="padding-top: 5px;"><strong>NEWSLETTER</strong></h4>
+					<p>Want to stay up to date with the latest news and developments of Azimuth Solar? Sign up for our newsletter and follow us on social media.</p>
+					<input class="form-control" type="email" placeholder="Email" />
+				</div>
+				<ul class="social-bar">
+					<li><a href="#" title=""><img src="images/rss.jpg" alt="" /></a></li>
+					<li><a href="#" title=""><img src="images/facebook.jpg" alt="" /></a></li>
+					<li><a href="#" title=""><img src="images/gplus.jpg" alt="" /></a></li>
+					<li><a href="#" title=""><img src="images/linked-in.jpg" alt="" /></a></li>
+					<li><a href="#" title=""><img src="images/pinterest.jpg" alt="" /></a></li>
+				</ul>
+				<div class="newsletter-btn">
+					<input type="button" value="Submit" />
+				</div>
+			</div>	<!-- News Letter SignUp -->		
+		</div>
+	</div>
+</footer><!-- Footer -->
+
+
+<div class="footer-bottom">
+	<div class="container">
+		<p>Copyright © 2016 Azimuth Solar. <span>All rights reserved.</span> </p>
+		<ul>
+			<li><a href="#home" title="">HOME</a></li>
+      <li><a href="#project" title="">ABOUT US</a></li>
+			<li><a href="#team" title="">TEAM</a></li>
+      <!-- to replace with a proper contact form...-->
+			<li><a href="mailto:info@azimuth-solar.com?Subject=Information%20about%20Azimuth%20Solar" title="">CONTACT</a></li>
+		</ul>
+	
+	</div>
+</div><!-- Bottom Footer Strip -->
+
+</body>
+</html>
