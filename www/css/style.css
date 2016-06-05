@@ -3633,7 +3633,7 @@ footer .container {
 
 
 .staff-member {
-    height:355px;
+    height:446px;
     width:100%;
     overflow:hidden;
     position:relative;
@@ -9573,7 +9573,7 @@ background: linear-gradient(to bottom, rgba(255,255,255,1) 0%,rgba(248,248,248,1
 filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ffffff', endColorstr='#f3f3f3',GradientType=0 );
 
     float: left;
-    margin-top: 10px;
+    margin-top: 40px;
     position: relative;
     top: 0;
     width: 100%;
