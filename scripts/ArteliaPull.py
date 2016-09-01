@@ -36,7 +36,7 @@ skip_keys = []
 # Need to change code so that all values are stored in the dump dictionar
 # (nested)
 for key in org_dict['_links']:
-    if ((key in ko_keys) or ('report' in key)):
+    if (key in ko_keys):
         print 'invalid ' + key
         print org_dict['_links'][key]['href']
         print org_dict['_links'][key]['href'].split('{')[0]
@@ -54,12 +54,6 @@ for key in org_dict['_links']:
 # Saving data to JSON
 with open('/Users/alexandre/azimuth/scripts/dump.json', 'w') as f:
     json.dump(dump, f)
-
-# 2.Payments
-
-# 3.Accounts
-
-# 4.Agents
 
 # Outputs
 print org_name
