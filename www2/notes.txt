@@ -1,0 +1,6 @@
+Notes on www2 development
+
+in #top-bar, class header-social is 41px high while the <li> elements on the left are 38px high
+top margin of the header should also be adjusted in styles.css, line 9525
+
+
