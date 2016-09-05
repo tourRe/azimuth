@@ -65,10 +65,10 @@ def expect_payment(start,end,activated,plan):
 
 # Locale variable for payment plans
 plans = {}
-plans['Eco-18-Pilot'] = [10]
+plans['Eco-18-Pilot'] = [10000]
 for i in range(1,19):
-    plans['Eco-18-Pilot'].append(i*5+10)
-plans['Eco-0-Pilot'] = [80]
+    plans['Eco-18-Pilot'].append(i*5000+10000)
+plans['Eco-0-Pilot'] = [80000]
 
 # Locale variables for solar points
 points = {}
@@ -85,19 +85,25 @@ accounts_raw = csvToList('accounts.csv')
 payments_raw = csvToList('payments.csv')
 
 # Defining the report's dates
-print(chr(27) + "[2J")
-question = input('Do you want to use today as the end date? (y/n) ')
+print(chr(27))
+print('############################################')
+print('####### EASY SOLAR REPORTING TOOL V0 #######')
+print('############################################')
+print(chr(27))
+question = input('Do you want to use TODAY as the end date for this reporting database? (y/n) ')
 if question == 'y':
-    today = datetime.datetime.today()
+    report_end = datetime.datetime.today()
 else:
     year = input(' Year? ')
     month = input(' Month? ')
     day = input(' Day? ')
-    today = datetime.datetime(int(year),int(month),int(day),23,59,59,999999)
+    report_end = datetime.datetime(int(year),int(month),int(day),23,59,59,999999)
 print(chr(27))
 
-start_date = datetime.datetime(2016,3,1,00,00,00,000000)
+report_start = datetime.datetime(2016,3,1,00,00,00,000000)
+today = datetime.datetime.today()
 
+# Generating the progress bar
 bar = Bar('Generating Database', max=len(payments_raw))
 
 # Creates the target dictionnary
@@ -107,68 +113,64 @@ for i in range(0,(len(payments_raw))):
     bar.next()
     # Defines the current payment for ease of coding
     pay = payments_raw[i]
-    # Checks whether it's a new account
-    if pay['account'] in data.keys():
-        # Updating the existing account in the database
-        # Defines the current account for ease of coding
-        line = data[pay['account']]
-        # Updating before last payment information from database
-        line['lastPay_date']=line['recorded_date']
-        line['lastPay_amount']=line['amount']
-        # Updating last payment information
-        line['recorded_date']=toTime(pay['recorded_utc'])
-        line['applied_date']=toTime(pay['applied_utc'])
-        line['new_total_paid']=pay['new_total_paid']
-        line['pay_number'] += 1
-        line['pay_thisMonth'] += thisMonth(line['recorded_date'],today)*int(pay['amount'])
-        # Complex calculations here (number of times disabeld etc.)
-    else:
-        # Creating the account in the database
-        account = pay['account']
-        # Deleting useless keys in the dictionnary
-        del pay['account']
-        del pay['organization']
-        del pay['angaza_id']
-        del pay['reversal']
-        del pay['provider_transaction']
-        del pay['synced']
-        # Converting keys in the dictionnary
-        pay['amount']=int(pay['amount'])
-        pay['new_total_paid']=int(pay['new_total_paid'])
-        # Renaming keys in the dictionnary
-        pay['account_angaza']=pay.pop('account_angaza_id')
-        pay['recorded_date']=toTime(pay.pop('recorded_utc'))
-        pay['applied_date']=toTime(pay.pop('applied_utc'))
-        pay['total_paid']=pay.pop('new_total_paid')
-        # Adding the new dictionnary to the database
-        data[account] = pay
-        line = data[account]
-        # Create the additional keys needed here
-        line['pay_number'] = 1
-        line['reg_date']=attributeFind(account, 'registration_date_utc')
-        line['reg_date']=toTime_ms(line['reg_date'])
-        line['reg_agent']=attributeFind(account, 'registering_user')
-        # line['unlock_price']=int(attributeFind(account, 'unlock_price'))
-        # line['upfront_price']=int(attributeFind(account, 'upfront_price'))
-        line['product']=attributeFind(account, 'attached_unit_type')
-        # line['hour_price']=float(attributeFind(account, 'hour_price'))
-        line['lastPay_date']=''
-        line['lastPay_amount']=0
-        line['pay_thisMonth']=thisMonth(line['recorded_date'],today)*line['amount']
-        # Total expected payments
-        line['pay_expected']=expect_payment(line['reg_date'],today,line['reg_date'],plans[line['group_name']])
-        # Total expected solar points
-        line['sPoints']=expect_payment(line['reg_date'],today,line['reg_date'],points[line['group_name']])
-        # Defining the date for the beginning of the month
-        month_start = datetime.datetime(today.year,today.month,1,00,00,00,000000)
-        # Total payments expected this month
-        line['pay_expected_thisMonth']=expect_payment(month_start,today,line['reg_date'],plans[line['group_name']])
-        # Total solar points expected this month
-        line['sPoints_thisMonth']=expect_payment(month_start,today,line['reg_date'],points[line['group_name']])
-        # Left to define
-        line['disable_number']=0
-        line['disable_days']=0
-        line['disable_days_over1']=0
+    # Checking that the payment is whithing the report's range
+    if toTime(pay['recorded_utc']) >= start_date and toTime(pay['recorded_utc']) <= end_date:
+        # Checking whether it's a new account
+        if pay['account'] in data.keys():
+            # Updating the existing account in the database
+            # Defines the current account for ease of coding
+            line = data[pay['account']]
+            # Updating before last payment information from database
+            line['lastlastPay_date'] = line['lastPay_date']
+            line['lastlastPay_amount'] = line['lastPay_amount']
+            # Updating last payment information
+            line['lastPay_date'] = toTime(pay['recorded_utc'])
+            line['lastPay_amount'] = int(pay['amount'])
+            line['total_paid'] = int(pay['new_total_paid'])
+            line['pay_number'] += 1
+            line['pay_thisMonth'] += thisMonth(line['lastPay_date'],report_end)*int(line['lastPay_amount'])
+            # Complex calculations here (number of times disabeld etc.)
+        else:
+            # Creating the account in the database
+            account = pay['account']
+            # Deleting useless keys in the dictionnary
+            del pay['account']
+            del pay['organization']
+            del pay['angaza_id']
+            del pay['reversal']
+            del pay['provider_transaction']
+            del pay['synced']
+            del pay['applied_utc'] # only keeping recorded date
+            # Converting and renaming keys in the dictionnary
+            pay['lastPay_amount'] = int(pay.pop('amount'))
+            pay['lastPay_date']=toTime(pay.pop('recorded_utc'))
+            pay['total_paid']=int(pay.pop('new_total_paid'))
+            pay['account_angaza']=pay.pop('account_angaza_id')
+            # Adding the new dictionnary to the database
+            data[account] = pay
+            line = data[account]
+            # Create the additional keys needed here
+            line['pay_number'] = 1
+            line['reg_date']=attributeFind(account, 'registration_date_utc')
+            line['reg_date']=toTime_ms(line['reg_date'])
+            line['reg_agent']=attributeFind(account, 'registering_user')
+            line['product']=attributeFind(account, 'attached_unit_type')
+            line['lastlastPay_date']=''
+            line['lastlastPay_amount']=0
+            line['pay_thisMonth']=thisMonth(line['lastPay_date'],report_end)*line['lastPay_amount']
+            # Total expected payments
+            line['total_paid_expected']=expect_payment(report_start,report_end,line['reg_date'],plans[line['group_name']])
+            # Defining the date for the beginning of the month
+            month_start = datetime.datetime(report_end.year,report_end.month,1,00,00,00,000000)
+            # Total payments expected this month
+            line['pay_expected_thisMonth']=expect_payment(month_start,report_end,line['reg_date'],plans[line['group_name']])
+            line['sPoints']=expect_payment(report_start,report_end,line['reg_date'],points[line['group_name']])
+            line['sPoints_thisMonth']=expect_payment(month_start,report_end,line['reg_date'],points[line['group_name']])
+            # Left to define
+            line['disable_number']=0
+            line['disable_days']=0
+            line['disable_days_over1']=0
+            line['pay_number_expected']=0
 
 bar.finish()
 
@@ -179,3 +181,27 @@ for account in data:
     #print(account)
     #print('expected ' + str(data[account]['sPoints']))
     # print('this month ' + str(data[account]['sPoints_thisMonth']))
+
+print(chr(27))
+report = True
+while report:
+    choice = input('Do you want to filter on agent? (y/n) ')
+    if choice == 'y':
+        agent = input('Agent name... ')
+    # Add proper agent filtering
+    print(chr(27))
+    print('****** NEW REPORT ******')
+    print(' Period ranging from ' + str(start_date) + ' to ' + str(today))
+    pay_collected = 0
+    pay_expected = 0
+    pay_number = 0
+    pay_thisMonth = 0
+    for account in data:
+        pay_collected += data[account]['total_paid']
+
+    print(chr(27))
+    choice = input('Do you want to produce another report? (y/n) ')
+    if choice == 'n':
+        report = False
+    for account in data:
+        print(data[account])
