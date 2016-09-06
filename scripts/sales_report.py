@@ -12,34 +12,35 @@ def csvToList(path):
     return result
 
 # Searches through the accounts and return and attribute for the given account
-def attributeFind(account, attribute):
+def findInAccounts(account, attribute):
     # Investigate list indexing and list length...
     for i in range(0,(len(accounts_raw))):
         current_account = accounts_raw[i]
         if current_account['account_number'] == account:
             return current_account[attribute]
 
-# Converts an Angaza time to a datetime format
+# Converts an UTC string to a datetime rounded at the previous hour
 def toTime(angaza_time):
     result = datetime.datetime.strptime(angaza_time,'%Y-%m-%d %H:%M:%S')
+    # Removing the minutes and seconds
     result = result - datetime.timedelta(0,result.minute*60 + result.second,0)
     return result
 
-# Converts an Angaza time with ms to a datetime format
+# Converts a UTC string with ms to a datetime rounded at the previous hour
 def toTime_ms(angaza_time):
     result = datetime.datetime.strptime(angaza_time,'%Y-%m-%d %H:%M:%S.%f')
+    # Removing the minutes, seconds and microseconds
     result = result - datetime.timedelta(0,result.minute*60 + result.second,result.microsecond)
     return result
-    
 
-# Returns 1 if date is of today's month, 0 otherwise
+# Returns 1 if date is of today's month and year, 0 otherwise
 def thisMonth(date, today):
+    result = 0
     if date.year == today.year and date.month==today.month:
-        return 1
-    else:
-        return 0
+        result = 1
+    return result
 
-# Returns a datetime.timedelta in weeks
+# Returns a datetime.timedelta in weeks with decimals
 def deltaToWeeks(timedelta):
     result = timedelta.days/7
     result += timedelta.seconds/7/(3600*24)
@@ -69,46 +70,51 @@ def expect_payment(start,end,activated,plan):
         return plan[len(plan) - int(deltaToWeeks(unlocked-end)) - 2] - plan[int(deltaToWeeks(start-activated))]
 
 # Returns the expected disable date based on payment plan
-# Solve issue with double payment the days of the activation
-# Solve issue with full payments
-def expect_disable(lastPay_date, lastPay_amount, activated, plan):
+def expect_disable(next_disable_date, lastPay_date, lastPay_amount, total_paid, activated, plan):
+    total_paid_before = total_paid - lastPay_amount
     days = 0
     if len(plan) != 1:
-        if lastPay_date == activated:
-            i = 1
-            lastPay_amount -= plan[0]
-            while lastPay_amount >= 0:
-                lastPay_amount -= (plan[i] - plan[i-1])
-                i += 1
-                days += 7
+        weekly_rate = plan[1] - plan[0]
+        if total_paid_before < plan[0]:
+            if total_paid < plan[0]:
+                days += (lastPay_amount/plan[0])*7
+            else:
+                days += ((plan[0] - total_paid_before)/plan[0])*7
+                lastPay_amount -= (plan[0] - total_paid_before)
         else:
             i = 1
-            while lastPay_amount >= 0:
-                lastPay_amount -= (plan[i] - plan[i-1])
+            while lastPay_amount >= weekly_rate:
+                lastPay_amount -= weekly_rate
                 i += 1
                 days += 7
-            days -=7
+            days += lastPay_amount*7/weekly_rate
+        days += max(0,deltaToWeeks(next_disable_date - lastPay_date)*7)
     delta = datetime.timedelta(days,0,0)
     return lastPay_date + delta
 
-# Locale variable for payment plans
+# Returns the number of solar points earned
+def sPoints(total_paid,points):
+    result = 0
+    for key in points:
+        if int(key) <= total_paid:
+            result += 1
+    return result
+
+# DEFINITION OF PAYMENT PLANS
+# Coding assumes that payment plan "period" is 7 days
+# Coding assumes that the upfront payment lasts 7 days
 plans = {}
 plans['Eco-18-Pilot'] = [10000]
 for i in range(1,19):
     plans['Eco-18-Pilot'].append(i*5000+10000)
 plans['Eco-0-Pilot'] = [80000]
 
-# Locale variables for solar points
+# DEFINITION OF SOLAR POINTS SCHEDULE
 points = {}
-# Definition for Eco-18-Pilot plan (1 at the end)
-points['Eco-18-Pilot'] = []
-for i in range(0,18):
-    points['Eco-18-Pilot'].append(0)
-points['Eco-18-Pilot'].append(1)
-# Definition for Eco-0-Pilot plan (1 upfront)
-points['Eco-0-Pilot'] = [1]
+points['Eco-18-Pilot'] = {'100000',1}
+points['Eco-0-Pilot'] = {'80000',1}
 
-# Imports raw accounts and payments files
+# IMPORT OF LATEST ANGAZA DOWNLOADS
 accounts_raw = csvToList('accounts.csv')
 payments_raw = csvToList('payments.csv')
 
@@ -126,7 +132,7 @@ else:
     year = input(' Year? ')
     month = input(' Month? ')
     day = input(' Day? ')
-    report_end = datetime.datetime(int(year),int(month),int(day),23,59,59,999999)
+    report_end = datetime.datetime(int(year),int(month),int(day),23,59,59,000000)
 print(chr(27))
 
 # Defining other important dates
@@ -166,9 +172,16 @@ for j in range(0,(len(payments_raw))):
             line['pay_thisMonth_expected'] = expect_payment(report_start,month_end,line['reg_date'],plans[line['group_name']]) - (line['total_paid']-line['pay_thisMonth'])
             line['pay_thisMonth_expected_today'] = line['total_paid_expected'] - (line['total_paid']-line['pay_thisMonth'])
             # Complex calculations here (number of times disabeld etc.)
-            line['disable_days_current'] = max(round(deltaToWeeks(line['lastPay_date']-line['next_disable_date'])*7,2),0)
-            line['disable_days_total'].append(line['disable_days_current'])
-            line['next_disable_date'] = expect_disable(line['lastPay_date'], line['lastPay_amount'], line['reg_date'], plans[line['group_name']])
+            line['disabled_days_history'].append(max(round(deltaToWeeks(line['lastPay_date']-line['next_disable_date'])*7,2),0))
+            line['pay_history'].append(line['lastPay_amount'])
+            line['next_disable_date'] = expect_disable(line['next_disable_date'],line['lastPay_date'], line['lastPay_amount'], line['total_paid'], line['reg_date'], plans[line['group_name']])
+            if line['total_paid'] == plans[line['group_name']][len(plans[line['group_name']])-1]:
+                line['disabled_days_current'] = 0
+            else:
+                line['disabled_days_current'] = max(0,deltaToWeeks(report_end - line['next_disable_date'])*7)
+            sPoints_before = line['sPoints']
+            line['sPoints'] = sPoints(line['total_paid'],points[line['group_name']])
+            line['sPoints_thisMonth'] += (line['sPoints']-sPoints_before)*thisMonth(line['lastPay_date'],report_end)
         else:
             # Creating the account in the database
             account = pay['account']
@@ -191,10 +204,10 @@ for j in range(0,(len(payments_raw))):
             # Create the additional keys needed here
             line['pay_number'] = 1
             line['pay_number_thisMonth'] = thisMonth(line['lastPay_date'],report_end)*1
-            line['reg_date'] = attributeFind(account, 'registration_date_utc')
+            line['reg_date'] = findInAccounts(account, 'registration_date_utc')
             line['reg_date'] = toTime_ms(line['reg_date'])
-            line['reg_agent'] = attributeFind(account, 'registering_user')
-            line['product'] = attributeFind(account, 'attached_unit_type')
+            line['reg_agent'] = findInAccounts(account, 'registering_user')
+            line['product'] = findInAccounts(account, 'attached_unit_type')
             line['lastlastPay_date'] = ''
             line['lastlastPay_amount'] = 0
             # Total expected payments
@@ -203,14 +216,15 @@ for j in range(0,(len(payments_raw))):
             line['pay_thisMonth'] = thisMonth(line['lastPay_date'],report_end)*line['lastPay_amount']
             line['pay_thisMonth_expected'] = expect_payment(report_start,month_end,line['reg_date'],plans[line['group_name']]) - (line['total_paid']-line['pay_thisMonth'])
             line['pay_thisMonth_expected_today'] = line['total_paid_expected'] - (line['total_paid']-line['pay_thisMonth'])
-            line['disable_days_current'] = 0
-            line['disable_days_total'] = []
-            line['next_disable_date'] = expect_disable(line['lastPay_date'], line['lastPay_amount'], line['reg_date'], plans[line['group_name']])
-            # Left to define
-            line['sPoints']=expect_payment(report_start,report_end,line['reg_date'],points[line['group_name']])
-            line['sPoints_thisMonth']=expect_payment(month_start,report_end,line['reg_date'],points[line['group_name']])
-            line['disable_number']=0
-            line['disable_days_over1']=0
+            line['next_disable_date'] = expect_disable(line['reg_date'],line['lastPay_date'], line['lastPay_amount'], line['total_paid'], line['reg_date'], plans[line['group_name']])
+            if line['total_paid'] == plans[line['group_name']][len(plans[line['group_name']])-1]:
+                line['disabled_days_current'] = 0
+            else:
+                line['disabled_days_current'] = max(0,deltaToWeeks(report_end - line['next_disable_date'])*7)
+            line['disabled_days_history'] = [0]
+            line['pay_history'] = [line['lastPay_amount']]
+            line['sPoints'] = sPoints(line['total_paid'],points[line['group_name']])
+            line['sPoints_thisMonth'] = line['sPoints']*thisMonth(line['lastPay_date'],report_end)
 
 bar.finish()
 
@@ -226,9 +240,9 @@ print(chr(27))
 report = True
 while report:
     # Taking filter options from the user for the report
-    choice_rm = input('Do you want to filter by Regional Manager? (y/n) ')
+    choice_rm = input('Do you want to filter by regional manager? (y/n) ')
     if choice_rm == 'y':
-        rm = input('Regional Manager name... ')
+        rm = input('Regional manager name... ')
     choice_agent = input('Do you want to filter by agent? (y/n) ')
     if choice_agent == 'y':
         agent = input('Agent name... ')
@@ -239,14 +253,14 @@ while report:
     if choice_plan == 'y':
         plan = input('Plan name... ')
     print(chr(27))
-    print('>>>>> BEGIN NEW REPORT')
+    print('############# BEGIN NEW REPORT #############')
     print(chr(27))
     print(' Period ranging from ' + str(report_start) + ' to ' + str(report_end))
     # Printing fiter options
     if choice_agent == 'y':
-        print(' For Regional Manager: ' + rm)
+        print(' For regional manager: ' + rm)
     else:
-        print(' For ALL Regional Managers')
+        print(' For ALL regional managers')
     if choice_agent == 'y':
         print(' For agent: ' + agent)
     else:
@@ -265,6 +279,10 @@ while report:
     pay_thisMonth = 0
     pay_thisMonth_expected = 0
     pay_number_thisMonth = 0
+    disabled_number = 0
+    accounts_number = 0
+    solarPoints = 0
+    solarPoints_thisMonth = 0
     for account in data:
         # Preparing filter variable depending on user defined filters
         select = 1
@@ -276,12 +294,20 @@ while report:
         if choice_plan == 'y':
             select *= (data[account]['group_name'] == plan)
         # Aggregating data if all filter criteria are met
+        accounts_number += 1*select
         pay_collected += data[account]['total_paid']*select
         pay_expected += data[account]['total_paid_expected']*select
         pay_number += data[account]['pay_number']*select
         pay_thisMonth += data[account]['pay_thisMonth']*select
         pay_thisMonth_expected += data[account]['pay_thisMonth_expected']*select
         pay_number_thisMonth += data[account]['pay_number_thisMonth']*select
+        solarPoints += data[account]['sPoints']*select
+        solarPoints_thisMonth += data[account]['sPoints_thisMonth']*select
+        if data[account]['disabled_days_current'] > 0:
+            disabled_number += 1*select
+    print(chr(27))
+    print(' Number of accounts in this report: ' + str(accounts_number))
+    print(' ... including ' + str(disabled_number) + ' disabled accounts')
     print(chr(27))
     print(' Total collection: ' + str("{:,}".format(pay_collected)))
     print(' Expected amount collected: ' + str("{:,}".format(pay_expected)))
@@ -293,6 +319,7 @@ while report:
     print(' Number of payments collected: ' + str(pay_number))
     if pay_number != 0:
         print(' Average payment amount: ' + str("{:,}".format(int(round(pay_collected/pay_number,0)))))
+    print(' Total number of Solar Points awarded: ' + str(solarPoints))
     print(chr(27))
     print(' Total amount collected this month: ' + str("{:,}".format(pay_thisMonth)))
     print(' Expected amount collected this month: ' + str("{:,}".format(pay_thisMonth_expected)))
@@ -304,14 +331,15 @@ while report:
     print(' Number of payments collected this month: ' + str(pay_number_thisMonth))
     if pay_number_thisMonth != 0:
         print(' Average payment amount this month: ' + str("{:,}".format(int(round(pay_thisMonth/pay_number_thisMonth,0)))))
+    print(' Number of Solar Points awarded this month: ' + str(solarPoints_thisMonth))
     print(chr(27))
-    print('>>>>> END OF REPORT')
+    print('############## END OF REPORT ###############')
 
     print(chr(27))
     choice = input('Do you want to produce another report? (y/n) ')
     if choice == 'n':
         report = False
 
-    for account in data:
-        print(account)
-        print(data[account])
+    #for account in data:
+        #print(account)
+        #print(data[account])

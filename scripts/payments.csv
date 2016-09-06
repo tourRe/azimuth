@@ -1,4 +1,10 @@
 angaza_id,organization,recorded_utc,account,account_angaza_id,group_name,country,amount,type,new_total_paid,phone,synced,reversal,recorder,provider_transaction,applied_utc
+PA096908,Azimuth Solar,2016-09-04 19:06:07,2724813,AC006918,Eco-18-Pilot,Sierra Leone,4998,Manual (Activator),100000,+23244630898,False,None,songo,None,2016-09-04 19:06:07
+PA096906,Azimuth Solar,2016-09-04 18:58:26,2724813,AC006918,Eco-18-Pilot,Sierra Leone,30000,Manual (Activator),95002,+23244630898,False,None,songo,None,2016-09-04 18:58:26
+PA096905,Azimuth Solar,2016-09-04 18:56:58,2724813,AC006918,Eco-18-Pilot,Sierra Leone,2,Manual (Activator),65002,+23244630898,False,None,songo,None,2016-09-04 18:56:58
+PA096525,Azimuth Solar,2016-09-04 12:40:35,2749711,AC006967,Eco-18-Pilot,Sierra Leone,20000,Manual (Activator),100000,+23277929066,False,None,songo,None,2016-09-04 12:40:35
+PA095351,Azimuth Solar,2016-09-02 12:11:48,2690717,AC006746,Eco-18-Pilot,Sierra Leone,10000,Manual (Activator),100000,+23276571167,False,None,songo,None,2016-09-02 12:11:48
+PA095162,Azimuth Solar,2016-09-01 20:12:39,2678118,AC006955,Eco-18-Pilot,Sierra Leone,10000,Manual (Activator),100000,+23299817796,False,None,songo,None,2016-09-01 20:12:39
 PA094484,Azimuth Solar,2016-08-31 18:38:04,2647212,AC006934,Eco-18-Pilot,Sierra Leone,9000,Manual (Activator),100000,+23278455629,False,None,songo,None,2016-08-31 18:38:04
 PA094483,Azimuth Solar,2016-08-31 18:36:57,2647212,AC006934,Eco-18-Pilot,Sierra Leone,1000,Manual (Activator),91000,+23278455629,False,None,songo,None,2016-08-31 18:36:57
 PA094153,Azimuth Solar,2016-08-31 14:34:04,2719516,AC007186,Eco-18-Pilot,Sierra Leone,25000,Manual (Activator),90000,+23277648689,False,None,songo,None,2016-08-31 14:34:04
