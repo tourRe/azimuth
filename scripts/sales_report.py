@@ -97,7 +97,7 @@ def sPoints(total_paid,points):
     result = 0
     for key in points:
         if int(key) <= total_paid:
-            result += 1
+            result += points[key]
     return result
 
 # DEFINITION OF PAYMENT PLANS
@@ -108,15 +108,21 @@ plans['Eco-18-Pilot'] = [10000]
 for i in range(1,19):
     plans['Eco-18-Pilot'].append(i*5000+10000)
 plans['Eco-0-Pilot'] = [80000]
+plans['Eco_Cash'] = [120000]
+plans['Pro_Cash'] = [350000]
 
 # DEFINITION OF SOLAR POINTS SCHEDULE
 points = {}
-points['Eco-18-Pilot'] = {'100000',1}
-points['Eco-0-Pilot'] = {'80000',1}
+points['Eco-18-Pilot'] = {'100000':1}
+points['Eco-0-Pilot'] = {'80000':1}
+points['Eco_Cash'] = {'120000':1}
+points['Pro_Cash'] = {'350000':4}
 
 # IMPORT OF LATEST ANGAZA DOWNLOADS
 accounts_raw = csvToList('accounts.csv')
 payments_raw = csvToList('payments.csv')
+
+# SETUP OF VARIABLES TO COLLECT LISTS
 
 print(chr(27))
 print('############################################')
@@ -239,40 +245,37 @@ for account in data:
 print(chr(27))
 report = True
 while report:
-    # Taking filter options from the user for the report
-    choice_rm = input('Do you want to filter by regional manager? (y/n) ')
-    if choice_rm == 'y':
+
+    # Setting up type of report
+    print('Which report would you like to see? ')
+    report_type = input('rm = Regional Manager, a = Agent, g = general')
+    # Regional manager report
+    if report_type == 'rm':
         rm = input('Regional manager name... ')
-    choice_agent = input('Do you want to filter by agent? (y/n) ')
-    if choice_agent == 'y':
+    # Agent report
+    elif report_type == 'a':
         agent = input('Agent name... ')
-    choice_model = input('Do you want to filter by lamp model? (y/n) ')
-    if choice_model == 'y':
-        model = input('Model name... ')
-    choice_plan = input('Do you want to filter by payment plan? (y/n) ')
-    if choice_plan == 'y':
-        plan = input('Plan name... ')
+    # Taking filter options for the General report
+    else:
+        choice_rm = input('Do you want to filter by regional manager? (y/n) ')
+        if choice_rm == 'y':
+            rm = input('Regional manager name... ')
+        choice_agent = input('Do you want to filter by agent? (y/n) ')
+        if choice_agent == 'y':
+            agent = input('Agent name... ')
+        choice_model = input('Do you want to filter by lamp model? (y/n) ')
+        if choice_model == 'y':
+            model = input('Model name... ')
+        choice_plan = input('Do you want to filter by payment plan? (y/n) ')
+        if choice_plan == 'y':
+            plan = input('Plan name... ')
+
     print(chr(27))
     print('############# BEGIN NEW REPORT #############')
     print(chr(27))
     print(' Period ranging from ' + str(report_start) + ' to ' + str(report_end))
-    # Printing fiter options
-    if choice_agent == 'y':
-        print(' For regional manager: ' + rm)
-    else:
-        print(' For ALL regional managers')
-    if choice_agent == 'y':
-        print(' For agent: ' + agent)
-    else:
-        print(' For ALL agents')
-    if choice_model == 'y':
-        print(' For model: ' + model)
-    else:
-        print(' For ALL lamp models')
-    if choice_plan == 'y':
-        print(' For payment plan: ' + plan)
-    else:
-        print(' For ALL payment plans')
+
+    # Setting up variables to collect
     pay_collected = 0
     pay_expected = 0
     pay_number = 0
@@ -283,28 +286,76 @@ while report:
     accounts_number = 0
     solarPoints = 0
     solarPoints_thisMonth = 0
-    for account in data:
-        # Preparing filter variable depending on user defined filters
-        select = 1
-        # IMPLEMENT REGIONAL MANAGER FILTER
+
+    # General Report Title
+    if report_type == 'g':
         if choice_agent == 'y':
-            select *= (data[account]['reg_agent'] == agent)
+            print(' For regional manager: ' + rm)
+        else:
+            print(' For ALL regional managers')
+        if choice_agent == 'y':
+            print(' For agent: ' + agent)
+        else:
+            print(' For ALL agents')
         if choice_model == 'y':
-            select *= (data[account]['product'] == model)
+            print(' For model: ' + model)
+        else:
+            print(' For ALL lamp models')
         if choice_plan == 'y':
-            select *= (data[account]['group_name'] == plan)
-        # Aggregating data if all filter criteria are met
-        accounts_number += 1*select
-        pay_collected += data[account]['total_paid']*select
-        pay_expected += data[account]['total_paid_expected']*select
-        pay_number += data[account]['pay_number']*select
-        pay_thisMonth += data[account]['pay_thisMonth']*select
-        pay_thisMonth_expected += data[account]['pay_thisMonth_expected']*select
-        pay_number_thisMonth += data[account]['pay_number_thisMonth']*select
-        solarPoints += data[account]['sPoints']*select
-        solarPoints_thisMonth += data[account]['sPoints_thisMonth']*select
-        if data[account]['disabled_days_current'] > 0:
-            disabled_number += 1*select
+            print(' For payment plan: ' + plan)
+        else:
+            print(' For ALL payment plans')
+
+    # Regional Manager Report Title
+    if report_type == 'rm':
+        print(' Regional Manager report for: ' + rm)
+
+    # Agent Report Title
+    if report_type == 'a':
+        print(' Agent report for: ' + agent)
+        plans_list = []
+        for key in plans:
+            plans_list.append(key)
+        plan = plans[0]
+        print(chr(27))
+        print(' Recap by payment plan (expected || collected || ratio)')
+
+    scan_again = True
+    while scan_again:
+        for account in data:
+
+            # Preparing filter variable depending on user defined filters
+            select = 1
+            if report_type == 'g':
+                # IMPLEMENT REGIONAL MANAGER FILTER
+                if choice_agent == 'y':
+                    select *= (data[account]['reg_agent'] == agent)
+                if choice_model == 'y':
+                    select *= (data[account]['product'] == model)
+                if choice_plan == 'y':
+                    select *= (data[account]['group_name'] == plan)
+
+            # Aggregating data if all filter criteria are met
+            accounts_number += 1*select
+            pay_collected += data[account]['total_paid']*select
+            pay_expected += data[account]['total_paid_expected']*select
+            pay_number += data[account]['pay_number']*select
+            pay_thisMonth += data[account]['pay_thisMonth']*select
+            pay_thisMonth_expected += data[account]['pay_thisMonth_expected']*select
+            pay_number_thisMonth += data[account]['pay_number_thisMonth']*select
+            solarPoints += data[account]['sPoints']*select
+            solarPoints_thisMonth += data[account]['sPoints_thisMonth']*select
+            if data[account]['disabled_days_current'] > 0:
+                disabled_number += 1*select
+        
+#        if report_type == 'a':
+#            if len(plans) > 0:
+#                plans.remove(plan[0])
+#                print(
+
+        if report_type == 'g':
+            scan_again = False
+
     print(chr(27))
     print(' Number of accounts in this report: ' + str(accounts_number))
     print(' ... including ' + str(disabled_number) + ' disabled accounts')
@@ -333,6 +384,7 @@ while report:
         print(' Average payment amount this month: ' + str("{:,}".format(int(round(pay_thisMonth/pay_number_thisMonth,0)))))
     print(' Number of Solar Points awarded this month: ' + str(solarPoints_thisMonth))
     print(chr(27))
+    
     print('############## END OF REPORT ###############')
 
     print(chr(27))
