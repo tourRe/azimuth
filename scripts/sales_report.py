@@ -115,29 +115,70 @@ def sumField(search,field_list):
             results[field_active] += line[field_active]
     return results
 
+# Returns the ratio of two numbers as a string and handles errors
+def ratio(top,bot):
+    if bot == 0:
+        ratio = 'n.a.'
+    else:
+        ratio = str(round(top/bot,2)*100) + '%'
+    return ratio
+
+# Returns the payment plan as a list
+def build_plan(upfront,total,weekly):
+    result = [upfront]
+    if total != upfront:
+        for i in range(1,int((total-upfront)/weekly) + 1):
+            result.append(upfront + i*weekly)
+    return result
+
+# Adds an element to a list if not already there
+def add_toList(item,plans):
+    if len(plans) == 0:
+        plans = [item]
+    elif not(item in plans):
+        plans.append(item)
+    return plans
+
 # DEFINITION OF PAYMENT PLANS
 # Coding assumes that payment plan "period" is 7 days
 # Coding assumes that the upfront payment lasts 7 days
 plans = {}
-plans['Eco-18-Pilot'] = [10000]
-for i in range(1,19):
-    plans['Eco-18-Pilot'].append(i*5000+10000)
-plans['Eco-0-Pilot'] = [80000]
-plans['Eco_Cash'] = [120000]
-plans['Pro_Cash'] = [350000]
+plans['Eco-0-Pilot'] = build_plan(80000,80000,0)
+plans['Eco-18-Pilot'] = build_plan(10000,100000,5000)
+plans['Eco_Cash'] = build_plan(100000,100000,0)
+plans['Eco_Weekly'] = build_plan(20000,120000,5000)
+plans['Pro_Cash'] = build_plan(350000,350000,0)
+plans['Pro_Weekly_Existing Customer'] = build_plan(40000,400000,10000)
+plans['Pro_Weekly_New Customer'] = build_plan(100000,400000,10000)
+plans['SHS_Cash'] = build_plan(950000,950000,0)
+plans['SHS_Weekly_15_Existing Customer'] = build_plan(100000,1100000,15000)
+plans['SHS_Weekly_15_New Customer'] = build_plan(350000,1100000,15000)
+plans['SHS_Weekly_20_Existing Customer'] = build_plan(100000,1000000,20000)
+plans['SHS_Weekly_20_New Customer'] = build_plan(350000,1000000,20000)
+plans['SHS_Weekly_Agent'] = build_plan(15000,945000,15000)
 
 # DEFINITION OF SOLAR POINTS SCHEDULE
 points = {}
 points['Eco-18-Pilot'] = {'100000':1}
 points['Eco-0-Pilot'] = {'80000':1}
-points['Eco_Cash'] = {'120000':1}
+points['Eco_Cash'] = {'100000':1}
+points['Eco_Weekly'] = {'120000':1}
 points['Pro_Cash'] = {'350000':4}
+points['Pro_Weekly_Existing Customer'] = {'400000':4}
+points['Pro_Weekly_New Customer'] = {'400000':1}
+points['SHS_Cash'] = {'950000':10}
+points['SHS_Weekly_15_Existing Customer'] = {'550000':2,'1100000':6}
+points['SHS_Weekly_15_New Customer'] = {'550000':2,'1100000':6}
+points['SHS_Weekly_20_Existing Customer'] = {'500000':2,'1000000':8}
+points['SHS_Weekly_20_New Customer'] = {'500000':2,'1000000':8}
+points['SHS_Weekly_Agent'] = {'945000':0}
 
 # IMPORT OF LATEST ANGAZA DOWNLOADS
 accounts_raw = csvToList('accounts.csv')
 payments_raw = csvToList('payments.csv')
 
 # SETUP OF VARIABLES TO COLLECT LISTS
+agents_plans = {}
 
 print(chr(27))
 print('############################################')
@@ -146,9 +187,10 @@ print('############################################')
 print(chr(27))
 
 # Defining the report's end date
+today = datetime.datetime.today()
 question = input('Do you want to use TODAY as the end date for this reporting database? (y/n) ')
 if question == 'y':
-    report_end = datetime.datetime.today()
+    report_end = today - datetime.timedelta(0,0,today.microsecond)
 else:
     year = input(' Year? ')
     month = input(' Month? ')
@@ -160,7 +202,6 @@ print(chr(27))
 report_start = datetime.datetime(2016,3,1,00,00,00,000000)
 month_start = datetime.datetime(report_end.year,report_end.month,1,00,00,00,000000)
 month_end = datetime.datetime(report_end.year,report_end.month+1,1,00,00,00,000000)
-today = datetime.datetime.today()
 
 # Generating the progress bar
 bar = Bar('Generating Database', max=len(payments_raw))
@@ -198,8 +239,13 @@ for j in range(0,(len(payments_raw))):
             line['next_disable_date'] = expect_disable(line['next_disable_date'],line['lastPay_date'], line['lastPay_amount'], line['paid'], line['reg_date'], plans[line['group_name']])
             if line['paid'] == plans[line['group_name']][len(plans[line['group_name']])-1]:
                 line['disabled_days_current'] = 0
+                line['status'] = 'unlocked'
             else:
                 line['disabled_days_current'] = max(0,deltaToWeeks(report_end - line['next_disable_date'])*7)
+                if line['disabled_days_current'] == 0:
+                    line['status'] = 'active'
+                else:
+                    line['status'] = 'disabled'
             sPoints_before = line['sPoints']
             line['sPoints'] = sPoints(line['paid'],points[line['group_name']])
             line['sPoints_thisMonth'] += (line['sPoints']-sPoints_before)*thisMonth(line['lastPay_date'],report_end)
@@ -242,12 +288,21 @@ for j in range(0,(len(payments_raw))):
             line['next_disable_date'] = expect_disable(line['reg_date'],line['lastPay_date'], line['lastPay_amount'], line['paid'], line['reg_date'], plans[line['group_name']])
             if line['paid'] == plans[line['group_name']][len(plans[line['group_name']])-1]:
                 line['disabled_days_current'] = 0
+                line['status'] = 'unlocked'
             else:
                 line['disabled_days_current'] = max(0,deltaToWeeks(report_end - line['next_disable_date'])*7)
+                if line['disabled_days_current'] == 0:
+                    line['status'] = 'active'
+                else:
+                    line['status'] = 'disabled'
+            line['status']
             line['disabled_days_history'] = [0]
             line['pay_history'] = [line['lastPay_amount']]
             line['sPoints'] = sPoints(line['paid'],points[line['group_name']])
             line['sPoints_thisMonth'] = line['sPoints']*thisMonth(line['lastPay_date'],report_end)
+            if not(line['reg_agent'] in agents_plans):
+                agents_plans[line['reg_agent']] = []
+            agents_plans[line['reg_agent']] = add_toList(line['group_name'],agents_plans[line['reg_agent']])
 bar.finish()
 
 # CAN BE OPTIMIZED BY SPECIFYING FIELDS TO TRANSLATE FROM DATETIME TO STRING
@@ -325,18 +380,18 @@ while report:
         paid_thisMonth_expected = results['paid_thisMonth_expected']
         pay_number_thisMonth = results['pay_number_thisMonth']
         sPoints_thisMonth = results['sPoints_thisMonth']
+        search = db.search((Account.reg_agent.matches(agent)) & (Account.product.matches(model)) & (Account.group_name.matches(plan)) & (Account.status == 'disabled'))
+        results = sumField(search, ['paid'])
+        disabled_number = results['count']
+
         # Printing results
         print(chr(27))
         print(' Number of accounts in this report: ' + str(count))
-        # print(' ... including ' + str(disabled_number) + ' disabled accounts')
+        print(' > including ' + str(disabled_number) + ' disabled accounts')
         print(chr(27))
         print(' Total collection: ' + str("{:,}".format(paid)))
         print(' Expected amount collected: ' + str("{:,}".format(paid_expected)))
-        if paid_expected == 0:
-            ratio = 'n.a.'
-        else:
-            ratio = str(round(paid/paid_expected,2)*100) + '%'
-        print(' Total repayment ratio: ' + ratio)
+        print(' Total repayment ratio: ' + ratio(paid,paid_expected))
         print(' Number of payments collected: ' + str(pay_number))
         if pay_number != 0:
             print(' Average payment amount: ' + str("{:,}".format(int(round(paid/pay_number,0)))))
@@ -344,30 +399,72 @@ while report:
         print(chr(27))
         print(' Total amount collected this month: ' + str("{:,}".format(paid_thisMonth)))
         print(' Expected amount collected this month: ' + str("{:,}".format(paid_thisMonth_expected)))
-        if paid_thisMonth_expected == 0:
-            ratio = 'n.a.'
-        else:
-            ratio = str(round(paid_thisMonth/paid_thisMonth_expected,2)*100) + '%'
-        print(' Repayment ratio this month so far: ' + ratio)
+        print(' Repayment ratio this month so far: ' + ratio(paid_thisMonth,paid_thisMonth_expected))
         print(' Number of payments collected this month: ' + str(pay_number_thisMonth))
         if pay_number_thisMonth != 0:
             print(' Average payment amount this month: ' + str("{:,}".format(int(round(paid_thisMonth/pay_number_thisMonth,0)))))
         print(' Number of Solar Points awarded this month: ' + str(sPoints_thisMonth))
         print(chr(27))
     
-    # Regional Manager Report Title
+    # REGIONAL MANAGER REPORT
     if report_type == 'rm':
         print(' Regional Manager report for: ' + rm)
 
-    # Agent Report Title
+    # AGENT REPORT
     if report_type == 'a':
-        print(' Agent report for: ' + agent)
-        plans_list = []
-        for key in plans:
-            plans_list.append(key)
-        plan = plans[0]
+        # Querying the database
+        Account = Query()
+        agent = '.*' + agent + '.*'
+        search = db.search(Account.reg_agent.matches(agent))
+        agent_name = search[0]['reg_agent']
+        results = sumField(search, ['paid','paid_expected','pay_number','paid_thisMonth','paid_thisMonth_expected','pay_number_thisMonth','sPoints','sPoints_thisMonth'])
+        count = results['count']
+        paid = results['paid']
+        paid_expected = results['paid_expected']
+        pay_number = results['pay_number']
+        sPoints = results['sPoints']
+        paid_thisMonth = results['paid_thisMonth']
+        paid_thisMonth_expected = results['paid_thisMonth_expected']
+        pay_number_thisMonth = results['pay_number_thisMonth']
+        sPoints_thisMonth = results['sPoints_thisMonth']
+        search = db.search((Account.reg_agent.matches(agent)) & (Account.status == 'disabled'))
+        results = sumField(search, ['paid'])
+        disabled_number = results['count']
+
+        # Printing results
+        print(' Agent report for: ' + agent_name)
         print(chr(27))
-        print(' Recap by payment plan (expected || collected || ratio)')
+        print(' Number of accounts for this agent: ' + str(count))
+        print(' > including ' + str(disabled_number) + ' disabled accounts')
+        print(chr(27))
+        print(' Monthly summary')
+        print(' > Total amount collected: ' + str("{:,}".format(paid_thisMonth)))
+        print(' > Expected amount collected: ' + str("{:,}".format(paid_thisMonth_expected)))
+        print(' > Repayment ratio so far: ' + ratio(paid_thisMonth,paid_thisMonth_expected))
+        print(' > Number of payments collected: ' + str(pay_number_thisMonth))
+        if pay_number_thisMonth != 0:
+            print(' > Average payment amount: ' + str("{:,}".format(int(round(paid_thisMonth/pay_number_thisMonth,0)))))
+        print(' > Number of Solar Points awarded: ' + str(sPoints_thisMonth))
+        print(chr(27))
+
+        print(' Breakdown by payment plan (collected || expected || ratio)')
+        for plan in agents_plans[agent_name]:
+            search = db.search((Account.reg_agent.matches(agent)) & (Account.group_name == plan))
+            results = sumField(search, ['paid','paid_expected','pay_number','paid_thisMonth','paid_thisMonth_expected','pay_number_thisMonth','sPoints','sPoints_thisMonth'])
+            count = results['count']
+            paid = results['paid']
+            paid_expected = results['paid_expected']
+            pay_number = results['pay_number']
+            sPoints = results['sPoints']
+            paid_thisMonth = results['paid_thisMonth']
+            paid_thisMonth_expected = results['paid_thisMonth_expected']
+            paid_number_thisMonth = results['pay_number_thisMonth']
+            Points_thisMonth = results['sPoints_thisMonth']
+            search = db.search((Account.reg_agent.matches(agent)) & (Account.group_name == plan) & (Account.status == 'disabled'))
+            results = sumField(search, ['paid'])
+            disabled_number = results['count']
+            print(" > " + str(plan) + ": " + str("{:,}".format(paid_thisMonth)) + ' || ' + str("{:,}".format(paid_thisMonth_expected)) + ' || ' + ratio(paid_thisMonth,paid_thisMonth_expected))
+        print(chr(27))
 
     print('############## END OF REPORT ###############')
     print(chr(27))
