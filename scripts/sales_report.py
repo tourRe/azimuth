@@ -1,3 +1,10 @@
+# TO DO
+# > implement regional manager tagging and filters
+# > improve agent report with list of worst customers
+# > improve agent report with way to distangle bad + good customers
+# compensating
+# > improve conversion to tinyDB performance
+
 #!/usd/bin/env python3
 import csv
 import datetime
