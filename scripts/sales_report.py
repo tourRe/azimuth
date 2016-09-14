@@ -159,9 +159,9 @@ plans['Pro_Weekly_Existing Customer'] = build_plan(40000,400000,10000)
 plans['Pro_Weekly_New Customer'] = build_plan(100000,400000,10000)
 plans['SHS_Cash'] = build_plan(950000,950000,0)
 plans['SHS_Weekly_15_Existing Customer'] = build_plan(100000,1100000,15000)
-plans['SHS_Weekly_15_New Customer'] = build_plan(350000,1100000,15000)
+plans['SHS_Weekly_15_New Customer'] = build_plan(250000,1100000,15000)
 plans['SHS_Weekly_20_Existing Customer'] = build_plan(100000,1000000,20000)
-plans['SHS_Weekly_20_New Customer'] = build_plan(350000,1000000,20000)
+plans['SHS_Weekly_20_New Customer'] = build_plan(250000,1000000,20000)
 plans['SHS_Weekly_Agent'] = build_plan(15000,945000,15000)
 
 # DEFINITION OF SOLAR POINTS SCHEDULE
