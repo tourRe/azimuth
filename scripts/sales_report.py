@@ -1,11 +1,6 @@
 # TO DO
-# > handle written off accounts
-# > handle unlocked accounts (at least total)
 # > implement regional manager tagging and filters
 # > improve agent report with list of worst customers
-# > improve agent report with way to distangle bad + good customers
-# compensating
-# > improve conversion to tinyDB performance
 # > ADDED 'unlocked_thisMonth'
 # > ADDED 'collection_deficit'
 # > ADDED 'writeoff_date'
