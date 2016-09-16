@@ -8,6 +8,7 @@
 # > improve conversion to tinyDB performance
 # > ADDED 'unlocked_thisMonth'
 # > ADDED 'collection_deficit'
+# > ADDED 'writeoff_date'
 
 #!/usd/bin/env python3
 import csv
@@ -131,7 +132,7 @@ def ratio(top,bot):
     if bot == 0:
         ratio = 'n.a.'
     else:
-        ratio = str(round(top/bot,2)*100) + '%'
+        ratio = str(int(round(top/bot,2)*100)) + '%'
     return ratio
 
 # Returns the payment plan as a list
@@ -296,6 +297,9 @@ for j in range(0,(len(payments_raw))):
             line['product'] = findInAccounts(account, 'attached_unit_type')
             line['lastlastPay_date'] = ''
             line['lastlastPay_amount'] = 0
+            line['writeoff_date'] = datetime.datetime(2050,12,31,23,59,59,000000)
+            if findInAccounts(account, 'account_status') == 'WRITTEN_OFF':
+                line['writeoff_date'] = toTime(findInAccounts(account, 'date_of_latest_payment_utc')) + datetime.timedelta(30,0,0)
             # Total expected payments
             line['paid_expected'] = expect_payment(report_start,report_end,line['reg_date'],plans[line['group_name']])
             # This month payments and expected
@@ -326,14 +330,19 @@ for j in range(0,(len(payments_raw))):
             agents_plans[line['reg_agent']] = add_toList(line['group_name'],agents_plans[line['reg_agent']])
 bar.finish()
 
-# CAN BE OPTIMIZED BY SPECIFYING FIELDS TO TRANSLATE FROM DATETIME TO STRING
 bar = Bar('Converting into TinyDB', max=len(data))
-# Transferring data into tinyDB
+# FINALIZING DB AND TRANSFERRING DATA INTO TINYDB
 db = TinyDB('db.json')
 db.purge()
 for account in data:
     bar.next()
-    for key in ['next_disable_date', 'reg_date', 'lastPay_date']:
+    if data[account]['writeoff_date'] <= report_end:
+        data[account]['paid_expected'] = data[account]['paid']
+        data[account]['paid_thisMonth_expected'] = data[account]['paid_thisMonth']
+        data[account]['payment_deficit'] = 0
+        data[account]['disabled_days_current'] = 0
+        data[account]['status'] = 'written_off'
+    for key in ['next_disable_date', 'reg_date', 'lastPay_date', 'writeoff_date']:
         data[account][key] = data[account][key].isoformat()
     if isinstance(data[account]['lastlastPay_date'],datetime.datetime):
         data[account]['lastlastPay_date'] = data[account]['lastlastPay_date'].isoformat()
@@ -472,15 +481,15 @@ while report:
         search = db.search((Account.reg_agent.matches(agent)) & (Account.status == 'active'))
         results = sumField(search, ['paid'])
         active_number = results['count']
+        search = db.search((Account.reg_agent.matches(agent)) & (Account.status == 'written_off'))
+        results = sumField(search, ['paid'])
+        written_off_number = results['count']
 
         # Printing results
         print(' Agent report for: ' + agent_name)
         print(chr(27))
         print(' Number of accounts for this agent: ' + str(count))
-        print(' > ' + str(unlocked_number) + ' unlocked accounts')
-        print(' >> of which ' + str(unlocked_thisMonth) + ' unlocked this month')
-        print(' > ' + str(active_number) + ' active accounts')
-        print(' > ' + str(disabled_number) + ' disabled accounts')
+        print(' > u:' + str(unlocked_number) + ' a:' + str(active_number) + ' d:' + str(disabled_number) + ' w:' + str(written_off_number))
         print(chr(27))
         print(' Monthly summary')
         print(' > Total amount collected: ' + str("{:,}".format(paid_thisMonth)))
