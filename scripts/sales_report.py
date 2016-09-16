@@ -160,7 +160,7 @@ plans['SHS_Weekly_15_Existing Customer'] = build_plan(100000,1100000,15000)
 plans['SHS_Weekly_15_New Customer'] = build_plan(250000,1100000,15000)
 plans['SHS_Weekly_20_Existing Customer'] = build_plan(100000,1000000,20000)
 plans['SHS_Weekly_20_New Customer'] = build_plan(250000,1000000,20000)
-plans['SHS_Weekly_Agent'] = build_plan(15000,945000,15000)
+plans['SHS_Agent'] = build_plan(15000,945000,15000)
 
 # DEFINITION OF SOLAR POINTS SCHEDULE
 points = {}
@@ -177,7 +177,7 @@ points['SHS_Weekly_15_Existing Customer'] = {'550000':2,'1100000':6}
 points['SHS_Weekly_15_New Customer'] = {'550000':2,'1100000':6}
 points['SHS_Weekly_20_Existing Customer'] = {'500000':2,'1000000':8}
 points['SHS_Weekly_20_New Customer'] = {'500000':2,'1000000':8}
-points['SHS_Weekly_Agent'] = {'945000':0}
+points['SHS_Agent'] = {'945000':0}
 
 # DEFINTION OF REGIONAL MANAGER ASSIGNMENTS
 RMs = {'Abu Bakkar Mansaray (songo)':'Eric','Sorie Koroma (mamamah)':'Eric'}
@@ -390,18 +390,26 @@ while report:
 
     # GENERAL REPORT
     if report_type == 'g':
-        if choice_agent == 'y': print(' For regional manager: ' + rm)
+        if choice_rm == 'y': 
+            print(' For regional manager: ' + rm)
+            rm = '.*' + rm + '.*'
         else: print(' For ALL regional managers')
-        if choice_agent == 'y': print(' For agent: ' + agent)
+        if choice_agent == 'y': 
+            print(' For agent: ' + agent)
+            agent = '.*' + agent + '.*'
         else: print(' For ALL agents')
-        if choice_model == 'y': print(' For model: ' + model)
+        if choice_model == 'y': 
+            print(' For model: ' + model)
+            model = '.*' + model + '.*'
         else: print(' For ALL lamp models')
-        if choice_plan == 'y': print(' For payment plan: ' + plan)
+        if choice_plan == 'y': 
+            print(' For payment plan: ' + plan)
+            plan = '.*' + plan + '.*'
         else: print(' For ALL payment plans')
 
         # Running Query and gathering results
         Account = Query()
-        search = db.search((Account.reg_agent.matches(agent)) & (Account.product.matches(model)) & (Account.group_name.matches(plan)))
+        search = db.search((Account.rm.matches(rm)) & (Account.reg_agent.matches(agent)) & (Account.product.matches(model)) & (Account.group_name.matches(plan)))
         results = sumField(search, ['paid','paid_expected','pay_number','paid_thisMonth','paid_thisMonth_expected','pay_number_thisMonth','sPoints','sPoints_thisMonth','unlocked_thisMonth'])
         count = results['count']
         paid = results['paid']
