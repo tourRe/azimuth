@@ -6,6 +6,8 @@
 # > improve agent report with way to distangle bad + good customers
 # compensating
 # > improve conversion to tinyDB performance
+# > ADDED 'unlocked_thisMonth'
+# > ADDED 'collection_deficit'
 
 #!/usd/bin/env python3
 import csv
@@ -159,6 +161,7 @@ plans['Eco_Weekly'] = build_plan(20000,120000,5000)
 plans['Pro_Cash'] = build_plan(350000,350000,0)
 plans['Pro_Weekly_Existing Customer'] = build_plan(40000,400000,10000)
 plans['Pro_Weekly_New Customer'] = build_plan(100000,400000,10000)
+plans['Pro_Weekly_Agent'] = build_plan(10000,350000,10000)
 plans['SHS_Cash'] = build_plan(950000,950000,0)
 plans['SHS_Weekly_15_Existing Customer'] = build_plan(100000,1100000,15000)
 plans['SHS_Weekly_15_New Customer'] = build_plan(250000,1100000,15000)
@@ -175,6 +178,7 @@ points['Eco_Weekly'] = {'120000':1}
 points['Pro_Cash'] = {'350000':4}
 points['Pro_Weekly_Existing Customer'] = {'400000':4}
 points['Pro_Weekly_New Customer'] = {'400000':1}
+points['Pro_Weekly_Agent'] = {'350000':0}
 points['SHS_Cash'] = {'950000':10}
 points['SHS_Weekly_15_Existing Customer'] = {'550000':2,'1100000':6}
 points['SHS_Weekly_15_New Customer'] = {'550000':2,'1100000':6}
@@ -246,8 +250,12 @@ for j in range(0,(len(payments_raw))):
             line['disabled_days_history'].append(max(round(deltaToWeeks(line['lastPay_date']-line['next_disable_date'])*7,2),0))
             line['pay_history'].append(line['lastPay_amount'])
             line['next_disable_date'] = expect_disable(line['next_disable_date'],line['lastPay_date'], line['lastPay_amount'], line['paid'], line['reg_date'], plans[line['group_name']])
+            line['payment_deficit'] = max(line['paid_thisMonth_expected'] - line['paid_thisMonth'],0)
+            line['unlocked_thisMonth'] = 0
             if line['paid'] == plans[line['group_name']][len(plans[line['group_name']])-1]:
                 line['disabled_days_current'] = 0
+                if thisMonth(line['lastPay_date'],report_end) == 1:
+                    line['unlocked_thisMonth'] = 1
                 line['status'] = 'unlocked'
             else:
                 line['disabled_days_current'] = max(0,deltaToWeeks(report_end - line['next_disable_date'])*7)
@@ -295,8 +303,12 @@ for j in range(0,(len(payments_raw))):
             line['paid_thisMonth_expected'] = expect_payment(report_start,month_end,line['reg_date'],plans[line['group_name']]) - (line['paid']-line['paid_thisMonth'])
             line['paid_thisMonth_expected_today'] = line['paid_expected'] - (line['paid']-line['paid_thisMonth'])
             line['next_disable_date'] = expect_disable(line['reg_date'],line['lastPay_date'], line['lastPay_amount'], line['paid'], line['reg_date'], plans[line['group_name']])
+            line['payment_deficit'] = max(line['paid_thisMonth_expected'] - line['paid_thisMonth'],0)
+            line['unlocked_thisMonth'] = 0
             if line['paid'] == plans[line['group_name']][len(plans[line['group_name']])-1]:
                 line['disabled_days_current'] = 0
+                if thisMonth(line['lastPay_date'],report_end) == 1:
+                    line['unlocked_thisMonth'] = 1
                 line['status'] = 'unlocked'
             else:
                 line['disabled_days_current'] = max(0,deltaToWeeks(report_end - line['next_disable_date'])*7)
@@ -321,9 +333,10 @@ db = TinyDB('db.json')
 db.purge()
 for account in data:
     bar.next()
-    for key in data[account]:
-        if isinstance(data[account][key],datetime.datetime):
-            data[account][key] = data[account][key].isoformat()
+    for key in ['next_disable_date', 'reg_date', 'lastPay_date']:
+        data[account][key] = data[account][key].isoformat()
+    if isinstance(data[account]['lastlastPay_date'],datetime.datetime):
+        data[account]['lastlastPay_date'] = data[account]['lastlastPay_date'].isoformat()
     db.insert(data[account])
 bar.finish()
 
@@ -379,7 +392,7 @@ while report:
         # Running Query and gathering results
         Account = Query()
         search = db.search((Account.reg_agent.matches(agent)) & (Account.product.matches(model)) & (Account.group_name.matches(plan)))
-        results = sumField(search, ['paid','paid_expected','pay_number','paid_thisMonth','paid_thisMonth_expected','pay_number_thisMonth','sPoints','sPoints_thisMonth'])
+        results = sumField(search, ['paid','paid_expected','pay_number','paid_thisMonth','paid_thisMonth_expected','pay_number_thisMonth','sPoints','sPoints_thisMonth','unlocked_thisMonth'])
         count = results['count']
         paid = results['paid']
         paid_expected = results['paid_expected']
@@ -389,30 +402,42 @@ while report:
         paid_thisMonth_expected = results['paid_thisMonth_expected']
         pay_number_thisMonth = results['pay_number_thisMonth']
         sPoints_thisMonth = results['sPoints_thisMonth']
+        unlocked_thisMonth = results['unlocked_thisMonth']
         search = db.search((Account.reg_agent.matches(agent)) & (Account.product.matches(model)) & (Account.group_name.matches(plan)) & (Account.status == 'disabled'))
         results = sumField(search, ['paid'])
         disabled_number = results['count']
+        search = db.search((Account.reg_agent.matches(agent)) & (Account.product.matches(model)) & (Account.group_name.matches(plan)) & (Account.status == 'unlocked'))
+        results = sumField(search, ['paid'])
+        unlocked_number = results['count']
+        search = db.search((Account.reg_agent.matches(agent)) & (Account.product.matches(model)) & (Account.group_name.matches(plan)) & (Account.status == 'active'))
+        results = sumField(search, ['paid'])
+        active_number = results['count']
 
         # Printing results
         print(chr(27))
         print(' Number of accounts in this report: ' + str(count))
-        print(' > including ' + str(disabled_number) + ' disabled accounts')
+        print(' > ' + str(unlocked_number) + ' unlocked accounts')
+        print(' >> of which ' + str(unlocked_thisMonth) + ' unlocked this month')
+        print(' > ' + str(active_number) + ' active accounts')
+        print(' > ' + str(disabled_number) + ' disabled accounts')
         print(chr(27))
-        print(' Total collection: ' + str("{:,}".format(paid)))
-        print(' Expected amount collected: ' + str("{:,}".format(paid_expected)))
-        print(' Total repayment ratio: ' + ratio(paid,paid_expected))
-        print(' Number of payments collected: ' + str(pay_number))
+        print(' Global summary')
+        print(' > Amount collected: ' + str("{:,}".format(paid)))
+        print(' > Expected amount collected: ' + str("{:,}".format(paid_expected)))
+        print(' > Repayment ratio: ' + ratio(paid,paid_expected))
+        print(' > Number of payments collected: ' + str(pay_number))
         if pay_number != 0:
-            print(' Average payment amount: ' + str("{:,}".format(int(round(paid/pay_number,0)))))
-        print(' Total number of Solar Points awarded: ' + str(sPoints))
+            print(' > Average payment amount: ' + str("{:,}".format(int(round(paid/pay_number,0)))))
+        print(' > Number of Solar Points awarded: ' + str(sPoints))
         print(chr(27))
-        print(' Total amount collected this month: ' + str("{:,}".format(paid_thisMonth)))
-        print(' Expected amount collected this month: ' + str("{:,}".format(paid_thisMonth_expected)))
-        print(' Repayment ratio this month so far: ' + ratio(paid_thisMonth,paid_thisMonth_expected))
-        print(' Number of payments collected this month: ' + str(pay_number_thisMonth))
+        print(' Monthly summary')
+        print(' > Amount collected: ' + str("{:,}".format(paid_thisMonth)))
+        print(' > Expected amount collected: ' + str("{:,}".format(paid_thisMonth_expected)))
+        print(' > Repayment ratio so far: ' + ratio(paid_thisMonth,paid_thisMonth_expected))
+        print(' > Number of payments collected: ' + str(pay_number_thisMonth))
         if pay_number_thisMonth != 0:
-            print(' Average payment amount this month: ' + str("{:,}".format(int(round(paid_thisMonth/pay_number_thisMonth,0)))))
-        print(' Number of Solar Points awarded this month: ' + str(sPoints_thisMonth))
+            print(' > Average payment amount: ' + str("{:,}".format(int(round(paid_thisMonth/pay_number_thisMonth,0)))))
+        print(' > Number of Solar Points awarded: ' + str(sPoints_thisMonth))
         print(chr(27))
     
     # REGIONAL MANAGER REPORT
@@ -426,7 +451,7 @@ while report:
         agent = '.*' + agent + '.*'
         search = db.search(Account.reg_agent.matches(agent))
         agent_name = search[0]['reg_agent']
-        results = sumField(search, ['paid','paid_expected','pay_number','paid_thisMonth','paid_thisMonth_expected','pay_number_thisMonth','sPoints','sPoints_thisMonth'])
+        results = sumField(search, ['paid','paid_expected','pay_number','paid_thisMonth','paid_thisMonth_expected','pay_number_thisMonth','sPoints','sPoints_thisMonth','unlocked_thisMonth','payment_deficit'])
         count = results['count']
         paid = results['paid']
         paid_expected = results['paid_expected']
@@ -436,30 +461,43 @@ while report:
         paid_thisMonth_expected = results['paid_thisMonth_expected']
         pay_number_thisMonth = results['pay_number_thisMonth']
         sPoints_thisMonth = results['sPoints_thisMonth']
+        unlocked_thisMonth = results['unlocked_thisMonth']
+        payment_deficit = results['payment_deficit']
         search = db.search((Account.reg_agent.matches(agent)) & (Account.status == 'disabled'))
         results = sumField(search, ['paid'])
         disabled_number = results['count']
+        search = db.search((Account.reg_agent.matches(agent)) & (Account.status == 'unlocked'))
+        results = sumField(search, ['paid'])
+        unlocked_number = results['count']
+        search = db.search((Account.reg_agent.matches(agent)) & (Account.status == 'active'))
+        results = sumField(search, ['paid'])
+        active_number = results['count']
 
         # Printing results
         print(' Agent report for: ' + agent_name)
         print(chr(27))
         print(' Number of accounts for this agent: ' + str(count))
-        print(' > including ' + str(disabled_number) + ' disabled accounts')
+        print(' > ' + str(unlocked_number) + ' unlocked accounts')
+        print(' >> of which ' + str(unlocked_thisMonth) + ' unlocked this month')
+        print(' > ' + str(active_number) + ' active accounts')
+        print(' > ' + str(disabled_number) + ' disabled accounts')
         print(chr(27))
         print(' Monthly summary')
         print(' > Total amount collected: ' + str("{:,}".format(paid_thisMonth)))
         print(' > Expected amount collected: ' + str("{:,}".format(paid_thisMonth_expected)))
-        print(' > Repayment ratio so far: ' + ratio(paid_thisMonth,paid_thisMonth_expected))
+        print(' > Repayment ratio: ' + ratio(paid_thisMonth,paid_thisMonth_expected))
+        print(' > Collection deficit: ' + str("{:,}".format(payment_deficit)))
+        print(' > Collection ratio: ' + ratio(paid_thisMonth,paid_thisMonth + payment_deficit))
         print(' > Number of payments collected: ' + str(pay_number_thisMonth))
         if pay_number_thisMonth != 0:
             print(' > Average payment amount: ' + str("{:,}".format(int(round(paid_thisMonth/pay_number_thisMonth,0)))))
         print(' > Number of Solar Points awarded: ' + str(sPoints_thisMonth))
         print(chr(27))
 
-        print(' Breakdown by payment plan (collected || expected || ratio)')
-        for plan in agents_plans[agent_name]:
+        print(' Breakdown by payment plan (collected || expected || repay ratio || deficit || collect ratio)')
+        for plan in sorted(agents_plans[agent_name]):
             search = db.search((Account.reg_agent.matches(agent)) & (Account.group_name == plan))
-            results = sumField(search, ['paid','paid_expected','pay_number','paid_thisMonth','paid_thisMonth_expected','pay_number_thisMonth','sPoints','sPoints_thisMonth'])
+            results = sumField(search, ['paid','paid_expected','pay_number','paid_thisMonth','paid_thisMonth_expected','pay_number_thisMonth','sPoints','sPoints_thisMonth','payment_deficit'])
             count = results['count']
             paid = results['paid']
             paid_expected = results['paid_expected']
@@ -469,10 +507,9 @@ while report:
             paid_thisMonth_expected = results['paid_thisMonth_expected']
             paid_number_thisMonth = results['pay_number_thisMonth']
             Points_thisMonth = results['sPoints_thisMonth']
-            search = db.search((Account.reg_agent.matches(agent)) & (Account.group_name == plan) & (Account.status == 'disabled'))
-            results = sumField(search, ['paid'])
-            disabled_number = results['count']
-            print(" > " + str(plan) + ": " + str("{:,}".format(paid_thisMonth)) + ' || ' + str("{:,}".format(paid_thisMonth_expected)) + ' || ' + ratio(paid_thisMonth,paid_thisMonth_expected))
+            payment_deficit = results['payment_deficit']
+            if paid_thisMonth_expected != 0:
+                print(" > " + str(plan) + ": " + str("{:,}".format(paid_thisMonth)) + ' || ' + str("{:,}".format(paid_thisMonth_expected)) + ' || ' + ratio(paid_thisMonth,paid_thisMonth_expected) + ' || ' + str("{:,}".format(payment_deficit)) + ' || ' + ratio(paid_thisMonth,paid_thisMonth + payment_deficit))
         print(chr(27))
 
     print('############## END OF REPORT ###############')
