@@ -1,6 +1,6 @@
 # TO DO
-# > implement regional manager tagging and filters
 # > improve agent report with list of worst customers
+# > Added the rm field
 
 #!/usd/bin/env python3
 import csv
@@ -154,7 +154,7 @@ plans['Eco_Weekly'] = build_plan(20000,120000,5000)
 plans['Pro_Cash'] = build_plan(350000,350000,0)
 plans['Pro_Weekly_Existing Customer'] = build_plan(40000,400000,10000)
 plans['Pro_Weekly_New Customer'] = build_plan(100000,400000,10000)
-plans['Pro_Weekly_Agent'] = build_plan(10000,350000,10000)
+plans['Pro_Agent'] = build_plan(10000,350000,10000)
 plans['SHS_Cash'] = build_plan(950000,950000,0)
 plans['SHS_Weekly_15_Existing Customer'] = build_plan(100000,1100000,15000)
 plans['SHS_Weekly_15_New Customer'] = build_plan(250000,1100000,15000)
@@ -171,13 +171,16 @@ points['Eco_Weekly'] = {'120000':1}
 points['Pro_Cash'] = {'350000':4}
 points['Pro_Weekly_Existing Customer'] = {'400000':4}
 points['Pro_Weekly_New Customer'] = {'400000':1}
-points['Pro_Weekly_Agent'] = {'350000':0}
+points['Pro_Agent'] = {'350000':0}
 points['SHS_Cash'] = {'950000':10}
 points['SHS_Weekly_15_Existing Customer'] = {'550000':2,'1100000':6}
 points['SHS_Weekly_15_New Customer'] = {'550000':2,'1100000':6}
 points['SHS_Weekly_20_Existing Customer'] = {'500000':2,'1000000':8}
 points['SHS_Weekly_20_New Customer'] = {'500000':2,'1000000':8}
 points['SHS_Weekly_Agent'] = {'945000':0}
+
+# DEFINTION OF REGIONAL MANAGER ASSIGNMENTS
+RMs = {'Abu Bakkar Mansaray (songo)':'Eric','Sorie Koroma (mamamah)':'Eric'}
 
 # IMPORT OF LATEST ANGAZA DOWNLOADS
 accounts_raw = csvToList('accounts.csv')
@@ -287,6 +290,7 @@ for j in range(0,(len(payments_raw))):
             line['reg_date'] = findInAccounts(account, 'registration_date_utc')
             line['reg_date'] = toTime_ms(line['reg_date'])
             line['reg_agent'] = findInAccounts(account, 'registering_user')
+            line['rm'] = RMs[line['reg_agent']]
             line['product'] = findInAccounts(account, 'attached_unit_type')
             line['lastlastPay_date'] = ''
             line['lastlastPay_amount'] = 0
@@ -448,7 +452,79 @@ while report:
     
     # REGIONAL MANAGER REPORT
     if report_type == 'rm':
-        print(' Regional Manager report for: ' + rm)
+        rm_name = rm
+        # Grabbing the list of agents
+        agents = []
+        for agent in RMs:
+            if RMs[agent] == rm:
+                agents.append(agent)
+        # Querying the database
+        Account = Query()
+        search = db.search(Account.rm.matches(rm))
+        results = sumField(search, ['paid','paid_expected','pay_number','paid_thisMonth','paid_thisMonth_expected','pay_number_thisMonth','sPoints','sPoints_thisMonth','unlocked_thisMonth','payment_deficit', 'payment_deficit_today'])
+        count = results['count']
+        paid = results['paid']
+        paid_expected = results['paid_expected']
+        pay_number = results['pay_number']
+        sPoints = results['sPoints']
+        paid_thisMonth = results['paid_thisMonth']
+        paid_thisMonth_expected = results['paid_thisMonth_expected']
+        pay_number_thisMonth = results['pay_number_thisMonth']
+        sPoints_thisMonth = results['sPoints_thisMonth']
+        unlocked_thisMonth = results['unlocked_thisMonth']
+        payment_deficit = results['payment_deficit']
+        payment_deficit_today = results['payment_deficit_today']
+        search = db.search((Account.rm.matches(rm)) & (Account.status == 'disabled'))
+        results = sumField(search, ['paid'])
+        disabled_number = results['count']
+        search = db.search((Account.rm.matches(rm)) & (Account.status == 'unlocked'))
+        results = sumField(search, ['paid'])
+        unlocked_number = results['count']
+        search = db.search((Account.rm.matches(rm)) & (Account.status == 'active'))
+        results = sumField(search, ['paid'])
+        active_number = results['count']
+        search = db.search((Account.rm.matches(rm)) & (Account.status == 'written_off'))
+        results = sumField(search, ['paid'])
+        written_off_number = results['count']
+
+        # Printing results
+        print(' Regional Manager report for: ' + rm_name)
+        print(chr(27))
+        print(' Number of agents for this Regional Manager: ' + str(len(agents)))
+        print(' Number of accounts for this Regional Manager: ' + str(count))
+        print(' > u:' + str(unlocked_number) + ' a:' + str(active_number) + ' d:' + str(disabled_number) + ' w:' + str(written_off_number))
+        print(chr(27))
+        print(' Monthly summary')
+        print(' > Total amount collected: ' + str("{:,}".format(paid_thisMonth)))
+        print(' > Expected repayments: ' + str("{:,}".format(paid_thisMonth_expected)))
+        print(' > Repayment ratio: ' + ratio(paid_thisMonth,paid_thisMonth_expected))
+        print(' > Expected collection: ' + str("{:,}".format(paid_thisMonth + payment_deficit)))
+        print(' > Collection ratio: ' + ratio(paid_thisMonth,paid_thisMonth + payment_deficit))
+        print(' > Collection deficit to date: ' + str("{:,}".format(payment_deficit_today)))
+        print(' > Number of payments collected: ' + str(pay_number_thisMonth))
+        if pay_number_thisMonth != 0:
+            print(' > Average payment amount: ' + str("{:,}".format(int(round(paid_thisMonth/pay_number_thisMonth,0)))))
+        print(' > Number of Solar Points awarded: ' + str(sPoints_thisMonth))
+        print(chr(27))
+        
+        print(' Breakdown by agents (collected || repay expect || repay ratio || collect expect || collect ratio || deficit to date)')
+        for agent in sorted(agents):
+            search = db.search(Account.reg_agent == agent)
+            results = sumField(search, ['paid','paid_expected','pay_number','paid_thisMonth','paid_thisMonth_expected','pay_number_thisMonth','sPoints','sPoints_thisMonth','payment_deficit', 'payment_deficit_today'])
+            count = results['count']
+            paid = results['paid']
+            paid_expected = results['paid_expected']
+            pay_number = results['pay_number']
+            sPoints = results['sPoints']
+            paid_thisMonth = results['paid_thisMonth']
+            paid_thisMonth_expected = results['paid_thisMonth_expected']
+            paid_number_thisMonth = results['pay_number_thisMonth']
+            Points_thisMonth = results['sPoints_thisMonth']
+            payment_deficit = results['payment_deficit']
+            payment_deficit_today = results['payment_deficit_today']
+            if paid_thisMonth_expected != 0:
+                print(" > " + str(agent) + ": " + str("{:,}".format(paid_thisMonth)) + ' || ' + str("{:,}".format(paid_thisMonth_expected)) + ' || ' + ratio(paid_thisMonth,paid_thisMonth_expected) + ' || ' + str("{:,}".format(paid_thisMonth + payment_deficit)) + ' || ' + ratio(paid_thisMonth,paid_thisMonth + payment_deficit)+ ' || ' + str("{:,}".format(payment_deficit_today)))
+        print(chr(27))
 
     # AGENT REPORT
     if report_type == 'a':
