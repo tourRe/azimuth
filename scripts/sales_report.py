@@ -1,9 +1,6 @@
 # TO DO
 # > implement regional manager tagging and filters
 # > improve agent report with list of worst customers
-# > ADDED 'unlocked_thisMonth'
-# > ADDED 'collection_deficit'
-# > ADDED 'writeoff_date'
 
 #!/usd/bin/env python3
 import csv
@@ -241,12 +238,13 @@ for j in range(0,(len(payments_raw))):
             line['pay_number_thisMonth'] += thisMonth(line['lastPay_date'],report_end)*1
             line['paid_thisMonth'] += thisMonth(line['lastPay_date'],report_end)*int(line['lastPay_amount'])
             line['paid_thisMonth_expected'] = expect_payment(report_start,month_end,line['reg_date'],plans[line['group_name']]) - (line['paid']-line['paid_thisMonth'])
-            line['paid_thisMonth_expected_today'] = line['paid_expected'] - (line['paid']-line['paid_thisMonth'])
+            line['paid_thisMonth_expected_today'] = expect_payment(report_start,report_end,line['reg_date'],plans[line['group_name']]) - (line['paid']-line['paid_thisMonth'])
+            line['payment_deficit'] = max(line['paid_thisMonth_expected'] - line['paid_thisMonth'],0)
+            line['payment_deficit_today'] = max(line['paid_thisMonth_expected_today'] - line['paid_thisMonth'],0)
             # Complex calculations here (number of times disabeld etc.)
             line['disabled_days_history'].append(max(round(deltaToWeeks(line['lastPay_date']-line['next_disable_date'])*7,2),0))
             line['pay_history'].append(line['lastPay_amount'])
             line['next_disable_date'] = expect_disable(line['next_disable_date'],line['lastPay_date'], line['lastPay_amount'], line['paid'], line['reg_date'], plans[line['group_name']])
-            line['payment_deficit'] = max(line['paid_thisMonth_expected'] - line['paid_thisMonth'],0)
             line['unlocked_thisMonth'] = 0
             if line['paid'] == plans[line['group_name']][len(plans[line['group_name']])-1]:
                 line['disabled_days_current'] = 0
@@ -300,7 +298,9 @@ for j in range(0,(len(payments_raw))):
             # This month payments and expected
             line['paid_thisMonth'] = thisMonth(line['lastPay_date'],report_end)*line['lastPay_amount']
             line['paid_thisMonth_expected'] = expect_payment(report_start,month_end,line['reg_date'],plans[line['group_name']]) - (line['paid']-line['paid_thisMonth'])
-            line['paid_thisMonth_expected_today'] = line['paid_expected'] - (line['paid']-line['paid_thisMonth'])
+            line['paid_thisMonth_expected_today'] = expect_payment(report_start,report_end,line['reg_date'],plans[line['group_name']]) - (line['paid']-line['paid_thisMonth'])
+            line['payment_deficit'] = max(line['paid_thisMonth_expected'] - line['paid_thisMonth'],0)
+            line['payment_deficit_today'] = max(line['paid_thisMonth_expected_today'] - line['paid_thisMonth'],0)
             line['next_disable_date'] = expect_disable(line['reg_date'],line['lastPay_date'], line['lastPay_amount'], line['paid'], line['reg_date'], plans[line['group_name']])
             line['payment_deficit'] = max(line['paid_thisMonth_expected'] - line['paid_thisMonth'],0)
             line['unlocked_thisMonth'] = 0
@@ -334,7 +334,9 @@ for account in data:
     if data[account]['writeoff_date'] <= report_end:
         data[account]['paid_expected'] = data[account]['paid']
         data[account]['paid_thisMonth_expected'] = data[account]['paid_thisMonth']
+        data[account]['paid_thisMonth_expected_today'] = data[account]['paid_thisMonth']
         data[account]['payment_deficit'] = 0
+        data[account]['payment_deficit_today'] = 0
         data[account]['disabled_days_current'] = 0
         data[account]['status'] = 'written_off'
     for key in ['next_disable_date', 'reg_date', 'lastPay_date', 'writeoff_date']:
@@ -455,7 +457,7 @@ while report:
         agent = '.*' + agent + '.*'
         search = db.search(Account.reg_agent.matches(agent))
         agent_name = search[0]['reg_agent']
-        results = sumField(search, ['paid','paid_expected','pay_number','paid_thisMonth','paid_thisMonth_expected','pay_number_thisMonth','sPoints','sPoints_thisMonth','unlocked_thisMonth','payment_deficit'])
+        results = sumField(search, ['paid','paid_expected','pay_number','paid_thisMonth','paid_thisMonth_expected','pay_number_thisMonth','sPoints','sPoints_thisMonth','unlocked_thisMonth','payment_deficit', 'payment_deficit_today'])
         count = results['count']
         paid = results['paid']
         paid_expected = results['paid_expected']
@@ -467,6 +469,7 @@ while report:
         sPoints_thisMonth = results['sPoints_thisMonth']
         unlocked_thisMonth = results['unlocked_thisMonth']
         payment_deficit = results['payment_deficit']
+        payment_deficit_today = results['payment_deficit_today']
         search = db.search((Account.reg_agent.matches(agent)) & (Account.status == 'disabled'))
         results = sumField(search, ['paid'])
         disabled_number = results['count']
@@ -488,20 +491,21 @@ while report:
         print(chr(27))
         print(' Monthly summary')
         print(' > Total amount collected: ' + str("{:,}".format(paid_thisMonth)))
-        print(' > Expected amount collected: ' + str("{:,}".format(paid_thisMonth_expected)))
+        print(' > Expected repayments: ' + str("{:,}".format(paid_thisMonth_expected)))
         print(' > Repayment ratio: ' + ratio(paid_thisMonth,paid_thisMonth_expected))
-        print(' > Collection deficit: ' + str("{:,}".format(payment_deficit)))
+        print(' > Expected collection: ' + str("{:,}".format(paid_thisMonth + payment_deficit)))
         print(' > Collection ratio: ' + ratio(paid_thisMonth,paid_thisMonth + payment_deficit))
+        print(' > Collection deficit to date: ' + str("{:,}".format(payment_deficit_today)))
         print(' > Number of payments collected: ' + str(pay_number_thisMonth))
         if pay_number_thisMonth != 0:
             print(' > Average payment amount: ' + str("{:,}".format(int(round(paid_thisMonth/pay_number_thisMonth,0)))))
         print(' > Number of Solar Points awarded: ' + str(sPoints_thisMonth))
         print(chr(27))
 
-        print(' Breakdown by payment plan (collected || expected || repay ratio || deficit || collect ratio)')
+        print(' Breakdown by payment plan (collected || repay expect || repay ratio || collect expect || collect ratio || deficit to date)')
         for plan in sorted(agents_plans[agent_name]):
             search = db.search((Account.reg_agent.matches(agent)) & (Account.group_name == plan))
-            results = sumField(search, ['paid','paid_expected','pay_number','paid_thisMonth','paid_thisMonth_expected','pay_number_thisMonth','sPoints','sPoints_thisMonth','payment_deficit'])
+            results = sumField(search, ['paid','paid_expected','pay_number','paid_thisMonth','paid_thisMonth_expected','pay_number_thisMonth','sPoints','sPoints_thisMonth','payment_deficit', 'payment_deficit_today'])
             count = results['count']
             paid = results['paid']
             paid_expected = results['paid_expected']
@@ -512,8 +516,9 @@ while report:
             paid_number_thisMonth = results['pay_number_thisMonth']
             Points_thisMonth = results['sPoints_thisMonth']
             payment_deficit = results['payment_deficit']
+            payment_deficit_today = results['payment_deficit_today']
             if paid_thisMonth_expected != 0:
-                print(" > " + str(plan) + ": " + str("{:,}".format(paid_thisMonth)) + ' || ' + str("{:,}".format(paid_thisMonth_expected)) + ' || ' + ratio(paid_thisMonth,paid_thisMonth_expected) + ' || ' + str("{:,}".format(payment_deficit)) + ' || ' + ratio(paid_thisMonth,paid_thisMonth + payment_deficit))
+                print(" > " + str(plan) + ": " + str("{:,}".format(paid_thisMonth)) + ' || ' + str("{:,}".format(paid_thisMonth_expected)) + ' || ' + ratio(paid_thisMonth,paid_thisMonth_expected) + ' || ' + str("{:,}".format(paid_thisMonth + payment_deficit)) + ' || ' + ratio(paid_thisMonth,paid_thisMonth + payment_deficit)+ ' || ' + str("{:,}".format(payment_deficit_today)))
         print(chr(27))
 
     print('############## END OF REPORT ###############')
