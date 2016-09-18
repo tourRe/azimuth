@@ -1,4 +1,11 @@
 angaza_id,organization,recorded_utc,account,account_angaza_id,group_name,country,amount,type,new_total_paid,phone,synced,reversal,recorder,provider_transaction,applied_utc
+PA105729,Azimuth Solar,2016-09-17 15:55:41,4284923,AC015110,SHS_Weekly_15_Existing Customer,Sierra Leone,15000,Manual (Activator),115000,+23288856538,False,None,songo,None,2016-09-17 15:55:41
+PA105699,Azimuth Solar,2016-09-17 15:43:00,4284022,AC015114,SHS_Weekly_15_Existing Customer,Sierra Leone,20000,Manual (Activator),120000,+23288856538,False,None,songo,None,2016-09-17 15:43:00
+PA105601,Azimuth Solar,2016-09-17 14:07:48,4340717,AC015655,Eco_Weekly,Sierra Leone,20000,Manual (Activator),20000,+23277073298,False,None,mamamah,None,2016-09-17 14:07:48
+PA105589,Azimuth Solar,2016-09-17 13:55:21,9579111,AC015654,Pro_Weekly_New Customer,Sierra Leone,100000,Manual (Activator),100000,+23277678534,False,None,mamamah,None,2016-09-17 13:55:21
+PA105528,Azimuth Solar,2016-09-17 12:35:11,4279618,AC015643,Eco_Weekly,Sierra Leone,30000,Manual (Activator),30000,+23277397836,False,None,mamamah,None,2016-09-17 12:35:11
+PA105330,Azimuth Solar,2016-09-16 19:47:33,4283628,AC015594,SHS_Cash,Sierra Leone,950000,Manual (Activator),950000,+23277641153,False,None,songo,None,2016-09-16 19:47:33
+PA105322,Azimuth Solar,2016-09-16 19:04:01,4284428,AC015044,SHS_Agent,Sierra Leone,15000,Manual (Activator),30000,+23277929066,False,None,songo,None,2016-09-16 19:04:01
 PA104933,Azimuth Solar,2016-09-16 14:18:16,4201018,AC015573,Eco_Weekly,Sierra Leone,20000,Manual (Activator),20000,+23230736031,False,None,songo,None,2016-09-16 14:18:16
 PA104806,Azimuth Solar,2016-09-16 11:47:16,4185716,AC015551,Eco_Weekly,Sierra Leone,20000,Manual (Activator),20000,+23288227326,False,None,mamamah,None,2016-09-16 11:47:16
 PA104801,Azimuth Solar,2016-09-16 11:41:58,9588815,AC015548,Pro_Weekly_Existing Customer,Sierra Leone,40000,Manual (Activator),40000,+23277919272,False,None,songo,None,2016-09-16 11:41:58
