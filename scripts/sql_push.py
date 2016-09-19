@@ -22,12 +22,11 @@ DB_NAME = 'azimuth3_payments'
 try:
     cnx = mysql.connector.connect(**config_payments)
     cursor = cnx.cursor()
-
 except mysql.connector.Error as err:
     if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
-        print("Something is wrong with your user name or password")
+        print('Something is wrong with your user name or password')
     elif err.errno == errorcode.ER_BAD_DB_ERROR:
-        print("Database does not exist")
+        print('Database does not exist')
     else:
         print(err)
 
@@ -46,25 +45,24 @@ TABLES['clients'] = (
 
 TABLES['managers'] = (
         "CREATE TABLE `managers` ("
-        "  `manager_no` int(11) NOT NULL AUTO_INCREMENT,"
-        "  `name` varchar(30) NOT NULL,"
-        "  `gender` enum('F','M') NOT NULL,"
-        "  `phone` varchar(16) NOT NULL,"
-        "  `location` varchar(30) NOT NULL,"
-        "  PRIMARY KEY (`manager_no`)"
+        "  `rm_id` int(11) NOT NULL AUTO_INCREMENT,"
+        "  `rm_name` varchar(30) NOT NULL,"
+        "  `rm_gender` enum('F','M') NOT NULL,"
+        "  `rm_phone` varchar(16) NOT NULL,"
+        "  `rm_location` varchar(30) NOT NULL,"
+        "  PRIMARY KEY (`rm_id`)"
         ") ENGINE=InnoDB")
 
 TABLES['agents'] = (
         "CREATE TABLE `agents` ("
-        "  `agent_no` int(11) NOT NULL AUTO_INCREMENT,"
-        "  `name` varchar(30) NOT NULL,"
-        "  `gender` enum('F','M') NOT NULL,"
-        "  `phone` varchar(16) NOT NULL,"
-        "  `location` varchar(30) NOT NULL,"
-        "  `manager` varchar(30) NOT NULL,"
-        "  PRIMARY KEY (`agent_no`)"
+        "  `agent_id` int(11) NOT NULL,"
+        "  `agent_name` varchar(30) NOT NULL,"
+        "  `agent_gender` enum('F','M') NOT NULL,"
+        "  `agent_phone` varchar(16) NOT NULL,"
+        "  `agent_location` varchar(30) NOT NULL,"
+        "  `rm_id` varchar(30) NOT NULL,"
+        "  PRIMARY KEY (`agent_id`)"
         ") ENGINE=InnoDB")
-        
 
 TABLES['accounts'] = (
         "CREATE TABLE `accounts` ("
@@ -74,7 +72,7 @@ TABLES['accounts'] = (
         "  `client_no` int(11) NOT NULL,"
         "  `plan` varchar(20) NOT NULL,"
         "  `reg_date` date NOT NULL,"
-        "  `reg_agent` varchar(30) NOT NULL,"
+        "  `agent_id` varchar(30) NOT NULL,"
         "  `paid` int(10) NOT NULL,"
         "  `paid_thisMonth` int(10) NOT NULL,"
         "  `paid_expect` int(10) NOT NULL,"
@@ -95,7 +93,7 @@ TABLES['accounts'] = (
         "  `unlocked_thisMonth` int(1) NOT NULL,"
         "  `writeOff_date` date,"
         "  `status` enum('active','disabled','unlocked','written_off') NOT NULL,"
-        "  PRIMARY KEY (`account_Angaza`)"
+        "  PRIMARY KEY (`account_no`,`account_Angaza`)"
         ") ENGINE=InnoDB")
 
 TABLES['employees'] = (
@@ -197,5 +195,32 @@ for name, ddl in TABLES.items():
             print(err.msg)
     else:
         print("OK")
+cursor.close()
+cnx.close()
+
+# ADDING DATA IN THE DATABASES
+
+# Connecting to the database and creating cursor
+try:
+    cnx = mysql.connector.connect(**config_payments)
+    cursor = cnx.cursor()
+except mysql.connector.Error as err:
+    if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
+        print('Something is wrong with your user name or password')
+    elif err.errno == errorcode.ER_BAD_DB_ERROR:
+        print('Database does not exist')
+    else:
+        print(err)
+
+# Creating data to add to the database
+add_client = ("INSERT INTO clients "
+        "(name, gender, phone, location) "
+        "VALUES (%s, %s, %s, %s) ")
+
+data_client = ('John', 'M', '+23278564345', 'Songo')
+
+cursor.execute(add_client, data_client)
+
+cnx.commit()
 cursor.close()
 cnx.close()
