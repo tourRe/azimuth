@@ -1,4 +1,11 @@
 angaza_id,organization,recorded_utc,account,account_angaza_id,group_name,country,amount,type,new_total_paid,phone,synced,reversal,recorder,provider_transaction,applied_utc
+PA106145,Azimuth Solar,2016-09-18 10:11:34,4284220,AC015682,SHS_Weekly_20_Existing Customer,Sierra Leone,100000,Manual (Activator),100000,+23276841171,False,None,songo,None,2016-09-18 10:11:34
+PA106109,Azimuth Solar,2016-09-18 08:14:47,9580911,AC015105,Pro_Weekly_Existing Customer,Sierra Leone,20000,Manual (Activator),60000,+23278929162,False,None,songo,None,2016-09-18 08:14:47
+PA106108,Azimuth Solar,2016-09-18 08:05:40,4284626,AC015272,SHS_Weekly_20_Existing Customer,Sierra Leone,80000,Manual (Activator),180000,+23277605065,False,None,songo,None,2016-09-18 08:05:40
+PA106028,Azimuth Solar,2016-09-17 21:05:36,9586017,AC015104,Pro_Weekly_Existing Customer,Sierra Leone,10000,Manual (Activator),50000,+23279744415,False,None,songo,None,2016-09-17 21:05:36
+PA105997,Azimuth Solar,2016-09-17 18:35:26,9588914,AC015672,Pro_Weekly_Existing Customer,Sierra Leone,40000,Manual (Activator),40000,+23277929032,False,None,songo,None,2016-09-17 18:35:26
+PA105974,Azimuth Solar,2016-09-17 18:02:31,4286027,AC015670,SHS_Weekly_15_Existing Customer,Sierra Leone,100000,Manual (Activator),100000,+23299265930,False,None,songo,None,2016-09-17 18:02:31
+PA105955,Azimuth Solar,2016-09-17 17:45:56,4200812,AC015669,Eco_Weekly,Sierra Leone,20000,Manual (Activator),20000,+23288348554,False,None,songo,None,2016-09-17 17:45:56
 PA105729,Azimuth Solar,2016-09-17 15:55:41,4284923,AC015110,SHS_Weekly_15_Existing Customer,Sierra Leone,15000,Manual (Activator),115000,+23288856538,False,None,songo,None,2016-09-17 15:55:41
 PA105699,Azimuth Solar,2016-09-17 15:43:00,4284022,AC015114,SHS_Weekly_15_Existing Customer,Sierra Leone,20000,Manual (Activator),120000,+23288856538,False,None,songo,None,2016-09-17 15:43:00
 PA105601,Azimuth Solar,2016-09-17 14:07:48,4340717,AC015655,Eco_Weekly,Sierra Leone,20000,Manual (Activator),20000,+23277073298,False,None,mamamah,None,2016-09-17 14:07:48

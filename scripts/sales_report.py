@@ -64,13 +64,13 @@ def expect_payment(start,end,activated,plan):
     # Case where the observation period includes the full plan
     elif activated >= start and unlocked <= end:
         return plan[len(plan)-1]
-    # Case where the plan doesnt finish in the observation period
+# Case where the plan doesnt finish in the observation period
     elif unlocked > end and activated >= start:
         return plan[int(deltaToWeeks(end - activated))]
     # Case where the plan doesn't start in the observation period
     elif activated < start and unlocked <= end:
         return plan[len(plan)-1] - plan[len(plan) - int(deltaToWeeks(unlocked-start)) - 1]
-    # Case where the observation period is included within the plan
+# Case where the observation period is included within the plan
     else:
         return plan[len(plan) - int(deltaToWeeks(unlocked-end)) - 2] - plan[int(deltaToWeeks(start-activated))]
 
@@ -466,7 +466,7 @@ while report:
             print(' > Average payment amount: ' + str("{:,}".format(int(round(paid_thisMonth/pay_number_thisMonth,0)))))
         print(' > Number of Solar Points awarded: ' + str(sPoints_thisMonth))
         print(chr(27))
-    
+
     # REGIONAL MANAGER REPORT
     if report_type == 'rm':
         rm_name = rm
@@ -478,7 +478,10 @@ while report:
         # Querying the database
         Account = Query()
         search = db.search(Account.rm.matches(rm))
-        results = sumField(search, ['paid','paid_expected','pay_number','paid_thisMonth','paid_thisMonth_expected','pay_number_thisMonth','sPoints','sPoints_thisMonth','payment_deficit', 'payment_deficit_today'])
+        results = sumField(search, ['paid','paid_expected','pay_number',
+            'paid_thisMonth','paid_thisMonth_expected','pay_number_thisMonth',
+            'sPoints','sPoints_thisMonth',
+            'payment_deficit', 'payment_deficit_today'])
         count = results['count']
         paid = results['paid']
         paid_expected = results['paid_expected']
@@ -515,7 +518,7 @@ while report:
             print(' > Average payment amount: ' + str("{:,}".format(int(round(paid_thisMonth/pay_number_thisMonth,0)))))
         print(' > Number of Solar Points awarded: ' + str(sPoints_thisMonth))
         print(chr(27))
-        
+
         print(' Breakdown by agents (collected || repay expect || repay ratio || collect expect || collect ratio || deficit to date)')
         for agent in sorted(agents):
             search = db.search(Account.reg_agent == agent)
