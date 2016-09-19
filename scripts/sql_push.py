@@ -34,12 +34,44 @@ except mysql.connector.Error as err:
 # DEFINING TEST TABLES
 TABLES = {}
 
+TABLES['clients'] = (
+        "CREATE TABLE `clients` ("
+        "  `client_no` int(11) NOT NULL AUTO_INCREMENT,"
+        "  `name` varchar(30),"
+        "  `gender` enum('F','M'),"
+        "  `phone` varchar(16) NOT NULL,"
+        "  `location` varchar(30) NOT NULL,"
+        "  PRIMARY KEY (`client_no`)"
+        ") ENGINE=InnoDB")
+
+TABLES['managers'] = (
+        "CREATE TABLE `managers` ("
+        "  `manager_no` int(11) NOT NULL AUTO_INCREMENT,"
+        "  `name` varchar(30) NOT NULL,"
+        "  `gender` enum('F','M') NOT NULL,"
+        "  `phone` varchar(16) NOT NULL,"
+        "  `location` varchar(30) NOT NULL,"
+        "  PRIMARY KEY (`manager_no`)"
+        ") ENGINE=InnoDB")
+
+TABLES['agents'] = (
+        "CREATE TABLE `agents` ("
+        "  `agent_no` int(11) NOT NULL AUTO_INCREMENT,"
+        "  `name` varchar(30) NOT NULL,"
+        "  `gender` enum('F','M') NOT NULL,"
+        "  `phone` varchar(16) NOT NULL,"
+        "  `location` varchar(30) NOT NULL,"
+        "  `manager` varchar(30) NOT NULL,"
+        "  PRIMARY KEY (`agent_no`)"
+        ") ENGINE=InnoDB")
+        
+
 TABLES['accounts'] = (
         "CREATE TABLE `accounts` ("
         "  `account_no` int(11) NOT NULL AUTO_INCREMENT,"
         "  `account_GLP` int(7) NOT NULL,"
         "  `account_Angaza` varchar(8) NOT NULL,"
-        "  `client_id` int(11) NOT NULL,"
+        "  `client_no` int(11) NOT NULL,"
         "  `plan` varchar(20) NOT NULL,"
         "  `reg_date` date NOT NULL,"
         "  `reg_agent` varchar(30) NOT NULL,"
@@ -63,7 +95,7 @@ TABLES['accounts'] = (
         "  `unlocked_thisMonth` int(1) NOT NULL,"
         "  `writeOff_date` date,"
         "  `status` enum('active','disabled','unlocked','written_off') NOT NULL,"
-        "  PRIMARY KEY (`account_no`)"
+        "  PRIMARY KEY (`account_Angaza`)"
         ") ENGINE=InnoDB")
 
 TABLES['employees'] = (
