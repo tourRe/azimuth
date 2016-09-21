@@ -60,6 +60,13 @@ class Account(models.Model):
     def __str__(self):
         return self.account_GLP
 
+    def paid(self):
+        payments = Payment.objects.get(account = self)
+        results = 0
+        for payment in payments:
+            results += payment.amount
+        return results
+
 class Payment(models.Model):
     account = models.ForeignKey(Account)
     amount = models.PositiveIntegerField(default=0)
