@@ -31,8 +31,8 @@ class InventoryItem(models.Model):
     qty = models.PositiveIntegerField(default=0)
 
     def __str__(self):
-        return ('%s %s in %s' 
-                % (str(self.qty), str(self.item_type), str(self.storage)))
+        return ('%s in %s: %s' 
+                % (str(self.item_type), str(self.storage), str(self.qty)))
 
 class Transaction(models.Model):
     TYPE_RECEIVED = 1
