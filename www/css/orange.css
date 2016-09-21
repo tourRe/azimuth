@@ -209,11 +209,12 @@ h5.slide3 span,
 .about-charity-desc.col-md-7 ul li:hover{
     background:url("../images/hexagon-orange.png") no-repeat scroll 0 0 transparent;
 }
+
 .sidebar-list li a:hover {
     background:url("../images/list-arrow-orange.png") no-repeat scroll 34px center #FCFCFB;
 }
+
 .error-page-search a,
 .order-reveived a {
-
     background:url("../images/link-arrow-orange.png") no-repeat scroll right center transparent;
 }
