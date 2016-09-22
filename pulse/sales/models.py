@@ -1,3 +1,5 @@
+import datetime
+
 from django.db import models
 from inventory.models import Product
 
@@ -50,25 +52,37 @@ class Plan(models.Model):
         return self.name
 
 class Account(models.Model):
+    STATUS = (('a', 'Activated'), ('d', 'Deactivated'), 
+            ('u', 'Unlocked'), ('w', 'Written Off'))
+
     account_GLP = models.CharField(max_length=7)
     account_Angaza = models.CharField(max_length=8)
     client = models.ForeignKey(Client)
     plan = models.ForeignKey(Plan)
     reg_date = models.DateTimeField('registration date')
     agent = models.ForeignKey(Agent)
+    status = models.CharField(max_length=10,choices=STATUS,default='a')
 
     def __str__(self):
         return self.account_GLP
 
     def paid(self):
-        payments = Payment.objects.get(account = self)
         results = 0
-        for payment in payments:
-            results += payment.amount
+        for payment in Payment.objects.filter(account = self):
+            results+=payment.amount
         return results
 
+    def paid_thisMonth(self):
+        results = 0
+        today = datetime.datetime.today()
+        for payment in Payment.objects.filter(account = self, 
+                date__year = today.year, date__month = today.month):
+            results += payment.amount
+            print('youpi')
+        return results
+    
 class Payment(models.Model):
-    account = models.ForeignKey(Account)
+    account = models.ForeignKey(Account, on_delete=models.CASCADE)
     amount = models.PositiveIntegerField(default=0)
     date = models.DateTimeField('payment date')
     agent = models.ForeignKey(Agent)
