@@ -12,6 +12,11 @@ https://docs.djangoproject.com/en/1.10/ref/settings/
 
 import os
 
+# Importing celery to manage recurring tasks
+import djcelery
+djcelery.setup_loader()
+BROKER_URL = 'django://'
+
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -31,8 +36,13 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    # My Apps
     'sales.apps.SalesConfig',
     'inventory.apps.InventoryConfig',
+    # Other Apps
+    'djcelery',
+    'kombu.transport.django',
+    # System Apps
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -56,7 +66,7 @@ ROOT_URLCONF = 'pulse.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -124,3 +134,8 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.10/howto/static-files/
 
 STATIC_URL = '/static/'
+
+# Celerybeat config
+# https://www.caktusgroup.com/blog/2014/06/23/scheduling-tasks-celery/
+
+CELERYBEAT_SCHEDULER = 'djcelery.schedulers.DatabaseScheduler'

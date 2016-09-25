@@ -194,7 +194,10 @@ points['SHS_Weekly_20_New Customer'] = {'500000':2,'1000000':8}
 points['SHS_Agent'] = {'945000':0}
 
 # DEFINTION OF REGIONAL MANAGER ASSIGNMENTS
-RMs = {'Abu Bakkar Mansaray (songo)':'Eric','Sorie Koroma (mamamah)':'Eric'}
+RMs = {'Abu Bakkar Mansaray (songo)':'Eric',
+    'Sorie Koroma (mamamah)':'Eric',
+    'Foday Kargbo (makiteh)':'Eric',
+    'HQ Freetown (hq.freetown)':'Eric'}
 
 # IMPORT OF LATEST ANGAZA DOWNLOADS
 accounts_raw = csvToList('accounts.csv')
