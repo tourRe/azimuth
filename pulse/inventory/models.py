@@ -11,28 +11,18 @@ class Product(models.Model):
     name = models.CharField(max_length=30)
     brand = models.CharField(max_length=30)
     power = models.FloatField(default=0)
-    
+
     def __str__(self):
         return self.name
 
-#class StockStatus(models.Model):
-#    name = models.CharField(max_length=30)
-#    description = models.CharField(max_length=300)
-#
-#    def __str__(self):
-#        return self.name
-#    
-#    class Meta():
-#       verbose_name_plural = 'Stock Status'
-
 class InventoryItem(models.Model):
-    item_type = models.ForeignKey(Product)
-    storage = models.ForeignKey(Warehouse)
+    product = models.ForeignKey(Product)
+    warehouse = models.ForeignKey(Warehouse)
     qty = models.PositiveIntegerField(default=0)
 
     def __str__(self):
         return ('%s in %s: %s' 
-                % (str(self.item_type), str(self.storage), str(self.qty)))
+                % (str(self.product), str(self.warehouse), str(self.qty)))
 
 class Transaction(models.Model):
     TYPE_RECEIVED = 1

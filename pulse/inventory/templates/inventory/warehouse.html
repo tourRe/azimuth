@@ -1,1 +1,27 @@
-{{ warehouse.name }}
+<h1> {{ warehouse.name }} </h1>
+
+{% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
+
+<form action="{% url 'inventory:warehouse' warehouse.name %}" method="post">
+  <fieldset>
+  {% csrf_token %}
+  <h3> Record a transfer </h3>
+    <select name="destination">
+      {% for w in warehouse_list %}
+        {% if w.name != warehouse.name %}
+          <option value="{{ w.name }}">{{ w.name }}</option>
+        {% endif %}
+      {% endfor %}
+    </select>
+    <br><br>
+    <select name="product">
+      {% for p in invItem_list %}
+        <option value="{{ p.product.name }}">{{ p.product.name }}</option>
+      {% endfor %}
+    </select>
+    <br><br>
+    <input type="text" name="qty" value="0"> </input>
+    <br><br>
+    <input type="submit" value="Record transfer" />
+  </fieldset>
+</form>

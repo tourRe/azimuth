@@ -4,7 +4,7 @@ from django.http import Http404
 from django.http import HttpResponse
 # Can be removed once all the views are changed and render fction is used
 from django.template import loader
-from .models import Warehouse
+from .models import Warehouse, InventoryItem, Product
 
 # Create your views here.
 def index(request):
@@ -17,7 +17,11 @@ def index(request):
 
 def warehouse(request, warehouse_name):
     warehouse = get_object_or_404(Warehouse, name=warehouse_name)
-    context = {'warehouse': warehouse}
+    warehouse_list = Warehouse.objects.all()
+    invItem_list = InventoryItem.objects.filter(warehouse=warehouse)
+    context = {'warehouse': warehouse, 
+            'warehouse_list': warehouse_list,
+            'invItem_list': invItem_list}
     return render(request, 'inventory/warehouse.html',context) 
 
 def transaction(request, warehouse_id):
