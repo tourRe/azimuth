@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block breadcrumbs %}
+<li>
+  <a href="{% url 'index' %}">Dashboard</a>
+</li>
+{% endblock %}
+
+
+{% block content %}
+<div class="content">
+
+  <p class="alert alert-info">
+  This site is in Beta version. Please visit Angaza's <a href="https://payg.angazadesign.com">Energy Hub</a> for accurate transaction information at this stage.
+  </p>
+
+  <div class="tab-content">
+    <div class="tab-pane active" id="suggestions">
+      <table class="sort table" style="width:100%">
+        <thead>
+          <tr>
+            <th> Warehouse </th>
+            <th></th>
+            {% for p in products_list %}
+            <th> {{ p.name }} </th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for key, value in invItem_listAll.items %}
+          {% if key != "_Supplier" and key != "_Client" %}
+          <tr>
+            <td>
+              <a href="{% url 'inventory:warehouse' key %}">{{ key }}</a>
+            </td>
+            <td></td>
+            {% for q in value %}
+            <td> 
+              {{ q }} 
+            </td>
+            {% endfor %}
+          </tr>
+          {% endif %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,15 @@
+{% include "inventory/header.html" %}
+
+<header>
+<h1>
+  <ol class="breadcrumb">
+{% block breadcrumbs %}
+{% endblock %}
+  </ol>
+</h1>
+</header>
+
+{% block content %}
+{% endblock %}
+
+{% include "inventory/footer.html" %}

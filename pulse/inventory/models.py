@@ -6,6 +6,15 @@ class Warehouse(models.Model):
 
     def __str__(self):
         return self.name
+    
+    def qty(self,product):
+        try:
+            item=InventoryItem.objects.get(
+                    warehouse=self,
+                    product=product)
+        except:
+            return 0
+        return item.qty
 
 class Product(models.Model):
     name = models.CharField(max_length=30)
@@ -39,8 +48,14 @@ class Transaction(models.Model):
 
     transaction_type = models.PositiveIntegerField(choices=TYPE_CHOICES)
     date = models.DateTimeField(auto_now_add=True)
+    origin = models.ForeignKey(Warehouse, related_name='origin')
+    destination = models.ForeignKey(Warehouse, related_name='destination')
     comment = models.CharField(max_length=255, blank=True, null=True)
     # need to add a user for the transaction
+
+    def __str__(self):
+                return "%s on %s" % (self.transaction_type, 
+                        str(self.date))
 
 class TransactionItem(models.Model):
     transaction = models.ForeignKey(Transaction)

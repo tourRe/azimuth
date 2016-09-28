@@ -1,18 +1,51 @@
-<!--
-{% if latest_question_list %}
-  <ul>
-    {% for question in latest_question_list %}
-      <li><a href="/polls/{{ question.id }}/">{{question.question_text }}</a></li>
-    {% endfor %}
-  </ul>
-{% else %}
-  <p>No polls are available.</p>
-{% endif %}
--->
+{% extends "inventory/base.html" %}
 
-<ul>
-  {% for warehouse in warehouse_list %}
-  <li><a href="{% url 'inventory:warehouse' warehouse.name %}">{{warehouse.name}}
-      - {{warehouse.location}}</a></li>
-  {% endfor %}
-</ul>
+{% block breadcrumbs %}
+<li>
+  <a href="{% url 'inventory:index' %}">Inventory Dashboard</a>
+</li>
+{% endblock %}
+
+
+{% block content %}
+<div class="content">
+
+  <p class="alert alert-info">
+  This site is in Beta version. Please visit Angaza's <a href="https://payg.angazadesign.com">Energy Hub</a> for accurate transaction information at this stage.
+  </p>
+
+  <div class="tab-content">
+    <div class="tab-pane active" id="suggestions">
+      <table class="sort table" style="width:100%">
+        <thead>
+          <tr>
+            <th> Warehouse </th>
+            <th></th>
+            {% for p in products_list %}
+            <th> {{ p.name }} </th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for key, value in invItem_listAll.items %}
+          {% if key != "_Supplier" and key != "_Client" %}
+          <tr>
+            <td>
+              <a href="{% url 'inventory:warehouse' key %}">{{ key }}</a>
+            </td>
+            <td></td>
+            {% for q in value %}
+            <td> 
+              {{ q }} 
+            </td>
+            {% endfor %}
+          </tr>
+          {% endif %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

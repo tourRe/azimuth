@@ -18,7 +18,8 @@ from django.contrib import admin
 from . import views
 
 urlpatterns = [
-    url(r'^pulse/', views.index, name='pulse'),
     url(r'^inventory/', include('inventory.urls')),
+    url(r'^sales/', include('sales.urls')),
     url(r'^admin/', admin.site.urls),
+    url(r'^', views.index, name='index'),
 ]
