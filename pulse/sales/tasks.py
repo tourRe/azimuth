@@ -3,20 +3,27 @@ from __future__ import absolute_import
 from celery import app, shared_task
 from sales.models import Client, Account, Payment, Agent
 from inventory.models import Product
+from progress.bar import Bar
 import csv, datetime
 import pytz
 
 @app.shared_task
 def collect():
+    print('Importing dump files')
     accounts_raw = csvToList('media/accounts.csv')
     payments_raw = csvToList('media/payments.csv')
 
     # List of updated clients + accounts to delete those not found in the dumps
     updated_clients = []
     updated_accounts = []
+    updated_payments = []
 
-    # Importing and updating the accounts list
+    # IMPORTING ACCOUNTS
+
+    bar = Bar('Updating Accounts', max=len(accounts_raw))
+
     for i in range(0,len(accounts_raw)):
+        bar.next()
         j = len(accounts_raw) - i - 1
         acc_read = accounts_raw[j]
 
@@ -78,10 +85,50 @@ def collect():
                     )
         updated_accounts.append(acc.account_Angaza)
         acc.save()
+
+    bar.finish()
+
+    # IMPORTING PAYMENTS
+
+    bar = Bar('Updating Payments', max=len(payments_raw))
+
+    for i in range(0,len(payments_raw)):
+        bar.next()
+        j = len(payments_raw) - i - 1
+        pay_read = payments_raw[j]
+
+        # Identifying agent
+        agent = Agent.objects.get(login = pay_read['recorder'])
+
+        # Identifying account
+        acc = Account.objects.get(
+                account_Angaza = pay_read['account_angaza_id'])
+
+        try:
+            pay = Payment.objects.get(
+                    id_Angaza = pay_read['angaza_id'])
+            pay.account = acc
+            pay.amount = pay_read['amount']
+            pay.date = toDate(pay_read['recorded_utc'])
+            pay.agent = agent
+        except:
+            pay = Payment(
+                    account = acc,
+                    amount = pay_read['amount'],
+                    date = toDate(pay_read['recorded_utc']),
+                    agent = agent,
+                    id_Angaza = pay_read['angaza_id']
+                    )
+        updated_payments.append(pay.id_Angaza)
+        pay.save()
+
+    bar.finish()
     
     # Deleting all clients (+ accounts) not found in the dump
+    print('Deleting deprecated entries')
     Client.objects.exclude(phone__in = updated_clients).delete()
     Account.objects.exclude(account_Angaza__in = updated_accounts).delete()
+    Payment.objects.exclude(id_Angaza__in = updated_payments).delete()
 
 def csvToList(path):
     reader = csv.DictReader(open(path))

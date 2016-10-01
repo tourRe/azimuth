@@ -36,6 +36,7 @@ class Agent(models.Model):
     location = models.CharField(max_length=30)
     phone = models.CharField(max_length=16)
     manager = models.ForeignKey(Manager)
+    login = models.CharField(max_length=30, null=True)
     label = models.CharField(max_length=50, null=True)
 
     def __str__(self):
@@ -80,6 +81,7 @@ class Payment(models.Model):
     amount = models.PositiveIntegerField(default=0)
     date = models.DateTimeField('payment date')
     agent = models.ForeignKey(Agent)
+    id_Angaza = models.CharField(max_length=8, null=True)
 
     def __str__(self):
         return ('%s (%s)' % (str(self.amount), self.account))
