@@ -1,7 +1,7 @@
 import datetime
 
 from django.db import models
-from inventory.models import Product
+from inventory.models import Product, Warehouse
 
 # Create your models here.
 
@@ -34,13 +34,14 @@ class Agent(models.Model):
     gender = models.CharField(max_length=1,
             choices=(('M', 'Male'),('F', 'Female')), null=True)
     location = models.CharField(max_length=30)
+    warehouse = models.ForeignKey(Warehouse)
     phone = models.CharField(max_length=16)
     manager = models.ForeignKey(Manager)
     login = models.CharField(max_length=30, null=True)
     label = models.CharField(max_length=50, null=True)
 
     def __str__(self):
-        return ('%s %s (%s)' % (self.firstname, self.lastname, self.location))
+        return ('%s (%s %s)' % (self.location, self.firstname, self.lastname))
 
 class Account(models.Model):
     STATUS = (('e', 'Active'), ('d', 'Deactivated'), 
@@ -59,7 +60,7 @@ class Account(models.Model):
     status = models.CharField(max_length=1,choices=STATUS)
 
     def __str__(self):
-        return '%s (%s)' % (self.account_GLP, self.plan_name)
+        return '%s - %s' % (self.account_GLP, self.plan_name)
 
     def paid(self):
         results = 0

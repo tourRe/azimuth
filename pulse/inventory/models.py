@@ -59,6 +59,24 @@ class Transaction(models.Model):
                         str(self.date))
 
 class TransactionItem(models.Model):
-    transaction = models.ForeignKey(Transaction)
+    transaction = models.ForeignKey(Transaction, on_delete=models.CASCADE)
     item = models.ForeignKey(InventoryItem)
     qty = models.PositiveIntegerField(default=0)
+
+    def transaction_apply(self):
+        w_from = self.transaction.origin
+        if self.qty > self.item.qty:
+            return "Error: Not enough products to perform that transfer"
+        elif self.qty == 0:
+            return "Error: No quantity selected"
+        else:
+            w_to = self.transaction.destination
+            item_to, created = InventoryItem.objects.get_or_create(
+                    warehouse = w_to, product = self.item.product)
+            if w_to.name != "_Client":
+                item_to.qty += self.qty
+            item_to.save()
+            if w_from.name != "_Supplier":
+                self.item.qty -= self.qty
+            self.item.save()
+            return "Your transaction was successfuly recorded"

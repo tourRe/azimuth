@@ -2,7 +2,9 @@ from __future__ import absolute_import
 
 from celery import app, shared_task
 from sales.models import Client, Account, Payment, Agent
-from inventory.models import Product
+from inventory.models import (
+        Product, Transaction, TransactionItem, InventoryItem, Warehouse
+        )
 from progress.bar import Bar
 import csv, datetime
 import pytz
@@ -57,8 +59,8 @@ def collect():
         # if the account exists (based on acc #), updates info
         try: 
             acc = Account.objects.get(
-                account_Angaza = acc_read['angaza_id'],
-                account_GLP = acc_read['account_number'])
+                account_Angaza = acc_read['angaza_id'])
+            acc.account_GLP = acc_read['account_number']
             acc.client = client
             acc.plan_name = acc_read['group_name']
             acc.plan_product = product
@@ -83,6 +85,24 @@ def collect():
                     agent = agent,
                     status = acc_read['account_status'][0].lower()
                     )
+            transaction = Transaction.objects.create(
+                    transaction_type = 2,
+                    date = acc.reg_date,
+                    origin = agent.warehouse,
+                    destination = Warehouse.objects.get(name="_Client"),
+                    comment = "sale"
+                    )
+            transItem = TransactionItem.objects.create(
+                    transaction = transaction,
+                    item = InventoryItem.objects.get(
+                        product = acc.plan_product,
+                        warehouse = agent.warehouse),
+                    qty = 1
+                    )
+            transaction_apply = transItem.transaction_apply()
+            if transaction_apply[0:5] == "Error":
+                print(transaction_apply)
+                transaction.delete()
         updated_accounts.append(acc.account_Angaza)
         acc.save()
 

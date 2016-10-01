@@ -41,13 +41,24 @@
       <ul class="nav navbar-nav">
         <li><a href="{% url 'sales:index' %}">Dashboard</a></li>
         <li class="dropdown">
-          <a href="#" class="dropdown-toggle" data-toggle="dropdown">Agents<b class="caret"></b></a>
+          <a href="#" class="dropdown-toggle" data-toggle="dropdown">Managers<b class="caret"></b></a>
           <ul class="dropdown-menu">
-            {% for w in warehouse_list %}
-            <li><a href="{% url 'inventory:warehouse' w %}">{{ w.name }}</a></li>
+            {% for m in manager_list %}
+            <li><a href="{% url 'sales:manager' m.firstname %}">
+              {{ m.firstname }} {{ m.lastname }}</a></li>
             {% endfor %}
           </ul>
         </li>
+        <li class="dropdown">
+          <a href="#" class="dropdown-toggle" data-toggle="dropdown">Agents<b class="caret"></b></a>
+          <ul class="dropdown-menu">
+            {% for a in agent_list %}
+            <li><a href="{% url 'sales:agent' a.login %}">
+              {{ a.location }} ({{ a.firstname }} {{ a.lastname }})</a></li>
+            {% endfor %}
+          </ul>
+        </li>
+        <li><a href="https://payg.angazadesign.com">Angaza</a></li>
       </ul>
     </div>
   </div>

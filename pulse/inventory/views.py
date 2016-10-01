@@ -53,33 +53,18 @@ def confirmation(request, warehouse_name):
             transaction = transaction,
             item = item_from,
             qty = int(request.POST['qty']))
-    if transItem.qty > item_from.qty:
-        warehouse_list = Warehouse.objects.order_by('name')
-        invItem_list = InventoryItem.objects.filter(warehouse=warehouse_from)
-        return render(request, 'inventory/warehouse.html', {
-            'warehouse_list': warehouse_list,
-            'warehouse': w_from,
-            'invItem_list': invItem_list,
-            'error_message':'Not enough products to perform that transfer',
-            })
-    elif transItem.qty == 0:
-        warehouse_list = Warehouse.objects.order_by('name')
-        invItem_list = InventoryItem.objects.filter(warehouse=warehouse_from)
-        return render(request, 'inventory/warehouse.html', {
-            'warehouse_list': warehouse_list,
-            'warehouse': w_from,
-            'invItem_list': invItem_list,
-            'error_message':'No quantity selected',
-            })
+    # preparing context to return the warehouse page
+    warehouse_list = Warehouse.objects.order_by('name')
+    invItem_list = InventoryItem.objects.filter(warehouse=w_from)
+    transaction_apply = transItem.transaction_apply()
+    context = {'warehouse_list': warehouse_list,
+        'warehouse': w_from,
+        'invItem_list': invItem_list,
+        'error_message': transaction_apply,
+        }
+    # changing actions depending on what transaction_apply returns
+    if transaction_apply[0:5] == "Error":
+        transaction.delete()
+        return render(request, 'inventory/warehouse.html', context)
     else:
-        transaction.save()
-        transItem.save()
-        if w_from.name != '_Supplier':
-            item_from.qty -= transItem.qty
-            item_from.save()
-        item_to, created = InventoryItem.objects.get_or_create(
-                warehouse=w_to, product=p)
-        item_to.qty += transItem.qty
-        item_to.save()
-        context = {}
-        return render(request, 'inventory/confirmation.html', context)
+        return render(request, 'inventory/warehouse.html', context)
