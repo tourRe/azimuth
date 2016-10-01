@@ -8,9 +8,9 @@ from inventory.models import Product
 class Client(models.Model):
     name = models.CharField(max_length=30)
     gender = models.CharField(max_length=1,
-            choices=(('M', 'Male'),('F', 'Female')))
-    phone = models.CharField(max_length=16)
-    location = models.CharField(max_length=30)
+            choices=(('M', 'Male'),('F', 'Female')), null=True)
+    phone = models.CharField(max_length=16, null=True)
+    location = models.CharField(max_length=30, null=True)
 
     def __str__(self):
         return ('%s (%s)' % (self.name, self.location))
@@ -32,39 +32,33 @@ class Agent(models.Model):
     lastname = models.CharField(max_length=30)
     start_date = models.DateTimeField('date hired')
     gender = models.CharField(max_length=1,
-            choices=(('M', 'Male'),('F', 'Female')))
+            choices=(('M', 'Male'),('F', 'Female')), null=True)
     location = models.CharField(max_length=30)
     phone = models.CharField(max_length=16)
     manager = models.ForeignKey(Manager)
+    label = models.CharField(max_length=50, null=True)
 
     def __str__(self):
         return ('%s %s (%s)' % (self.firstname, self.lastname, self.location))
 
-class Plan(models.Model):
-    name = models.CharField(max_length=30)
-    description = models.CharField(max_length=300, blank=True, null=True)
-    product = models.ForeignKey(Product)
-    upfront = models.PositiveIntegerField(default=0)
-    total = models.PositiveIntegerField(default=0)
-    weekly = models.PositiveIntegerField(default=0)
-
-    def __str__(self):
-        return self.name
-
 class Account(models.Model):
-    STATUS = (('a', 'Activated'), ('d', 'Deactivated'), 
+    STATUS = (('e', 'Active'), ('d', 'Deactivated'), 
             ('u', 'Unlocked'), ('w', 'Written Off'))
 
-    account_GLP = models.CharField(max_length=7)
     account_Angaza = models.CharField(max_length=8)
+    account_GLP = models.CharField(max_length=7)
     client = models.ForeignKey(Client)
-    plan = models.ForeignKey(Plan)
+    plan_name = models.CharField(max_length=40)
+    plan_product = models.ForeignKey(Product)
+    plan_up = models.PositiveIntegerField(default=0)
+    plan_tot = models.PositiveIntegerField(default=0)
+    plan_week = models.PositiveIntegerField(default=0)
     reg_date = models.DateTimeField('registration date')
     agent = models.ForeignKey(Agent)
-    status = models.CharField(max_length=10,choices=STATUS,default='a')
+    status = models.CharField(max_length=1,choices=STATUS)
 
     def __str__(self):
-        return self.account_GLP
+        return '%s (%s)' % (self.account_GLP, self.plan_name)
 
     def paid(self):
         results = 0

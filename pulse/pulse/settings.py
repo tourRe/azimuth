@@ -129,6 +129,11 @@ USE_L10N = True
 
 USE_TZ = True
 
+# Media Files
+MEDIA_URL = '/media/'
+MEDIAFILES_DIRS = [
+            os.path.join(BASE_DIR, "media"),
+                ]
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.10/howto/static-files/
@@ -142,3 +147,4 @@ STATICFILES_DIRS = [
 # https://www.caktusgroup.com/blog/2014/06/23/scheduling-tasks-celery/
 
 CELERYBEAT_SCHEDULER = 'djcelery.schedulers.DatabaseScheduler'
+CELERY_RESULT_BACKEND = 'djcelery.backends.database:DatabaseBackend'

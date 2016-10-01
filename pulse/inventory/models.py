@@ -20,6 +20,7 @@ class Product(models.Model):
     name = models.CharField(max_length=30)
     brand = models.CharField(max_length=30)
     power = models.FloatField(default=0)
+    label = models.CharField(max_length=30, null=True)
 
     def __str__(self):
         return self.name
