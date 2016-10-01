@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+from django.core.exceptions import ValidationError
 from celery import app, shared_task
 from sales.models import Client, Account, Payment, Agent
 from inventory.models import (
@@ -92,17 +93,21 @@ def collect():
                     destination = Warehouse.objects.get(name="_Client"),
                     comment = "sale"
                     )
-            transItem = TransactionItem.objects.create(
+            transItem = TransactionItem(
                     transaction = transaction,
                     item = InventoryItem.objects.get(
                         product = acc.plan_product,
                         warehouse = agent.warehouse),
                     qty = 1
                     )
-            transaction_apply = transItem.transaction_apply()
-            if transaction_apply[0:5] == "Error":
-                print(transaction_apply)
+            # Testing transItem for save, returning an error if necessary
+            try:
+                transItem.save()
+            except ValidationError as e:
                 transaction.delete()
+                for key, value in e.message_dict.items():
+                    print("error in " + key + ": " + value)
+
         updated_accounts.append(acc.account_Angaza)
         acc.save()
 

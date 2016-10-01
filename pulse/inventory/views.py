@@ -1,4 +1,5 @@
 import datetime
+from django.core.exceptions import ValidationError
 from django.shortcuts import render, get_object_or_404
 from django.http import Http404
 from .models import Warehouse, InventoryItem, Product, Transaction, TransactionItem
@@ -29,8 +30,10 @@ def warehouse(request, warehouse_name):
             'invItem_list': invItem_list}
     return render(request, 'inventory/warehouse.html',context) 
 
+# HANDLES TRANSACTION FORMS ON WAREHOUSE PAGE
 def confirmation(request, warehouse_name):
-    # Defining transaction parameters based on form variables
+    
+    # Grabbing transaction parameters based on form variables
     w_from = get_object_or_404(Warehouse, name=warehouse_name)
     w_to = Warehouse.objects.get(name=request.POST['destination'])
     p = Product.objects.get(name=request.POST['product'])
@@ -43,28 +46,33 @@ def confirmation(request, warehouse_name):
         ttype = 1
     else:
         ttype = 4
+    
+    # Defining the transaction and transaction item
     transaction = Transaction.objects.create(
             transaction_type = ttype, 
             date = datetime.datetime.today(), 
-            comment = 'test_transaction',
             origin = w_from,
-            destination = w_to)
-    transItem = TransactionItem.objects.create(
+            destination = w_to,
+            comment = 'test_transaction')
+    transItem = TransactionItem(
             transaction = transaction,
             item = item_from,
             qty = int(request.POST['qty']))
-    # preparing context to return the warehouse page
+    
+    # Preparing context to return to the warehouse page
     warehouse_list = Warehouse.objects.order_by('name')
     invItem_list = InventoryItem.objects.filter(warehouse=w_from)
-    transaction_apply = transItem.transaction_apply()
     context = {'warehouse_list': warehouse_list,
         'warehouse': w_from,
         'invItem_list': invItem_list,
-        'error_message': transaction_apply,
         }
-    # changing actions depending on what transaction_apply returns
-    if transaction_apply[0:5] == "Error":
+    
+    # Testing transItem for save, returning an error if necessary
+    try:
+        transItem.save()
+    except ValidationError as e:
+        context['error_message'] = next (iter (e.message_dict.values()))
         transaction.delete()
         return render(request, 'inventory/warehouse.html', context)
-    else:
-        return render(request, 'inventory/warehouse.html', context)
+    context['error_message'] = "Your transfer was successfully applied"
+    return render(request, 'inventory/warehouse.html', context)

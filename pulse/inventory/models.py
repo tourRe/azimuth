@@ -1,4 +1,6 @@
 from django.db import models
+from django.db.models.signals import pre_delete
+from django.dispatch import receiver
 
 class Warehouse(models.Model):
     name = models.CharField(max_length=30)
@@ -63,20 +65,40 @@ class TransactionItem(models.Model):
     item = models.ForeignKey(InventoryItem)
     qty = models.PositiveIntegerField(default=0)
 
-    def transaction_apply(self):
+    def clean(self):
+        # don't allow transactions with a qty of 0
+        if self.qty == 0:
+            raise ValidationError(_(
+                'Error: No quantity selected'))
+        # don't allow transaction items where there's not enough products
+        elif self.qty > self.item.qty:
+            raise ValidationError(_(
+                'Error: Not enough products to perform that transfer'))
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
         w_from = self.transaction.origin
-        if self.qty > self.item.qty:
-            return "Error: Not enough products to perform that transfer"
-        elif self.qty == 0:
-            return "Error: No quantity selected"
-        else:
-            w_to = self.transaction.destination
-            item_to, created = InventoryItem.objects.get_or_create(
-                    warehouse = w_to, product = self.item.product)
-            if w_to.name != "_Client":
-                item_to.qty += self.qty
-            item_to.save()
-            if w_from.name != "_Supplier":
-                self.item.qty -= self.qty
-            self.item.save()
-            return "Your transaction was successfuly recorded"
+        w_to = self.transaction.destination
+        item_to, created = InventoryItem.objects.get_or_create(
+                warehouse = w_to, product = self.item.product)
+        if w_to.name != "_Client":
+            item_to.qty += self.qty
+        item_to.save()
+        if w_from.name != "_Supplier":
+            self.item.qty -= self.qty
+        self.item.save()
+        super(TransactionItem, self).save(*args, **kwargs)
+
+@receiver(pre_delete, sender=TransactionItem, 
+        dispatch_uid='TransactionItem_delete_signal')
+def log_deleted_question(sender, instance, using, **kwargs):
+    w_from = instance.transaction.origin
+    w_to = instance.transaction.destination
+    item_to = InventoryItem.objects.get(
+            warehouse= w_to, product = instance.item.product)
+    if w_to.name != "_Client":
+        item_to.qty -= instance.qty
+    item_to.save()
+    if w_from.name != "_Supplier":
+        instance.item.qty += instance.qty
+    instance.item.save()
