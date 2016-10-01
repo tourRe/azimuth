@@ -11,7 +11,9 @@ def collect():
     accounts_raw = csvToList('media/accounts.csv')
     payments_raw = csvToList('media/payments.csv')
 
+    # List of updated clients + accounts to delete those not found in the dumps
     updated_clients = []
+    updated_accounts = []
 
     # Importing and updating the accounts list
     for i in range(0,len(accounts_raw)):
@@ -74,10 +76,12 @@ def collect():
                     agent = agent,
                     status = acc_read['account_status'][0].lower()
                     )
+        updated_accounts.append(acc.account_Angaza)
         acc.save()
     
-    # Deleting all clients (+ accounts & payments) not found in the dump
+    # Deleting all clients (+ accounts) not found in the dump
     Client.objects.exclude(phone__in = updated_clients).delete()
+    Account.objects.exclude(account_Angaza__in = updated_accounts).delete()
 
 def csvToList(path):
     reader = csv.DictReader(open(path))
