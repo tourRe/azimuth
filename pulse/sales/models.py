@@ -47,7 +47,7 @@ class Account(models.Model):
 
     account_Angaza = models.CharField(max_length=8)
     account_GLP = models.CharField(max_length=7)
-    client = models.ForeignKey(Client)
+    client = models.ForeignKey(Client, on_delete=models.CASCADE)
     plan_name = models.CharField(max_length=40)
     plan_product = models.ForeignKey(Product)
     plan_up = models.PositiveIntegerField(default=0)

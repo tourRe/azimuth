@@ -11,6 +11,9 @@ def collect():
     accounts_raw = csvToList('media/accounts.csv')
     payments_raw = csvToList('media/payments.csv')
 
+    updated_clients = []
+
+    # Importing and updating the accounts list
     for i in range(0,len(accounts_raw)):
         j = len(accounts_raw) - i - 1
         acc_read = accounts_raw[j]
@@ -38,6 +41,7 @@ def collect():
                     phone = acc_read['owner_msisdn'],
                     location = acc_read['location']
                     )
+        updated_clients.append(client.phone)
         client.save()
 
         # Creating or identifying account
@@ -71,6 +75,9 @@ def collect():
                     status = acc_read['account_status'][0].lower()
                     )
         acc.save()
+    
+    # Deleting all clients (+ accounts & payments) not found in the dump
+    Client.objects.exclude(phone__in = updated_clients).delete()
 
 def csvToList(path):
     reader = csv.DictReader(open(path))
