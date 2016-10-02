@@ -14,37 +14,41 @@
   This site is in Beta version. Please visit Angaza's <a href="https://payg.angazadesign.com">Energy Hub</a> for accurate transaction information at this stage.
   </p>
 
-  <div class="tab-content">
-    <div class="tab-pane active" id="suggestions">
-      <table class="sort table" style="width:100%">
-        <thead>
-          <tr>
-            <th> Warehouse </th>
-            <th></th>
-            {% for p in products_list %}
-            <th> {{ p.name }} </th>
-            {% endfor %}
-          </tr>
-        </thead>
-        <tbody>
-          {% for key, value in invItem_listAll.items %}
-          {% if key != "_Supplier" and key != "_Client" %}
-          <tr>
-            <td>
-              <a href="{% url 'inventory:warehouse' key %}">{{ key }}</a>
-            </td>
-            <td></td>
-            {% for q in value %}
-            <td> 
-              {{ q }} 
-            </td>
-            {% endfor %}
-          </tr>
-          {% endif %}
-          {% endfor %}
-        </tbody>
-      </table>
+  <div class="container-fluid">
+
+    <div class="row">
+      <div class="col-lg-6">
+        <div class="panel panel-primary">
+          <div class="panel-heading"><h4 class="panel-title">
+              <a href="{% url 'sales:account_index' %}">Accounts</a></h4></div>
+          <div class="panel-body">
+            <table class="table table-condensed table-striped">
+              <tr>
+                <th>Number of active accounts</th>
+                <td>130</td>
+              </tr>
+              <tr>
+                <th>PAR (14 days)</th>
+                <td>103%</td>
+              </tr>
+              <tr>
+                <th>LAR (14 days)</th>
+                <td>103%</td>
+              </tr>
+              <tr>
+                <th>Expected Collection</th>
+                <td>SLL 2,000,000</td>
+              </tr>
+              <tr>
+                <th>Expected Collection</th>
+                <td>SLL 2,000,000</td>
+              </tr>
+            </table>
+          </div>
+        </div>
+      </div>
     </div>
+
   </div>
 
 </div>

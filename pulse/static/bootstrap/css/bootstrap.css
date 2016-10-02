@@ -1462,6 +1462,9 @@ caption {
 th {
   text-align: left;
 }
+td {
+  text-align: right;
+}
 .table {
   width: 100%;
   max-width: 100%;
