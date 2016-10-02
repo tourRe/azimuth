@@ -96,7 +96,7 @@ class Account(models.Model):
         for payment in Payment.objects.filter(account = self): 
             if (payment.date.year == _today.year and 
                     payment.date.month == _today.month):
-                results += payment.amount
+                result += payment.amount
         return result
 
     # Payments collected this month

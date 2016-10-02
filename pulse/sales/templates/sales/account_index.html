@@ -52,6 +52,17 @@ Accounts index
             <th> PAR (14 days) </th>
           </tr>
         </thead>
+        <tbody>
+          {% for plan_name, values in table_2.items %}
+          <tr>
+            <th>{{ plan_name }}</th>
+            <td></td>
+            {% for n in values %}
+            <td>{{ n }}</td>
+            {% endfor %}
+          </tr>
+          {% endfor %}
+        </tbody>
       </table>
     </div>
   </div>

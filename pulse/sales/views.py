@@ -83,6 +83,7 @@ def account_index(request):
             'manager_list' : manager_list,
             'agent_list' : agent_list
             }
+
     # Preparing data for global summary
     table_1 = collections.OrderedDict()
     account_number = Account.objects.all().count()
@@ -119,6 +120,22 @@ def account_index(request):
     table_1['Average days disabled'] = ratio(days_disabled,account_number)
     table_1['Average unit price (SLL)'] = ratio(paid+outstanding,account_number)
     context['table_1']=table_1
+
+    # Generating data per plan
+    table_2 = {}
+    for acc in Account.objects.all():
+        if not (acc.plan_name in table_2.keys()):
+            table_2[acc.plan_name] = [0,0,0,0,0,0]
+        table_2[acc.plan_name][0] += acc.get_paid_TM
+        table_2[acc.plan_name][1] += (acc.status == 'e')*1
+        table_2[acc.plan_name][2] += (acc.status == 'd')*1
+        table_2[acc.plan_name][3] += (acc.status == 'u')*1
+        table_2[acc.plan_name][4] += acc.OAR(14)
+        table_2[acc.plan_name][5] += acc.plan_tot - acc.get_paid
+    for key in table_2:
+        table_2[key][4] = ratio(table_2[key][4],table_2[key][5],True,2)
+        del table_2[key][-1]
+    context['table_2']=table_2
 
     return render(request, 'sales/account_index.html', context)
 
