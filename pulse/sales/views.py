@@ -104,12 +104,12 @@ def account_index(request):
     outstanding = 0
     oar_14 = 0
     for acc in Account.objects.all():
-        paid += acc.paid()
-        paid_expected += acc.paid_expected()
-        payment_deficit += max(0,acc.payment_deficit())
+        paid += acc.paid
+        paid_expected += acc.paid_expected
+        payment_deficit += max(0,acc.payment_deficit)
         days_disabled += acc.days_disabled()
-        pay_number += acc.pay_number()
-        outstanding += acc.plan_tot - acc.paid()
+        pay_number += acc.pay_number
+        outstanding += acc.plan_tot - acc.paid
         oar_14 += acc.OAR(14)
     table_1['Total paid (SLL)'] = str("{:,}".format(paid))
     table_1['Repayment ratio (CRR)'] = ratio(paid,paid_expected,pc=True)

@@ -1,10 +1,16 @@
-import datetime, calendar, pytz
-
 from django.db import models
+# Imports to handle dates and timezones
+import datetime, calendar, pytz
+# Some models from the sales app are imported in inventory.models which can
+# create a circular import error
 from inventory.models import Product, Warehouse
 
-# Create your models here.
-
+# SIMPLE CLIENT CLASS
+# At the moment only handles 1 phone number per client and uses it as the main
+# key (used to identify duplicates, never updated)
+# Would probably need to implement a double search on update to manage that
+# properly (update phone if other fields are similar)
+# Also have to look into addons to identify and merge duplicates
 class Client(models.Model):
     name = models.CharField(max_length=30)
     gender = models.CharField(max_length=1,
@@ -15,6 +21,7 @@ class Client(models.Model):
     def __str__(self):
         return ('%s (%s)' % (self.name, self.location))
 
+# MANAGER CLASS, RESPONSIBLE FOR SEVERAL AGENTS
 class Manager(models.Model):
     firstname = models.CharField(max_length=30)
     lastname = models.CharField(max_length=30)
@@ -27,6 +34,8 @@ class Manager(models.Model):
     def __str__(self):
         return ('%s %s (%s)' % (self.firstname, self.lastname, self.district))
 
+# AGENT CLASS, SELLS PRODUCTS FROM A UNIQUE WAREHOUSE
+# Could look into geolocalization...
 class Agent(models.Model):
     firstname = models.CharField(max_length=30)
     lastname = models.CharField(max_length=30)
@@ -43,6 +52,13 @@ class Agent(models.Model):
     def __str__(self):
         return ('%s (%s %s)' % (self.location, self.firstname, self.lastname))
 
+# SIMPLE ACCOUNT CLASS WITH PLENTY OF FUNCTIONS FOR ANALYTICS
+# Model doesn't work yet with detached (reposessed) and replaced lamps
+# Also, test accounts are not taken into account at this stage
+# Could actually override save to make sure that origin inventory gets updated
+# automatically
+# PLAN is not a separate class because of how plans can change over time and
+# it would be a nightmare to track (they keep the same name on the hub)
 class Account(models.Model):
     STATUS = (('e', 'Active'), ('d', 'Deactivated'), 
             ('u', 'Unlocked'), ('w', 'Written Off'))
@@ -62,13 +78,15 @@ class Account(models.Model):
     def __str__(self):
         return '%s - %s' % (self.account_GLP, self.plan_name)
 
+    # Total payments collected
     @property
-    def paid(self):
+    def get_paid(self):
         result = 0
         for payment in Payment.objects.filter(account = self):
             result += payment.amount
         return result
 
+    # Payments collected a given month, 'offset' from current month
     def paid_thisMonth(self, offset):
         result = 0
         today = datetime.datetime.today()
@@ -79,11 +97,25 @@ class Account(models.Model):
                 results += payment.amount
         return result
 
+    # Payments collected this month
+    # Made a property for ease of use in templates
     @property
-    def pay_number(self):
+    def get_paid_thisMonth(self):
+        return self.paid_thisMonth(0)
+
+    # Payments collected last month
+    # Made a property for ease of use in templates
+    @property
+    def get_paid_lastMonth(self):
+        return self.paid_thisMonth_offset(-1)
+
+    # Total number of payments
+    @property
+    def get_pay_nb(self):
         return Payment.objects.filter(account = self).count()
 
-    def pay_number_thisMonth(self, offset):
+    # Number of payments for a given month, 'offset' from current month
+    def pay_nb_thisMonth(self, offset):
         result = 0
         today = datetime.datetime.today()
         _today = add_months(today,offset).replace(tzinfo=pytz.utc)
@@ -93,33 +125,68 @@ class Account(models.Model):
                 result += 1
         return result
 
+    # Number of payments this month
+    # Made a property for ease of use in templates
     @property
-    def paid_expected(self):
-        today = datetime.datetime.today().replace(tzinfo=pytz.utc)
-        delta = today - self.reg_date
+    def get_pay_nb_thisMonth(self):
+        return self.pay_number_thisMonth(0)
+
+    # Number of payments last month
+    # Made a property for ease of use in templates
+    @property
+    def get_pay_nb_lastMonth(self):
+        return self.pay_number_lastMonth(0)
+
+    # Expected payment as of 'date'
+    def paid_expected(self, date):
+        if date < self.reg_date:
+            return 0
+        delta = date - self.reg_date
         full_weeks = int(toWeeks(delta))
         return min(self.plan_up + self.plan_week*full_weeks, 
                 self.plan_tot)
 
+    # Expected payment as of today
+    # Made a property for ease of use in templates
     @property
-    def paid_expected_eom(self):
+    def get_paid_expected(self):
+        today = datetime.datetime.today().replace(tzinfo=pytz.utc)
+        return self.paid_expected(today)
+
+    # Expected payment as of end of month
+    # Made a property for ease of use in templates
+    @property
+    def get_paid_expected_thisMonth(self):
         today = datetime.datetime.today().replace(tzinfo=pytz.utc)
         eom = monthEnd(today)
-        delta = eom - self.reg_date
-        full_weeks = int(toWeeks(delta))
-        return min(self.plan_up + self.plan_week*full_weeks, 
-                self.plan_tot)
+        return self.paid_expected(eom)
 
+    # Expected payment as of end of last month
+    # Made a property for ease of use in templates
     @property
-    def payment_deficit(self):
-        return self.paid() - self.paid_expected()
+    def get_paid_expected_lastMonth(self):
+        today = datetime.datetime.today().replace(tzinfo=pytz.utc)
+        eolm = monthEnd(addmonth(today,-1))
+        return self.paid_expected(eom)
 
+    # Payment deficit, can be negative if in advance
     @property
-    def payment_deficit_eom(self):
-        return self.paid_thisMonth(0) - self.paid_expected_eom()
+    def get_payment_deficit(self):
+        return self.get_paid - self.get_paid_expected
 
+    # Projected payment deficit at end of month
     @property
-    def lastPay(self):
+    def get_payment_deficit_thisMonth(self):
+        return self.get_paid_thisMonth - self.get_paid_expected_thisMonth
+
+    # Payment deficit at end of last month
+    @property
+    def get_payment_deficit_lastMonth(self):
+        return self.get_paid_lastMonth - self.get_paid_expected_lastMonth
+
+    # Returns a Payment object with the last payment
+    @property
+    def get_lastPay(self):
         r = list(Payment.objects.filter(account = self).order_by('date')[:1])
         if r:
             return r[0]
@@ -147,13 +214,19 @@ class Account(models.Model):
         if self.status != 'u':
             result += max(0,toWeeks(today - disable_date)*7)
         return result
+    
+    # Current disabled, made into a property for use in templates
+    @property
+    def get_current_disabled(self):
+        return self.days_disabled(now=True)
 
     # Returns outstanding amount for which no payments in the last 'days'
     def OAR(self,days):
         if self.days_disabled(now=True) > days:
-            return self.plan_tot - self.paid()
+            return self.plan_tot - self.paid
         return 0
 
+# SIMPLE PAYMENT CLASS, INCLUDES ANGAZA ID TO USE AS PRIMARY KEY WHEN UPDATING
 class Payment(models.Model):
     account = models.ForeignKey(Account, on_delete=models.CASCADE)
     amount = models.PositiveIntegerField(default=0)
@@ -175,7 +248,7 @@ def add_months(sourcedate,months):
     second = sourcedate.second
     return datetime.datetime(year,month,day,hour,minute,second)
 
-# Converts a timedelta into weeks with decimals
+# Converts a timedelta into weeks, with decimals
 def toWeeks(delta):
     result = delta.days/7
     result += delta.seconds/7/(3600*24)

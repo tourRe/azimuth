@@ -1,4 +1,18 @@
 angaza_id,organization,recorded_utc,account,account_angaza_id,group_name,country,amount,type,new_total_paid,phone,synced,reversal,recorder,provider_transaction,applied_utc
+PA117561,Azimuth Solar,2016-10-02 19:54:49,4364915,AC016786,Eco_Weekly,Sierra Leone,20000,Manual (Activator),20000,+23288559293,False,None,songo,None,2016-10-02 19:54:49
+PA117559,Azimuth Solar,2016-10-02 19:34:32,4364816,AC016785,Eco_Weekly,Sierra Leone,20000,Manual (Activator),20000,+23277764181,False,None,songo,None,2016-10-02 19:34:32
+PA117558,Azimuth Solar,2016-10-02 19:28:33,4286027,AC015670,SHS_Weekly_15_Existing Customer,Sierra Leone,15000,Manual (Activator),130000,+23299265930,False,None,songo,None,2016-10-02 19:28:33
+PA117471,Azimuth Solar,2016-10-02 17:27:55,4237913,AC015271,Eco_Weekly,Sierra Leone,5000,Manual (Activator),30000,+23288784911,False,None,songo,None,2016-10-02 17:27:55
+PA117125,Azimuth Solar,2016-10-02 13:25:22,4279717,AC016771,Eco_Weekly,Sierra Leone,20000,Manual (Activator),20000,+23299511546,False,None,mamamah,None,2016-10-02 13:25:22
+PA117085,Azimuth Solar,2016-10-02 12:55:14,4215216,AC015907,Eco_Weekly,Sierra Leone,5000,Manual (Activator),35000,+23277918729,False,None,mamamah,None,2016-10-02 12:55:14
+PA117042,Azimuth Solar,2016-10-02 11:52:16,4145017,AC015848,Eco_Weekly,Sierra Leone,15000,Manual (Activator),85000,+23277606052,False,None,mamamah,None,2016-10-02 11:52:16
+PA117023,Azimuth Solar,2016-10-02 11:13:06,4145017,AC015848,Eco_Weekly,Sierra Leone,50000,Manual (Activator),70000,+23277606052,False,None,mamamah,None,2016-10-02 11:13:06
+PA117019,Azimuth Solar,2016-10-02 11:09:51,4127312,AC016113,Eco_Weekly,Sierra Leone,5000,Manual (Activator),25000,+23288244830,False,None,songo,None,2016-10-02 11:09:51
+PA116974,Azimuth Solar,2016-10-02 09:29:08,4340717,AC015655,Eco_Weekly,Sierra Leone,5000,Manual (Activator),30000,+23277073298,False,None,mamamah,None,2016-10-02 09:29:08
+PA116968,Azimuth Solar,2016-10-02 09:15:35,9579111,AC015654,Pro_Weekly_New Customer,Sierra Leone,20000,Manual (Activator),140000,+23277678534,False,None,mamamah,None,2016-10-02 09:15:35
+PA116960,Azimuth Solar,2016-10-02 08:23:08,4347712,AC016062,Eco_Weekly,Sierra Leone,5000,Manual (Activator),30000,+23288682401,False,None,mamamah,None,2016-10-02 08:23:08
+PA116932,Azimuth Solar,2016-10-02 07:36:26,9579616,AC015466,Pro_Weekly_New Customer,Sierra Leone,10000,Manual (Activator),130000,+23288811440,False,None,mamamah,None,2016-10-02 07:36:26
+PA116880,Azimuth Solar,2016-10-01 20:47:09,9590118,AC016153,Pro_Weekly_Existing Customer,Sierra Leone,10000,Manual (Activator),50000,+23299974687,False,None,songo,None,2016-10-01 20:47:09
 PA116870,Azimuth Solar,2016-10-01 19:00:25,4114211,AC015710,Eco_Weekly,Sierra Leone,5000,Manual (Activator),30000,+23278695351,False,None,songo,None,2016-10-01 19:00:25
 PA116853,Azimuth Solar,2016-10-01 18:30:59,9579616,AC015466,Pro_Weekly_New Customer,Sierra Leone,10000,Manual (Activator),120000,+23288811440,False,None,mamamah,None,2016-10-01 18:30:59
 PA116732,Azimuth Solar,2016-10-01 17:04:38,4284220,AC015682,SHS_Weekly_20_Existing Customer,Sierra Leone,20000,Manual (Activator),140000,+23276841171,False,None,songo,None,2016-10-01 17:04:38
