@@ -1,8 +1,60 @@
 {% extends "sales/base.html" %}
 
 {% block breadcrumbs %}
-Accounts
+Accounts index
 {% endblock %}
 
 {% block content %}
+<div class="content">
+
+  <p class="alert alert-info">
+  This site is in Beta version. Please visit Angaza's <a href="https://payg.angazadesign.com">Energy Hub</a> for accurate transaction information at this stage.
+  </p>
+
+  <ul class="nav nav-pills">
+    <li class="active"><a href="#stats" data-toggle="tab">Statistics</a></li>
+    <li><a href="#plans" data-toggle="tab">By payment plan</a></li>
+  </ul>
+
+  <div class="tab-content">
+    <div class="tab-pane active" id="stats">
+      <div class="container-fluid">
+        <div class="row">
+          <div class="col-lg-6">
+            <div class="panel panel-primary">
+              <div class="panel-heading"><h4 class="panel-title">Global summary</h4></div>
+              <div class="panel-body">
+                <table class="table table-condensed table-striped">
+                  {% for key, value in table_1.items %}
+                  <tr>
+                    <th>{{ key }}</th>
+                    <td>{{ value }}</td>   
+                  </tr>
+                  {% endfor %}
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-pane" id="plans">
+      <table class="sort table" style="width:100%">
+        <thead>
+          <tr>
+            <th> Payment plan </th>
+            <th></th>
+            <th> Monthly collection </th>
+            <th> # Enabled </th>
+            <th> # Disabled </th>
+            <th> # Unlocked </th>
+            <th> PAR (14 days) </th>
+          </tr>
+        </thead>
+      </table>
+    </div>
+  </div>
+</div>
+
 {% endblock %}

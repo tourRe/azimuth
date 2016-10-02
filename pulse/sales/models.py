@@ -98,7 +98,7 @@ class Account(models.Model):
         delta = today - self.reg_date
         full_weeks = int(toWeeks(delta))
         return min(self.plan_up + self.plan_week*full_weeks, 
-                self.plan_total)
+                self.plan_tot)
 
     def paid_expected_eom(self):
         today = datetime.datetime.today().replace(tzinfo=pytz.utc)
@@ -106,7 +106,7 @@ class Account(models.Model):
         delta = eom - self.reg_date
         full_weeks = int(toWeeks(delta))
         return min(self.plan_up + self.plan_week*full_weeks, 
-                self.plan_total)
+                self.plan_tot)
 
     def payment_deficit(self):
         return self.paid() - self.paid_expected()
@@ -114,7 +114,15 @@ class Account(models.Model):
     def payment_deficit_eom(self):
         return self.paid_thisMonth(0) - self.paid_expected_eom()
 
-    def days_disabled(self):
+    def lastPay(self):
+        r = list(Payment.objects.filter(account = self).order_by('date')[:1])
+        if r:
+            return r[0]
+        return None
+
+    # Total numbers of days disabled. Returns the current disabled if now = True
+    def days_disabled(self, now = False):
+        today = datetime.datetime.today().replace(tzinfo=pytz.utc)
         result = 0
         for idx, payment in enumerate(
                 Payment.objects.filter(account = self).order_by('date')):
@@ -128,9 +136,18 @@ class Account(models.Model):
                 weeks_credit = payment.amount / self.plan_week
                 disable_date = (max(disable_date, payment.date) 
                         + datetime.timedelta(weeks_credit*7,0,0))
-            print(result)
             prev_pay = payment
+        if now:
+            result = 0
+        if self.status != 'u':
+            result += max(0,toWeeks(today - disable_date)*7)
         return result
+
+    # Returns outstanding amount for which no payments in the last 'days'
+    def OAR(self,days):
+        if self.days_disabled(now=True) > days:
+            return self.plan_tot - self.paid()
+        return 0
 
 class Payment(models.Model):
     account = models.ForeignKey(Account, on_delete=models.CASCADE)
