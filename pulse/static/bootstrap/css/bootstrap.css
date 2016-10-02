@@ -4089,32 +4089,44 @@ a.label:focus {
 .label-primary[href]:focus {
   background-color: #286090;
 }
-.label-success {
+.label-success,
+.label-success.badge {
   background-color: #5cb85c;
 }
 .label-success[href]:hover,
-.label-success[href]:focus {
+.label-success[href]:focus,
+.label-success.badge[href]:hover,
+.label-success.badge[href]:focus {
   background-color: #449d44;
 }
-.label-info {
+.label-info,
+.label-info.badge{
   background-color: #5bc0de;
 }
 .label-info[href]:hover,
-.label-info[href]:focus {
+.label-info[href]:focus,
+.label-info.badge[href]:hover,
+.label-info.badge[href]:focus {
   background-color: #31b0d5;
 }
-.label-warning {
+.label-warning,
+.label-warning.badge {
   background-color: #f0ad4e;
 }
 .label-warning[href]:hover,
-.label-warning[href]:focus {
+.label-warning[href]:focus,
+.label-warning.badge[href]:hover,
+.label-warning.badge[href]:focus {
   background-color: #ec971f;
 }
-.label-danger {
+.label-danger,
+.label-danger.badge {
   background-color: #d9534f;
 }
 .label-danger[href]:hover,
-.label-danger[href]:focus {
+.label-danger[href]:focus,
+.label-danger.badge[href]:hover,
+.label-danger.badge[href]:focus {
   background-color: #c9302c;
 }
 .badge {

@@ -1,6 +1,8 @@
 from django.db import models
 from django.db.models.signals import pre_delete
 from django.dispatch import receiver
+import datetime, pytz
+import sales
 
 class Warehouse(models.Model):
     name = models.CharField(max_length=30)
@@ -8,7 +10,7 @@ class Warehouse(models.Model):
 
     def __str__(self):
         return self.name
-    
+
     def qty(self,product):
         try:
             item=InventoryItem.objects.get(
@@ -35,6 +37,19 @@ class InventoryItem(models.Model):
     def __str__(self):
         return ('%s in %s: %s' 
                 % (str(self.product), str(self.warehouse), str(self.qty)))
+
+    # Returns the number of sales of that item in the last 'days'
+    @property
+    def get_invDays_14(self):
+        result = 0
+        today = datetime.datetime.today().replace(tzinfo=pytz.utc)
+        from_date = today - datetime.timedelta(14,0,0)
+        agents = sales.models.Agent.objects.filter(warehouse = self.warehouse)
+        sold = sales.models.Account.objects.filter(
+                agent__in = agents, reg_date__gte = from_date).count()
+        if sold == 0:
+            return -1
+        return self.qty/(sold/14)
 
 class Transaction(models.Model):
     TYPE_RECEIVED = 1

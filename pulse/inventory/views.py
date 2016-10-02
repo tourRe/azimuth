@@ -12,7 +12,9 @@ def index(request):
     for w in warehouse_list:
         invItem_listAll[w.name] = []
         for p in products_list:
-            invItem_listAll[w.name].append(w.qty(p))
+            invItem_listAll[w.name].append(
+                    InventoryItem.objects.get(
+                        warehouse=w,product=p))
     # defining context to be used in the template
     context = {
             'warehouse_list': warehouse_list,

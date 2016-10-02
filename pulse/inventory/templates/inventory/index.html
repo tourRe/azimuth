@@ -26,15 +26,25 @@
           </tr>
         </thead>
         <tbody>
-          {% for key, value in invItem_listAll.items %}
-          {% if key != "_Supplier" and key != "_Client" %}
+          {% for w_name, item_list in invItem_listAll.items %}
+          {% if w_name != "_Client" and w_name != "_Supplier" %}
           <tr>
             <th>
-              <a href="{% url 'inventory:warehouse' key %}">{{ key }}</a>
+              <a href="{% url 'inventory:warehouse' w_name %}">{{ w_name }}</a>
             </th>
-            {% for q in value %}
-            <td> 
-              {{ q }} 
+            {% for item in item_list %}
+            <td>
+              {% if item.get_invDays_14 == -1 or item.get_invDays_14 >= 14 %}
+              <span class="label-success badge">
+              {% endif %}
+              {% if item.get_invDays_14 >= 7 and item.get_invDays_14 < 14 %}
+              <span class="label-warning badge">
+              {% endif %}
+              {% if item.get_invDays_14 >= 0 and item.get_invDays_14 < 7 %}
+              <span class="label-danger badge">
+              {% endif %}
+                  {{ item.qty }}
+              </span>
             </td>
             {% endfor %}
           </tr>

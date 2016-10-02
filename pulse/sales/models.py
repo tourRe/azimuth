@@ -1,6 +1,4 @@
-import datetime
-import calendar
-import pytz
+import datetime, calendar, pytz
 
 from django.db import models
 from inventory.models import Product, Warehouse
@@ -64,6 +62,7 @@ class Account(models.Model):
     def __str__(self):
         return '%s - %s' % (self.account_GLP, self.plan_name)
 
+    @property
     def paid(self):
         result = 0
         for payment in Payment.objects.filter(account = self):
@@ -80,6 +79,7 @@ class Account(models.Model):
                 results += payment.amount
         return result
 
+    @property
     def pay_number(self):
         return Payment.objects.filter(account = self).count()
 
@@ -93,6 +93,7 @@ class Account(models.Model):
                 result += 1
         return result
 
+    @property
     def paid_expected(self):
         today = datetime.datetime.today().replace(tzinfo=pytz.utc)
         delta = today - self.reg_date
@@ -100,6 +101,7 @@ class Account(models.Model):
         return min(self.plan_up + self.plan_week*full_weeks, 
                 self.plan_tot)
 
+    @property
     def paid_expected_eom(self):
         today = datetime.datetime.today().replace(tzinfo=pytz.utc)
         eom = monthEnd(today)
@@ -108,12 +110,15 @@ class Account(models.Model):
         return min(self.plan_up + self.plan_week*full_weeks, 
                 self.plan_tot)
 
+    @property
     def payment_deficit(self):
         return self.paid() - self.paid_expected()
 
+    @property
     def payment_deficit_eom(self):
         return self.paid_thisMonth(0) - self.paid_expected_eom()
 
+    @property
     def lastPay(self):
         r = list(Payment.objects.filter(account = self).order_by('date')[:1])
         if r:
