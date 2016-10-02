@@ -53,6 +53,8 @@ class Agent(models.Model):
         return ('%s (%s %s)' % (self.location, self.firstname, self.lastname))
 
 # SIMPLE ACCOUNT CLASS WITH PLENTY OF FUNCTIONS FOR ANALYTICS
+# By convention, all @property methods are named get_ to not be confused with
+# class attributes
 # Model doesn't work yet with detached (reposessed) and replaced lamps
 # Also, test accounts are not taken into account at this stage
 # Could actually override save to make sure that origin inventory gets updated
@@ -87,7 +89,7 @@ class Account(models.Model):
         return result
 
     # Payments collected a given month, 'offset' from current month
-    def paid_thisMonth(self, offset):
+    def paid_TM(self, offset):
         result = 0
         today = datetime.datetime.today()
         _today = add_months(today,offset).replace(tzinfo=pytz.utc)
@@ -100,14 +102,14 @@ class Account(models.Model):
     # Payments collected this month
     # Made a property for ease of use in templates
     @property
-    def get_paid_thisMonth(self):
-        return self.paid_thisMonth(0)
+    def get_paid_TM(self):
+        return self.paid_TM(0)
 
     # Payments collected last month
     # Made a property for ease of use in templates
     @property
-    def get_paid_lastMonth(self):
-        return self.paid_thisMonth_offset(-1)
+    def get_paid_LM(self):
+        return self.paid_TM(-1)
 
     # Total number of payments
     @property
@@ -115,7 +117,7 @@ class Account(models.Model):
         return Payment.objects.filter(account = self).count()
 
     # Number of payments for a given month, 'offset' from current month
-    def pay_nb_thisMonth(self, offset):
+    def pay_nb_TM(self, offset):
         result = 0
         today = datetime.datetime.today()
         _today = add_months(today,offset).replace(tzinfo=pytz.utc)
@@ -128,14 +130,14 @@ class Account(models.Model):
     # Number of payments this month
     # Made a property for ease of use in templates
     @property
-    def get_pay_nb_thisMonth(self):
-        return self.pay_number_thisMonth(0)
+    def get_pay_nb_TM(self):
+        return self.pay_nb_TM(0)
 
     # Number of payments last month
     # Made a property for ease of use in templates
     @property
-    def get_pay_nb_lastMonth(self):
-        return self.pay_number_lastMonth(0)
+    def get_pay_nb_LM(self):
+        return self.pay_nb_LM(-1)
 
     # Expected payment as of 'date'
     def paid_expected(self, date):
@@ -156,7 +158,7 @@ class Account(models.Model):
     # Expected payment as of end of month
     # Made a property for ease of use in templates
     @property
-    def get_paid_expected_thisMonth(self):
+    def get_paid_expected_TM(self):
         today = datetime.datetime.today().replace(tzinfo=pytz.utc)
         eom = monthEnd(today)
         return self.paid_expected(eom)
@@ -164,25 +166,25 @@ class Account(models.Model):
     # Expected payment as of end of last month
     # Made a property for ease of use in templates
     @property
-    def get_paid_expected_lastMonth(self):
+    def get_paid_expected_LM(self):
         today = datetime.datetime.today().replace(tzinfo=pytz.utc)
         eolm = monthEnd(addmonth(today,-1))
-        return self.paid_expected(eom)
+        return self.paid_expected(eolm)
 
     # Payment deficit, can be negative if in advance
     @property
-    def get_payment_deficit(self):
+    def get_pay_deficit(self):
         return self.get_paid - self.get_paid_expected
 
     # Projected payment deficit at end of month
     @property
-    def get_payment_deficit_thisMonth(self):
-        return self.get_paid_thisMonth - self.get_paid_expected_thisMonth
+    def get_pay_deficit_TM(self):
+        return self.get_paid_TM - self.get_paid_expected_TM
 
     # Payment deficit at end of last month
     @property
-    def get_payment_deficit_lastMonth(self):
-        return self.get_paid_lastMonth - self.get_paid_expected_lastMonth
+    def get_pay_deficit_LM(self):
+        return self.get_paid_LM - self.get_paid_expected_LM
 
     # Returns a Payment object with the last payment
     @property
@@ -223,7 +225,7 @@ class Account(models.Model):
     # Returns outstanding amount for which no payments in the last 'days'
     def OAR(self,days):
         if self.days_disabled(now=True) > days:
-            return self.plan_tot - self.paid
+            return self.plan_tot - self.get_paid
         return 0
 
 # SIMPLE PAYMENT CLASS, INCLUDES ANGAZA ID TO USE AS PRIMARY KEY WHEN UPDATING
