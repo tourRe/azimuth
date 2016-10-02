@@ -9,53 +9,64 @@
 {% block content %}
 <div class="content">
 
-  <div class="col-lg-6">
-    <div class="panel panel-primary">
-      <div class="panel-heading">
-        <h4 class="panel-title">Inventory Summary</h4></div>
-      <div class="panel-body">
-        <div class="list-group">
-          {% for p in invItem_list %}
-          <a class="list-group-item" href="#">
-            <span class="badge">{{ p.qty }}</span>{{ p.product.name }}</a>
+  <div class="panel panel-primary">
+    <div class="panel-heading">
+      <h4 class="panel-title">Inventory and recent sales</h4>
+    </div>
+    <table class="sort table" style="width:100%">
+      <thead>
+        <tr>
+          <th colspan="2">Product</th>
+          <th style="text-align:right">Inventory</th>
+          <th></th>
+          <th style="text-align:right">Sold last 7 days</th>
+          <th style="text-align:right">Sold last 14 days</th>
+          <th style="text-align:right">Sold last 30 days</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in invItem_list %}
+        <tr>
+          <th colspan="2">{{ p.product.name }}</th>
+          <td>
+          {% if p.get_invDays_14 == -1 or p.get_invDays_14 >= 14 %}
+          <span class="label-success badge">
+          {% endif %}
+          {% if p.get_invDays_14 >= 7 and p.get_invDays_14 < 14 %}
+          <span class="label-warning badge">
+          {% endif %}
+          {% if p.get_invDays_14 >= 0 and p.get_invDays_14 < 7 %}
+          <span class="label-danger badge">
+          {% endif %}
+          {{ p.qty }}
+          </td>
+          </span>
+          <td></td>
+          {% for n in p.get_sold_sample %}
+          <td>{{ n }}</td>
           {% endfor %}
-        </div>
-      </div>
+          <td></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <div class="panel-footer">
+      <span class="label-success badge">__</span> : more than 14 days
+      &nbsp &nbsp &nbsp &nbsp
+      <span class="label-warning badge">__</span> :between 7 and 14 days
+      &nbsp &nbsp &nbsp &nbsp
+      <span class="label-danger badge">__</span> : less than 7 days
+      &nbsp &nbsp &nbsp &nbsp
+      ....based on average sales over the last 14 days
     </div>
 
   </div>
-  
-  <div class="col-lg-6">
-    <div class="panel panel-primary">
-      <div class="panel-heading">
-        <h4 class="panel-title">Record a transfer</h4></div>
-      <div class="panel-body">
-        {% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
-        <form action="{% url 'inventory:confirmation' warehouse.name %}" method="post">
-          <fieldset>
-            {% csrf_token %}
-            <select name="destination"> 
-              {% for w in warehouse_list %} 
-              {% if w.name != warehouse.name %} 
-              <option value="{{ w.name }}">{{ w.name }}</option> 
-              {% endif %}
-              {% endfor %}
-            </select>
-            <br><br>
-            <select name="product">
-              {% for p in invItem_list %}
-              <option value="{{ p.product.name }}">{{ p.product.name }}</option>
-              {% endfor %}
-            </select> 
-            <br><br> 
-            <input type="text" name="qty" value="0"> </input>
-            <br><br>
-            <input type="submit" value="Record transfer" />
-          </fieldset>
-        </form>
-      </div>
+
+  <div class="panel panel-primary">
+    <div class="panel-heading">
+      <h4 class="panel-title">Transaction History</h4>
     </div>
   </div>
-
 </div>
 {% endblock %}

@@ -3,12 +3,13 @@ from django.core.exceptions import ValidationError
 from django.shortcuts import render, get_object_or_404
 from django.http import Http404
 from .models import Warehouse, InventoryItem, Product, Transaction, TransactionItem
+import collections
 
 def index(request):
     warehouse_list = Warehouse.objects.order_by('name')
     products_list = Product.objects.all()
     # creating a dict with the values for index display
-    invItem_listAll = {}
+    invItem_listAll = collections.OrderedDict()
     for w in warehouse_list:
         invItem_listAll[w.name] = []
         for p in products_list:
@@ -33,12 +34,14 @@ def warehouse(request, warehouse_name):
     return render(request, 'inventory/warehouse.html',context) 
 
 # HANDLES TRANSACTION FORMS ON WAREHOUSE PAGE
-def confirmation(request, warehouse_name):
+def confirmation(request):
     
     # Grabbing transaction parameters based on form variables
-    w_from = get_object_or_404(Warehouse, name=warehouse_name)
+    w_from = Warehouse.objects.get(name=request.POST['origin'])
     w_to = Warehouse.objects.get(name=request.POST['destination'])
     p = Product.objects.get(name=request.POST['product'])
+    page_from = request.POST['page_from']
+    destination = "inventory/" + page_from
     item_from = InventoryItem.objects.get(
             warehouse=w_from,
             product=p)
@@ -64,9 +67,11 @@ def confirmation(request, warehouse_name):
     # Preparing context to return to the warehouse page
     warehouse_list = Warehouse.objects.order_by('name')
     invItem_list = InventoryItem.objects.filter(warehouse=w_from)
+    products_list = Product.objects.all()
     context = {'warehouse_list': warehouse_list,
         'warehouse': w_from,
         'invItem_list': invItem_list,
+        'products_list': products_list,
         }
     
     # Testing transItem for save, returning an error if necessary
@@ -75,6 +80,22 @@ def confirmation(request, warehouse_name):
     except ValidationError as e:
         context['error_message'] = next (iter (e.message_dict.values()))
         transaction.delete()
-        return render(request, 'inventory/warehouse.html', context)
+        invItem_listAll = collections.OrderedDict()
+        for w in warehouse_list:
+            invItem_listAll[w.name] = []
+            for p in products_list:
+                invItem_listAll[w.name].append(
+                        InventoryItem.objects.get(
+                            warehouse=w,product=p))
+        context['invItem_listAll'] = invItem_listAll
+        return render(request, destination, context)
+    invItem_listAll = collections.OrderedDict()
+    for w in warehouse_list:
+        invItem_listAll[w.name] = []
+        for p in products_list:
+            invItem_listAll[w.name].append(
+                    InventoryItem.objects.get(
+                        warehouse=w,product=p))
+    context['invItem_listAll'] = invItem_listAll
     context['error_message'] = "Your transfer was successfully applied"
-    return render(request, 'inventory/warehouse.html', context)
+    return render(request, destination, context)

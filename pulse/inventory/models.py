@@ -38,15 +38,26 @@ class InventoryItem(models.Model):
         return ('%s in %s: %s' 
                 % (str(self.product), str(self.warehouse), str(self.qty)))
 
-    # Returns the number of sales of that item in the last 'days'
+   # Returns the number of such units solds in the last 'days'
+    def get_sold(self,days):
+        result = 0
+        today = datetime.datetime.today().replace(tzinfo=pytz.utc)
+        from_date = today - datetime.timedelta(days,0,0)
+        agents = sales.models.Agent.objects.filter(warehouse = self.warehouse)
+        return sales.models.Account.objects.filter(
+                agent__in = agents, reg_date__gte = from_date,
+                plan_product=self.product).count()
+
+    # Returns the list of sales in the last 7, 14 and 30 days
+    @property
+    def get_sold_sample(self):
+        return [self.get_sold(7),self.get_sold(14),self.get_sold(30)]
+ 
+    # Returns the inventory days based on last 14 days of sales
     @property
     def get_invDays_14(self):
         result = 0
-        today = datetime.datetime.today().replace(tzinfo=pytz.utc)
-        from_date = today - datetime.timedelta(14,0,0)
-        agents = sales.models.Agent.objects.filter(warehouse = self.warehouse)
-        sold = sales.models.Account.objects.filter(
-                agent__in = agents, reg_date__gte = from_date).count()
+        sold = self.get_sold(14)
         if sold == 0:
             return -1
         return self.qty/(sold/14)

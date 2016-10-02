@@ -14,9 +14,12 @@
   This site is in Beta version. Please visit Angaza's <a href="https://payg.angazadesign.com">Energy Hub</a> for accurate transaction information at this stage.
   </p>
 
-  <div class="tab-content">
-    <div class="tab-pane active" id="suggestions">
-      <table class="sort table" style="width:50%">
+  <div class="col-lg-6">
+    <div class="panel panel-primary">
+      <div class="panel-heading">
+        <h4 class="panel-title">Inventory Summary</h4>
+      </div>
+      <table class="sort table" style="width:100%">
         <thead>
           <tr>
             <th> Warehouse </th>
@@ -43,7 +46,7 @@
               {% if item.get_invDays_14 >= 0 and item.get_invDays_14 < 7 %}
               <span class="label-danger badge">
               {% endif %}
-                  {{ item.qty }}
+              {{ item.qty }}
               </span>
             </td>
             {% endfor %}
@@ -52,6 +55,60 @@
           {% endfor %}
         </tbody>
       </table>
+      <div class="panel-footer">
+        <span class="label-success badge">__</span> : more than 14 days
+        &nbsp &nbsp &nbsp &nbsp
+        <span class="label-warning badge">__</span> : between 7 and 14 days
+        &nbsp &nbsp &nbsp &nbsp
+        <span class="label-danger badge">__</span> : less than 7 days
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="panel panel-primary">
+      <div class="panel-heading">
+        <h4 class="panel-title">Record a transfer</h4>
+      </div>
+      <div class="panel-body">
+        {% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
+        <form action="{% url 'inventory:confirmation' %}" method="post">
+          <fieldset>
+            {% csrf_token %}
+            <label class="control-label">Origin</label><br>
+            <select name="origin" class="select form-control"> 
+              {% for w in warehouse_list %} 
+              {% if w.name != "_Client" %} 
+              <option value="{{ w.name }}">{{ w.name }}</option> 
+              {% endif %}
+              {% endfor %}
+            </select>
+            <br>
+            <label class="control-label">Destination</label><br>
+            <select name="destination" class="select form-control"> 
+              {% for w in warehouse_list %} 
+              {% if w.name != "_Client" and w.name != "_Supplier" %} 
+              <option value="{{ w.name }}">{{ w.name }}</option> 
+              {% endif %}
+              {% endfor %}
+            </select>
+            <br>
+            <label class="control-label">Product</label><br>
+            <select name="product" class="select form-control">
+              {% for p in products_list %}
+              <option value="{{ p.name }}">{{ p.name }}</option>
+              {% endfor %}
+            </select> 
+            <br> 
+            <label class="control-label">Quantity</label><br>
+            <input type="text" name="qty" value="0" class="textinput
+            form-control"></input>
+            <br>
+            <input type="hidden" value="index.html" name="page_from">
+            <input type="submit" value="Record transfer" class="btn btn-default"/>
+          </fieldset>
+        </form>
+      </div>
     </div>
   </div>
 
