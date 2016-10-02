@@ -16,13 +16,12 @@
 
   <div class="tab-content">
     <div class="tab-pane active" id="suggestions">
-      <table class="sort table" style="width:100%">
+      <table class="sort table" style="width:50%">
         <thead>
           <tr>
             <th> Warehouse </th>
-            <th></th>
             {% for p in products_list %}
-            <th> {{ p.name }} </th>
+            <th style="text-align:right"> {{ p.name }} </th>
             {% endfor %}
           </tr>
         </thead>
@@ -30,10 +29,9 @@
           {% for key, value in invItem_listAll.items %}
           {% if key != "_Supplier" and key != "_Client" %}
           <tr>
-            <td>
+            <th>
               <a href="{% url 'inventory:warehouse' key %}">{{ key }}</a>
-            </td>
-            <td></td>
+            </th>
             {% for q in value %}
             <td> 
               {{ q }} 

@@ -9,38 +9,53 @@
 {% block content %}
 <div class="content">
 
-  Summary of inventory
-  <ul>
-    {% for p in invItem_list %}
-    <li>{{ p.product.name }}: {{ p.qty }}</li>
-    {% endfor %}
-  </ul>
+  <div class="col-lg-6">
+    <div class="panel panel-primary">
+      <div class="panel-heading">
+        <h4 class="panel-title">Inventory Summary</h4></div>
+      <div class="panel-body">
+        <div class="list-group">
+          {% for p in invItem_list %}
+          <a class="list-group-item" href="#">
+            <span class="badge">{{ p.qty }}</span>{{ p.product.name }}</a>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
 
-  {% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
-
-  <form action="{% url 'inventory:confirmation' warehouse.name %}" method="post">
-    <fieldset>
-      {% csrf_token %}
-      <h3> Record a transfer </h3>
-      <select name="destination"> 
-        {% for w in warehouse_list %} 
-        {% if w.name != warehouse.name %} 
-        <option value="{{ w.name }}">{{ w.name }}</option> 
-        {% endif %}
-        {% endfor %}
-      </select>
-      <br><br>
-      <select name="product">
-        {% for p in invItem_list %}
-        <option value="{{ p.product.name }}">{{ p.product.name }}</option>
-        {% endfor %}
-      </select> 
-      <br><br> 
-      <input type="text" name="qty" value="0"> </input>
-      <br><br>
-      <input type="submit" value="Record transfer" />
-    </fieldset>
-  </form>
+  </div>
+  
+  <div class="col-lg-6">
+    <div class="panel panel-primary">
+      <div class="panel-heading">
+        <h4 class="panel-title">Record a transfer</h4></div>
+      <div class="panel-body">
+        {% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
+        <form action="{% url 'inventory:confirmation' warehouse.name %}" method="post">
+          <fieldset>
+            {% csrf_token %}
+            <select name="destination"> 
+              {% for w in warehouse_list %} 
+              {% if w.name != warehouse.name %} 
+              <option value="{{ w.name }}">{{ w.name }}</option> 
+              {% endif %}
+              {% endfor %}
+            </select>
+            <br><br>
+            <select name="product">
+              {% for p in invItem_list %}
+              <option value="{{ p.product.name }}">{{ p.product.name }}</option>
+              {% endfor %}
+            </select> 
+            <br><br> 
+            <input type="text" name="qty" value="0"> </input>
+            <br><br>
+            <input type="submit" value="Record transfer" />
+          </fieldset>
+        </form>
+      </div>
+    </div>
+  </div>
 
 </div>
 {% endblock %}
