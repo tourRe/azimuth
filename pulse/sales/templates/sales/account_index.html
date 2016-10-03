@@ -35,6 +35,21 @@ Accounts index
               </div>
             </div>
           </div>
+          <div class="col-lg-6">
+            <div class="panel panel-primary">
+              <div class="panel-heading"><h4 class="panel-title">Previous month summary</h4></div>
+              <div class="panel-body">
+                <table class="table table-condensed table-striped">
+                  {% for key, value in table_2.items %}
+                  <tr>
+                    <th>{{ key }}</th>
+                    <td>{{ value }}</td>   
+                  </tr>
+                  {% endfor %}
+                </table>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

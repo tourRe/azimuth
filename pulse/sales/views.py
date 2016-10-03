@@ -152,21 +152,51 @@ def account_index(request):
     table_1['Average unit price (SLL)'] = ratio(paid+outstanding,account_number)
     context['table_1']=table_1
 
-    # Generating data per plan
-    table_2 = {}
+    # Preparing data for monthly summary
+    table_2 = collections.OrderedDict()
+    account_number = 0 
+    paid = 0
+    paid_expected = 0
+    payment_deficit = 0
+    days_disabled = 0
+    pay_number = 0
+    outstanding = 0
+    oar_14 = 0
     for acc in Account.objects.all():
-        if not (acc.plan_name in table_2.keys()):
-            table_2[acc.plan_name] = [0,0,0,0,0,0]
-        table_2[acc.plan_name][0] += acc.get_paid_TM
-        table_2[acc.plan_name][1] += (acc.status == 'e')*1
-        table_2[acc.plan_name][2] += (acc.status == 'd')*1
-        table_2[acc.plan_name][3] += (acc.status == 'u')*1
-        table_2[acc.plan_name][4] += acc.OAR(14)
-        table_2[acc.plan_name][5] += acc.plan_tot - acc.get_paid
-    for key in table_2:
-        table_2[key][4] = ratio(table_2[key][4],table_2[key][5],True,2)
-        del table_2[key][-1]
+        if acc.get_new_LM:
+            account_number += 1
+            paid += acc.get_paid
+            paid_expected += acc.get_paid_expected
+            payment_deficit += max(0,acc.get_pay_deficit)
+            days_disabled += acc.days_disabled()
+            pay_number += acc.get_pay_nb
+            outstanding += acc.plan_tot - acc.get_paid
+            oar_14 += acc.OAR(14)
+    table_2['Number of accounts'] = str("{:,}".format(account_number))
+    table_2['Total paid (SLL)'] = str("{:,}".format(paid))
+    table_2['Repayment ratio (CRR)'] = ratio(paid,paid_expected,pc=True)
+    table_2['Number of payments'] = str("{:,}".format(pay_number))
+    table_2['Average payment (SLL)'] = ratio(paid,pay_number)
+    table_2['PAR (14 days)'] = ratio(oar_14,outstanding,pc=True,dec=2)
+    table_2['Average days disabled'] = ratio(days_disabled,account_number)
+    table_2['Average unit price (SLL)'] = ratio(paid+outstanding,account_number)
     context['table_2']=table_2
+
+    # Generating data per plan
+    table_3 = {}
+    for acc in Account.objects.all():
+        if not (acc.plan_name in table_3.keys()):
+            table_3[acc.plan_name] = [0,0,0,0,0,0]
+        table_3[acc.plan_name][0] += acc.get_paid_TM
+        table_3[acc.plan_name][1] += (acc.status == 'e')*1
+        table_3[acc.plan_name][2] += (acc.status == 'd')*1
+        table_3[acc.plan_name][3] += (acc.status == 'u')*1
+        table_3[acc.plan_name][4] += acc.OAR(14)
+        table_3[acc.plan_name][5] += acc.plan_tot - acc.get_paid
+    for key in table_3:
+        table_3[key][4] = ratio(table_3[key][4],table_3[key][5],True,2)
+        del table_3[key][-1]
+    context['table_3']=table_3
 
     return render(request, 'sales/account_index.html', context)
 
