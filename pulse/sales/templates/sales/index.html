@@ -17,31 +17,92 @@
   <div class="container-fluid">
 
     <div class="row">
-      <div class="col-lg-6">
+      <div class="col-lg-4">
         <div class="panel panel-primary">
           <div class="panel-heading"><h4 class="panel-title">
-              <a href="{% url 'sales:account_index' %}">Accounts</a></h4></div>
+              <a href="{% url 'sales:index' %}">General</a></h4></div>
           <div class="panel-body">
             <table class="table table-condensed table-striped">
               <tr>
                 <th>Number of active accounts</th>
                 <td>130</td>
               </tr>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-4">
+        <div class="panel panel-primary">
+          <div class="panel-heading"><h4 class="panel-title">
+              <a href="{% url 'sales:manager_index' %}">Managers</a></h4></div>
+          <div class="panel-body">
+            <table class="table table-condensed table-striped">
               <tr>
-                <th>PAR (14 days)</th>
-                <td>103%</td>
+                <th>Number of active accounts</th>
+                <td>130</td>
               </tr>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-4">
+        <div class="panel panel-primary">
+          <div class="panel-heading"><h4 class="panel-title">
+              <a href="{% url 'sales:agent_index' %}">Agents</a></h4></div>
+          <div class="panel-body">
+            <table class="table table-condensed table-striped">
               <tr>
-                <th>LAR (14 days)</th>
-                <td>103%</td>
+                <th>Number of active accounts</th>
+                <td>130</td>
               </tr>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-lg-4">
+        <div class="panel panel-primary">
+          <div class="panel-heading"><h4 class="panel-title">
+              <a href="{% url 'sales:client_index' %}">Clients</a></h4></div>
+          <div class="panel-body">
+            <table class="table table-condensed table-striped">
+              {% for key, value in Clients.items %}
               <tr>
-                <th>Expected Collection</th>
-                <td>SLL 2,000,000</td>
+                <th>{{ key }}</th>
+                <td>{{ value }}</td>
               </tr>
+              {% endfor %}
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-4">
+        <div class="panel panel-primary">
+          <div class="panel-heading"><h4 class="panel-title">
+              <a href="{% url 'sales:account_index' %}">Accounts</a></h4></div>
+          <div class="panel-body">
+            <table class="table table-condensed table-striped">
+              {% for key, value in Accounts.items %}
               <tr>
-                <th>Expected Collection</th>
-                <td>SLL 2,000,000</td>
+                <th>{{ key }}</th>
+                <td>{{ value }}</td>
+              </tr>
+              {% endfor %}
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-4">
+        <div class="panel panel-primary">
+          <div class="panel-heading"><h4 class="panel-title">
+              <a href="{% url 'sales:payment_index' %}">Payments</a></h4></div>
+          <div class="panel-body">
+            <table class="table table-condensed table-striped">
+              <tr>
+                <th>Number of active accounts</th>
+                <td>130</td>
               </tr>
             </table>
           </div>

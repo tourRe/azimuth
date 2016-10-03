@@ -3,7 +3,7 @@ from django.shortcuts import render
 # Module that has the ordered dictionnary class
 import collections
 # Importing necessary models
-from .models import Agent, Manager, Account
+from .models import Agent, Manager, Account, Client, Payment
 
 def index(request):
     # Adding menu content to context
@@ -13,6 +13,37 @@ def index(request):
             'manager_list' : manager_list,
             'agent_list' : agent_list
             }
+
+    # Preparing Clients table
+    table_clients = collections.OrderedDict()
+    Q = Client.objects.all()
+    table_clients['Number'] = Q.count()
+    table_clients['New this month'] = 0
+    table_clients['New last month'] = 0
+    for c in Q:
+        table_clients['New this month'] += (c.get_new_TM)*1
+        table_clients['New last month'] += (c.get_new_LM)*1
+    table_clients['Accounts per client'] = ratio(
+            Account.objects.all().count(),table_clients['Number'],False,2)
+    context['Clients'] = table_clients
+
+    # Preparing Accounts table
+    table_accounts = collections.OrderedDict()
+    Q = Account.objects.all()
+    table_accounts['Number'] = Q.count()
+    table_accounts['New this month'] = 0
+    table_accounts['New last month'] = 0
+    oar_14 = 0
+    outstanding = 0
+    for a in Q:
+        table_accounts['New this month'] += (a.get_new_TM)*1
+        table_accounts['New last month'] += (a.get_new_LM)*1
+        oar_14 += a.OAR(14)
+        outstanding += a.plan_tot - a.get_paid
+    table_accounts['PAR (14 days)'] = ratio(
+            oar_14,outstanding,True,2)
+    context['Accounts'] = table_accounts
+
     return render(request, 'sales/index.html', context)
 
 def manager_index(request):
@@ -108,7 +139,7 @@ def account_index(request):
         paid += acc.get_paid
         paid_expected += acc.get_paid_expected
         payment_deficit += max(0,acc.get_pay_deficit)
-        days_disabled += acc.get_current_disabled
+        days_disabled += acc.days_disabled()
         pay_number += acc.get_pay_nb
         outstanding += acc.plan_tot - acc.get_paid
         oar_14 += acc.OAR(14)

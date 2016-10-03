@@ -21,6 +21,28 @@ class Client(models.Model):
     def __str__(self):
         return ('%s (%s)' % (self.name, self.location))
 
+    # Returns the earliest registration date
+    @property
+    def get_from(self):
+        result = datetime.datetime.today().replace(tzinfo=pytz.utc)
+        for acc in Account.objects.filter(client=self):
+            result = min(acc.reg_date,result)
+        return result
+
+    # Returns True if the client was created a given month offset from today
+    def new_TM(self,offset):
+        return thisMonth(self.get_from,offset)
+
+    # Returns true if the client was created this month
+    @property
+    def get_new_TM(self):
+        return self.new_TM(0)
+
+    # Returns true if the client was created last month
+    @property
+    def get_new_LM(self):
+        return self.new_TM(-1)
+
 # MANAGER CLASS, RESPONSIBLE FOR SEVERAL AGENTS
 class Manager(models.Model):
     firstname = models.CharField(max_length=30)
@@ -171,6 +193,20 @@ class Account(models.Model):
         eolm = monthEnd(addmonth(today,-1))
         return self.paid_expected(eolm)
 
+    # Returns True if the account was created a given month offset from today
+    def new_TM(self,offset):
+        return thisMonth(self.reg_date,offset)
+
+    # Returns true if the client was created this month
+    @property
+    def get_new_TM(self):
+        return self.new_TM(0)
+
+    # Returns true if the client was created last month
+    @property
+    def get_new_LM(self):
+        return self.new_TM(-1)
+
     # Payment deficit, can be negative if in advance
     @property
     def get_pay_deficit(self):
@@ -260,5 +296,11 @@ def toWeeks(delta):
 # Return the last second of the last day of the month of a given date
 def monthEnd(date):
     result = datetime.datetime(date.year, date.month+1, 1,
-            00,00,00,000000)
+            00,00,00,000000).replace(tzinfo=pytz.utc)
     return result - datetime.timedelta(0,1,0)
+
+# Returns Yes if date is of today's month with offset
+def thisMonth(date,offset):
+    today = datetime.datetime.today().replace(tzinfo=pytz.utc)
+    return (date > monthEnd(add_months(today,-1+offset)) and
+        date <= monthEnd(add_months(today,offset)))
