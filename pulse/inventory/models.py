@@ -137,6 +137,11 @@ class TransactionItem(models.Model):
         # calls the actual Django save function
         super(TransactionItem, self).save(*args, **kwargs)
 
+    def __str__(self):
+                return "%s %s(s) from %s to %s" % (self.qty, 
+                        self.item.product, self.transaction.origin,
+                        self.transaction.destination)
+
 # Removes quantities in inventory items on transaction item delete
 # Has to use the 'delete_signal' for mass deletes
 # Mirrors the actions performed on save
