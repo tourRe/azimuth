@@ -275,6 +275,16 @@ class Payment(models.Model):
     def __str__(self):
         return ('%s (%s)' % (str(self.amount), self.account))
 
+    # Returns True if the account was collected this month
+    @property
+    def get_TM(self):
+        return thisMonth(self.date,0)
+
+    # Returns True if the account was collected last month
+    @property
+    def get_LM(self):
+        return thisMonth(self.date,-1)
+
 # Adds months to a given date
 def add_months(sourcedate,months):
     month = sourcedate.month - 1 + months

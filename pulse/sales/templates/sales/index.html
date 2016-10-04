@@ -68,7 +68,7 @@
               <a href="{% url 'sales:client_index' %}">Clients</a></h4></div>
           <div class="panel-body">
             <table class="table table-condensed table-striped">
-              {% for key, value in Clients.items %}
+              {% for key, value in table_clients.items %}
               <tr>
                 <th>{{ key }}</th>
                 <td>{{ value }}</td>
@@ -84,7 +84,7 @@
               <a href="{% url 'sales:account_index' %}">Accounts</a></h4></div>
           <div class="panel-body">
             <table class="table table-condensed table-striped">
-              {% for key, value in Accounts.items %}
+              {% for key, value in table_accounts.items %}
               <tr>
                 <th>{{ key }}</th>
                 <td>{{ value }}</td>
@@ -100,10 +100,12 @@
               <a href="{% url 'sales:payment_index' %}">Payments</a></h4></div>
           <div class="panel-body">
             <table class="table table-condensed table-striped">
+              {% for key, value in table_payments.items %}
               <tr>
-                <th>Number of active accounts</th>
-                <td>130</td>
+                <th>{{ key }}</th>
+                <td>{{ value }}</td>
               </tr>
+              {% endfor %}
             </table>
           </div>
         </div>

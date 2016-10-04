@@ -2,6 +2,8 @@
 from django.shortcuts import render
 # Module that has the ordered dictionnary class
 import collections
+# Modules to handle dates and timwezones
+import datetime, pytz
 # Importing necessary models
 from .models import Agent, Manager, Account, Client, Payment
 
@@ -25,7 +27,15 @@ def index(request):
         table_clients['New last month'] += (c.get_new_LM)*1
     table_clients['Accounts per client'] = ratio(
             Account.objects.all().count(),table_clients['Number'],False,2)
-    context['Clients'] = table_clients
+    # Converting numbers to well presented strings
+    table_clients['Number'] = str("{:,}".format(
+        table_clients['Number']))
+    table_clients['New this month'] =  str("{:,}".format(
+        table_clients['New this month']))
+    table_clients['New last month'] =  str("{:,}".format(
+        table_clients['New last month']))
+
+    context['table_clients'] = table_clients
 
     # Preparing Accounts table
     table_accounts = collections.OrderedDict()
@@ -40,9 +50,35 @@ def index(request):
         table_accounts['New last month'] += (a.get_new_LM)*1
         oar_14 += a.OAR(14)
         outstanding += a.plan_tot - a.get_paid
+    table_accounts['New this month'] =  str("{:,}".format(
+        table_accounts['New this month']))
+    table_accounts['New last month'] =  str("{:,}".format(
+        table_accounts['New last month']))
     table_accounts['PAR (14 days)'] = ratio(
             oar_14,outstanding,True,2)
-    context['Accounts'] = table_accounts
+    context['table_accounts'] = table_accounts
+    
+    # Preparing Payments table
+    table_payments = collections.OrderedDict()
+    Q = Payment.objects.all()
+    table_payments['Number'] = str("{:,}".format(Q.count()))
+    today = datetime.datetime.today().replace(tzinfo=pytz.utc)
+    today_m2m = today - datetime.timedelta(62,0,0)
+    Q2 = Payment.objects.filter(date__gt = today_m2m)
+    table_payments['Collected this month'] = 0
+    table_payments['Collected last month'] = 0
+    for p in Q2:
+        table_payments['Collected this month'] += (p.get_TM)*1
+        table_payments['Collected last month'] += (p.get_LM)*1
+    table_payments['Collected this month'] =  str("{:,}".format(
+        table_payments['Collected this month']))
+    table_payments['Collected last month'] =  str("{:,}".format(
+        table_payments['Collected last month']))
+    # Check online for averaging a field
+    # table_payments['Average payment amount'] = str("{:,}".format(
+    # Q.amount__average))
+    table_payments['Average payment amount'] = "tbd"
+    context['table_payments'] = table_payments
 
     return render(request, 'sales/index.html', context)
 
