@@ -1,11 +1,9 @@
 #!/usr/bin/env python
-import urllib2
+import urllib3
 import json
 
 # url opener
 cookies = ('Cookie', '_ga=GA1.2.1862213469.1457357349')
-artelia = urllib2.build_opener()
-artelia.addheaders.append(cookies)
 
 # api call parameters
 address = "https://payg.angazadesign.com/api/"
@@ -15,13 +13,14 @@ num = '10'
 #num = str(input('Number of lines: '))
 
 # Fetches the Json file at a given url and converts it to a dictionary
-def to_dict(url):
-    call = artelia.open(url)
+def to_dict(url, cookies):
+    http_pool = urllib3.connection_from_url(url)
+    call = http_pool.get_url(url, headers=cookies)
     str_json = call.readline()
     return json.loads(str_json)
 
 # Grabbing the organization link
-org_dict = to_dict(address + "organizations/OR" + org)
+org_dict = to_dict(address + "organizations/OR" + org, cookies)
 org_name = org_dict['name']
 org_products = org_dict['available_product_types']
 org_smsPrice = org_dict['sms_price']['value']
@@ -37,28 +36,29 @@ skip_keys = []
 # (nested)
 for key in org_dict['_links']:
     if (key in ko_keys):
-        print 'invalid ' + key
-        print org_dict['_links'][key]['href']
-        print org_dict['_links'][key]['href'].split('{')[0]
+        print('invalid ' + key)
+        print(org_dict['_links'][key]['href'])
+        print(org_dict['_links'][key]['href'].split('{')[0])
     elif (key in skip_keys):
-        print 'skipping ' + key
+        print('skipping ' + key)
     else:
-        print 'fetching ' + key
+        print('fetching ' + key)
         # show = input('execute? Y/N ')
         show = 'Y'
         if show == 'Y':
-            print org_dict['_links'][key]['href']
-            print org_dict['_links'][key]['href'].split('{')[0]
-            dump[key]=to_dict(org_dict['_links'][key]['href'].split('{')[0])
+            print(org_dict['_links'][key]['href'])
+            print(org_dict['_links'][key]['href'].split('{')[0])
+            dump[key]=to_dict(org_dict['_links'][key]['href'].split('{')[0]
+                    ,cookies)
 
 # Saving data to JSON
 with open('/Users/alexandre/azimuth/scripts/dump.json', 'w') as f:
     json.dump(dump, f)
 
 # Outputs
-print org_name
-print 'available products: ' + str(org_products)
-print 'sms price: ' + str(org_smsPrice)
+print(org_name)
+print('available products: ' + str(org_products))
+print('sms price: ' + str(org_smsPrice))
 
 #for i in range(0,len(payments)-1):
 #    data = payments[i]
