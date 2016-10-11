@@ -74,6 +74,60 @@ class Agent(models.Model):
     def __str__(self):
         return ('%s (%s %s)' % (self.location, self.firstname, self.lastname))
 
+    # Returns the monthly expected collection for an agent
+    @property
+    def get_collect_expected_TM(self):
+        Q = [obj for obj in Account.objects.filter(agent = self)
+                if obj.get_isActive_TM]
+        result = 0
+        for account in Q:
+            result += (account.get_paid_expected_TM 
+                    - min(0,account.get_pay_deficit))
+        return result
+
+    # Returns the collection % covered by this month's upfront payments
+    @property
+    def get_collect_upfront(self):
+        Q = [obj for obj in Account.objects.filter(agent = self)
+                if obj.get_isActive_TM]
+        paid_up = 0
+        for account in Q:
+            if thisMonth(account.reg_date,0):
+                paid_up += account.plan_up
+        try: 
+            return int(round(paid_up/self.get_collect_expected_TM*100,0))
+        except:
+            return str(0)
+
+    # Returns the collection % covered by this month's recurring payments
+    @property
+    def get_collect_rec(self):
+        Q = [obj for obj in Account.objects.filter(agent = self)
+                if obj.get_isActive_TM]
+        paid_rec = 0
+        for account in Q:
+            if thisMonth(account.reg_date,0):
+                paid_rec += account.get_paid_TM - account.plan_up
+            else:
+                paid_rec += account.get_paid_TM
+        try: 
+            return int(round(paid_rec/self.get_collect_expected_TM*100,0))
+        except:
+            return str(0)
+
+    # Returns the collection % of late payments
+    @property
+    def get_collect_late(self):
+        Q = [obj for obj in Account.objects.filter(agent = self)
+                if obj.get_isActive_TM]
+        paid_late = 0
+        for account in Q:
+            paid_late += max(0,account.get_pay_deficit)
+        try: 
+            return int(round(paid_late/self.get_collect_expected_TM*100,0))
+        except:
+            return str(0)
+
 # SIMPLE ACCOUNT CLASS WITH PLENTY OF FUNCTIONS FOR ANALYTICS
 # By convention, all @property methods are named get_ to not be confused with
 # class attributes
@@ -210,17 +264,17 @@ class Account(models.Model):
     # Payment deficit, can be negative if in advance
     @property
     def get_pay_deficit(self):
-        return self.get_paid - self.get_paid_expected
+        return self.get_paid_expected - self.get_paid
 
     # Projected payment deficit at end of month
     @property
     def get_pay_deficit_TM(self):
-        return self.get_paid_TM - self.get_paid_expected_TM
+        return self.get_paid_expected_TM - self.get_paid_TM
 
     # Payment deficit at end of last month
     @property
     def get_pay_deficit_LM(self):
-        return self.get_paid_LM - self.get_paid_expected_LM
+        return self.get_paid_expected_LM - self.get_paid_LM
 
     # Returns a Payment object with the last payment
     @property
@@ -257,6 +311,15 @@ class Account(models.Model):
     @property
     def get_current_disabled(self):
         return self.days_disabled(now=True)
+
+    # False if account is not active this month
+    @property
+    def get_isActive_TM(self):
+        return (
+                (self.status == 'e') 
+                or (self.status == 'd')
+                or (self.status == 'u' and thisMonth(self.get_lastPay.date,0)) 
+                )
 
     # Returns outstanding amount for which no payments in the last 'days'
     def OAR(self,days):

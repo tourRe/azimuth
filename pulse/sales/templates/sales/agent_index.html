@@ -5,6 +5,61 @@ Agents
 {% endblock %}
 
 {% block content %}
+<div class="content">
+<table class="sort table">
+  <thead>
+    <tr>
+      <th>Agent</th>
+      <th></th>
+      <th colspan="2">Collection this month</th>
+      <th style="display: none">Collection ratio</th>
+      <th colspan="2">PAR-7</th>
+      <th style="display: none">PAR (7 days) pct</th>
+      <th colspan="2">PDP-14</th>
+      <th style="display: none">PDP (14 days) pct</th>
+      <th></th>
+      <th>Units sold</th>
+      <th>This Month</th>
+      <th>Last month</th>
+    </tr>
+  </thead>
+  <tbody>
+
+    {% for agent in agent_list %}
+    <tr>
+      <th>
+        <a href={% url 'sales:agent' agent.login %}>{{ agent.location }} ({{ agent.firstname }} {{ agent.lastname }})</a>
+      </th>
+      <td></td>
+
+      <td class="progress-cell">
+        <div class="progress">
+          <div class="progress-bar progress-bar-info" role="progressbar"
+            aria-valuenow="{{ agent.get_collect_upfront }}" 
+            aria-valuemin="0" aria-valuemax="100"
+            style="width: {{ agent.get_collect_upfront }}%;" 
+            title="Upfront payments"></div>
+          <div class="progress-bar progress-bar-success" role="progressbar"
+            aria-valuenow="{{ agent.get_collect_rec }}" 
+            aria-valuemin="0" aria-valuemax="100"
+            style="width: {{ agent.get_collect_rec }}%;" 
+            title="Recurring payments"></div>
+          <div class="progress-bar progress-bar-warning" role="progressbar"
+            aria-valuenow="{{ agent.get_collect_late }}" 
+            aria-valuemin="0" aria-valuemax="100"
+            style="width: {{ agent.get_collect_late }}%;" 
+            title="Late payments"></div>
+        </div>
+      </td>
+
+      <td style="text-align:left">{{ agent.get_collect_upfront|add:agent.get_collect_rec }}%</td>
+    </tr>
+  {% endfor %}
+
+  </tbody>
+</table>
+</div>
+
 Full size sortable table with total number of units sold, number of units sold this month and last month, progress bar with  collection ratio for the month, number of accounts disbabled for more than 7 days and PAR% (7 days), number of accounts on PDP with more than 14 days and PDP% (14 days)
 
 Probably want to develop that in an external table format so that it can be reused for the detailed Manager table for their own agents
