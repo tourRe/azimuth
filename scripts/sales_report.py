@@ -197,6 +197,9 @@ points['SHS_Agent'] = {'945000':0}
 RMs = {'Abu Bakkar Mansaray (songo)':'Eric',
     'Sorie Koroma (mamamah)':'Eric',
     'Foday Kargbo (makiteh)':'Eric',
+    'Alie Kargbo (ma lamina)':'Eric',
+    'Bundu Bangura (mabang)':'Eric',
+    'HQ Marketing (hq.marketing)':'Eric',
     'HQ Freetown (hq.freetown)':'Eric'}
 
 # IMPORT OF LATEST ANGAZA DOWNLOADS

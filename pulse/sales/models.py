@@ -237,7 +237,9 @@ class Account(models.Model):
     def get_paid_expected_TM(self):
         today = datetime.datetime.today().replace(tzinfo=pytz.utc)
         eom = monthEnd(today)
-        return self.paid_expected(eom)
+        return (self.paid_expected(eom) 
+                - self.get_paid 
+                + self.get_paid_TM)
 
     # Expected payment as of end of last month
     # Made a property for ease of use in templates
@@ -245,7 +247,9 @@ class Account(models.Model):
     def get_paid_expected_LM(self):
         today = datetime.datetime.today().replace(tzinfo=pytz.utc)
         eolm = monthEnd(addmonth(today,-1))
-        return self.paid_expected(eolm)
+        return (self.paid_expected(eolm) 
+                - self.get_paid 
+                + self.get_paid_TM + self.get_paid_LM)
 
     # Returns True if the account was created a given month offset from today
     def new_TM(self,offset):
