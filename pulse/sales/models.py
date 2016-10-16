@@ -1,4 +1,5 @@
 from django.db import models
+import math
 # Imports to handle dates and timezones
 import datetime, calendar, pytz
 # Some models from the sales app are imported in inventory.models which can
@@ -8,6 +9,8 @@ from inventory.models import (Product, Warehouse, Transaction,
 # Imports to receive the post_save signal and create transactions on sale
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+# Used to cache properties and improve performance
+from django.utils.functional import cached_property
 
 # SIMPLE CLIENT CLASS
 # At the moment only handles 1 phone number per client and uses it as the main
@@ -78,67 +81,73 @@ class Agent(models.Model):
     def __str__(self):
         return ('%s (%s %s)' % (self.location, self.firstname, self.lastname))
 
-    # Returns the monthly expected collection for an agent
-    @property
-    def get_collect_expected_TM(self):
-        Q = [obj for obj in Account.objects.filter(agent = self)
-                if obj.get_isActive_TM]
+# CUSTOM MANAGER FOR THE ACCOUNT CLASS TO DEFINE TABLE LEVEL METHODS
+class AccountQuerySet(models.QuerySet):
+
+    # Returns the monthly expected collection for a list of accounts
+    @cached_property
+    def expct_collection_TM(self):
         result = 0
+        Q = [obj for obj in self if obj.get_isActive_TM]
         for account in Q:
-            result += (account.get_paid_expected_TM 
+            result+= (account.get_paid_expected_TM
                     - min(0,account.get_pay_deficit))
         return result
 
-    # Returns the collection % covered by this month's upfront payments
-    @property
-    def get_collect_upfront(self):
-        Q = [obj for obj in Account.objects.filter(agent = self)
-                if obj.get_isActive_TM]
-        paid_up = 0
+    # Returns the amount collected this month in upfront payments
+    @cached_property
+    def collected_upfront(self):
+        result = 0
+        Q = [obj for obj in self if thisMonth(obj.reg_date,0)]
         for account in Q:
-            if thisMonth(account.reg_date,0):
-                paid_up += account.plan_up
-        try: 
-            return int(round(paid_up/self.get_collect_expected_TM*100,0))
-        except:
-            return str(0)
+            result += account.plan_up
+        return result
 
-    # Returns the collection % covered by this month's recurring payments
+    # Returns this month's upfront payments as a % of expected collection
     @property
-    def get_collect_rec(self):
-        Q = [obj for obj in Account.objects.filter(agent = self)
-                if obj.get_isActive_TM]
-        paid_rec = 0
-        for account in Q:
-            if thisMonth(account.reg_date,0):
-                paid_rec += account.get_paid_TM - account.plan_up
-            else:
-                paid_rec += account.get_paid_TM
-        try: 
-            return int(round(paid_rec/self.get_collect_expected_TM*100,0))
-        except:
-            return str(0)
+    def collected_upfront_PCT(self):
+        return ratio(self.collected_upfront, self.expct_collection_TM,
+                pc=True)
 
-    # Returns the collection % of late payments
-    @property
-    def get_collect_late(self):
-        Q = [obj for obj in Account.objects.filter(agent = self)
-                if obj.get_isActive_TM]
-        paid_late = 0
+    # Returns the amount collected this month in instalments
+    @cached_property
+    def collected_instalments(self):
+        result = 0
+        Q = [obj for obj in self if obj.get_isActive_TM]
         for account in Q:
-            paid_late += max(0,account.get_pay_deficit)
-        try: 
-            return int(round(paid_late/self.get_collect_expected_TM*100,0))
-        except:
-            return str(0)
+            result += account.get_paid_TM
+            if thisMonth(account.reg_date,0):
+                result -= account.plan_up
+        return result
+
+    # Returns this month's instalments as a % of expected collection
+    @property
+    def collected_instalments_PCT(self):
+        return ratio(self.collected_instalments, self.expct_collection_TM,
+                pc=True)
+
+    # Returns the amount of late payments for this month
+    @cached_property
+    def collected_late(self):
+        result = 0
+        for account in self:
+            if account.get_isActive_TM:
+                result += max(0,account.get_pay_deficit)
+        return result
+
+    # Returns this month's instalments as a % of expected collection
+    @property
+    def collected_late_PCT(self):
+        return ratio(self.collected_late, self.expct_collection_TM,
+                pc=True)
+
 
 # SIMPLE ACCOUNT CLASS WITH PLENTY OF FUNCTIONS FOR ANALYTICS
 # By convention, all @property methods are named get_ to not be confused with
 # class attributes
-# Model doesn't work yet with detached (reposessed) and replaced lamps
+# AccountQuerySet is a custom query set created to add table level methods
+# Model doesn't work yet with replaced lamps
 # Also, test accounts are not taken into account at this stage
-# Could actually override save to make sure that origin inventory gets updated
-# automatically
 # PLAN is not a separate class because of how plans can change over time and
 # it would be a nightmare to track (they keep the same name on the hub)
 class Account(models.Model):
@@ -157,12 +166,13 @@ class Account(models.Model):
     reg_date = models.DateTimeField('registration date')
     agent = models.ForeignKey(Agent)
     status = models.CharField(max_length=1,choices=STATUS)
+    objects = AccountQuerySet.as_manager()
 
     def __str__(self):
         return '%s - %s' % (self.account_GLP, self.plan_name)
 
     # Total payments collected
-    @property
+    @cached_property
     def get_paid(self):
         result = 0
         for payment in Payment.objects.filter(account = self):
@@ -181,19 +191,15 @@ class Account(models.Model):
         return result
 
     # Payments collected this month
-    # Made a property for ease of use in templates
-    @property
-    def get_paid_TM(self):
-        return self.paid_TM(0)
+    @cached_property
+    def get_paid_TM(self): return self.paid_TM(0)
 
     # Payments collected last month
-    # Made a property for ease of use in templates
-    @property
-    def get_paid_LM(self):
-        return self.paid_TM(-1)
+    @cached_property
+    def get_paid_LM(self): return self.paid_TM(-1)
 
     # Total number of payments
-    @property
+    @cached_property
     def get_pay_nb(self):
         return Payment.objects.filter(account = self).count()
 
@@ -209,16 +215,12 @@ class Account(models.Model):
         return result
 
     # Number of payments this month
-    # Made a property for ease of use in templates
-    @property
-    def get_pay_nb_TM(self):
-        return self.pay_nb_TM(0)
+    @cached_property
+    def get_pay_nb_TM(self): return self.pay_nb_TM(0)
 
     # Number of payments last month
-    # Made a property for ease of use in templates
-    @property
-    def get_pay_nb_LM(self):
-        return self.pay_nb_LM(-1)
+    @cached_property
+    def get_pay_nb_LM(self): return self.pay_nb_LM(-1)
 
     # Expected payment as of 'date'
     def paid_expected(self, date):
@@ -230,14 +232,12 @@ class Account(models.Model):
                 self.plan_tot)
 
     # Expected payment as of today
-    # Made a property for ease of use in templates
     @property
     def get_paid_expected(self):
         today = datetime.datetime.today().replace(tzinfo=pytz.utc)
         return self.paid_expected(today)
 
     # Expected payment as of end of month
-    # Made a property for ease of use in templates
     @property
     def get_paid_expected_TM(self):
         today = datetime.datetime.today().replace(tzinfo=pytz.utc)
@@ -247,7 +247,6 @@ class Account(models.Model):
                 + self.get_paid_TM)
 
     # Expected payment as of end of last month
-    # Made a property for ease of use in templates
     @property
     def get_paid_expected_LM(self):
         today = datetime.datetime.today().replace(tzinfo=pytz.utc)
@@ -257,27 +256,23 @@ class Account(models.Model):
                 + self.get_paid_TM + self.get_paid_LM)
 
     # Returns True if the account was created a given month offset from today
-    def new_TM(self,offset):
-        return thisMonth(self.reg_date,offset)
+    def new_TM(self,offset): return thisMonth(self.reg_date,offset)
 
     # Returns true if the client was created this month
     @property
-    def get_new_TM(self):
-        return self.new_TM(0)
+    def get_new_TM(self): return self.new_TM(0)
 
     # Returns true if the client was created last month
     @property
-    def get_new_LM(self):
-        return self.new_TM(-1)
+    def get_new_LM(self): return self.new_TM(-1)
 
     # Payment deficit, can be negative if in advance
     @property
-    def get_pay_deficit(self):
-        return self.get_paid_expected - self.get_paid
+    def get_pay_deficit(self): return self.get_paid_expected - self.get_paid
 
     # Projected payment deficit at end of month
     @property
-    def get_pay_deficit_TM(self):
+    def get_pay_deficit_TM(self): 
         return self.get_paid_expected_TM - self.get_paid_TM
 
     # Payment deficit at end of last month
@@ -286,7 +281,7 @@ class Account(models.Model):
         return self.get_paid_expected_LM - self.get_paid_LM
 
     # Returns a Payment object with the last payment
-    @property
+    @cached_property
     def get_lastPay(self):
         r = list(Payment.objects.filter(account = self).order_by('date')[:1])
         if r:
@@ -317,9 +312,8 @@ class Account(models.Model):
         return result
     
     # Current disabled, made into a property for use in templates
-    @property
-    def get_current_disabled(self):
-        return self.days_disabled(now=True)
+    @cached_property
+    def get_current_disabled(self): return self.days_disabled(now=True)
 
     # False if account is not active this month
     @property
@@ -336,11 +330,11 @@ class Account(models.Model):
             return self.plan_tot - self.get_paid
         return 0
 
-# Creates a transaction and transaction item when an item is sold
+# CREATES A TRANSACTION AND TRANSACTION ITEM WHEN AN ACCOUNT IS CREATED
 @receiver(post_save, sender=Account,
         dispatch_uid='Account_save_signal')
-def log_transactions(sender, instance, using, **kwargs):
-    if not instance.pk:
+def log_transactions(sender, instance, created, *args, **kwargs):
+    if created:
         transaction = Transaction.objects.create(
                 transaction_type = 2,
                 date = instance.reg_date,
@@ -407,3 +401,25 @@ def thisMonth(date,offset):
     today = datetime.datetime.today().replace(tzinfo=pytz.utc)
     return (date > monthEnd(add_months(today,-1+offset)) and
         date <= monthEnd(add_months(today,offset)))
+
+# Returns the ratio of two numbers, handling div by 0 and with options on the
+# number of decimals, display as pc and str output
+def ratio(top, bottom, dec=0, pc=False, toStr=False):
+    if not toStr:
+        if bottom == 0:
+            return 0
+        elif pc:
+            return (int(round(top/bottom,2+dec)*math.pow(10,dec+2))
+                    /math.pow(10,dec))
+        else:
+            return (int(round(top/bottom,dec)*math.pow(10,dec))
+                    /math.pow(10,dec))
+    else:
+        if bottom == 0:
+            return "n.a."
+        elif pc:
+            return str((int(round(top/bottom,2+dec)*math.pow(10,dec+2))
+                    /math.pow(10,dec))) + " %"
+        else:
+            return str("{:,}".format(int(round(top/bottom,dec)*math.pow(10,dec))
+                    /math.pow(10,dec)))

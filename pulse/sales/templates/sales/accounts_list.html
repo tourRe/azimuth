@@ -1,0 +1,61 @@
+<table class="sort table">
+  <thead>
+    <tr>
+      <th>Agent</th>
+      <th></th>
+      <th colspan="2">Collection this month</th>
+      <th style="display: none">Collection ratio</th>
+      <th colspan="2">PAR-7</th>
+      <th style="display: none">PAR (7 days) pct</th>
+      <th colspan="2">PDP-14</th>
+      <th style="display: none">PDP (14 days) pct</th>
+      <th></th>
+      <th>Units sold</th>
+      <th>This month</th>
+      <th>Last month</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for line_title, accounts in account_table.items %}
+    <tr>
+      <th>
+        {% autoescape off %}{{ line_title }}{% endautoescape %}
+      </th>
+      <td></td>
+
+      <td class="progress-cell">
+        <div class="progress">
+          <div class="progress-bar progress-bar-info" role="progressbar" 
+            aria-valuenow="{{ accounts.collected_upfront_PCT }}" 
+            aria-valuemin="0" aria-valuemax="100" 
+            style="width: {{ accounts.collected_upfront_PCT }}%;" 
+            title="Upfront payments"></div>
+          <div class="progress-bar progress-bar-success" role="progressbar" 
+            aria-valuenow="{{ accounts.collected_instalments_PCT }}" 
+            aria-valuemin="0" aria-valuemax="100" 
+            style="width: {{ accounts.collected_instalments_PCT }}%;" 
+            title="Instalments"></div>
+          <div class="progress-bar progress-bar-warning" role="progressbar" 
+            aria-valuenow="{{ accounts.collected_late_PCT }}" 
+            aria-valuemin="0" aria-valuemax="100" 
+            style="width: {{ accounts.collected_late_PCT }}%;" 
+            title="Late payments"></div>
+        </div>
+      </td>
+
+      <td style="text-align:left">{{ accounts.collected_upfront_PCT|add:accounts.collected_instalments_PCT }}%</td>
+
+      <td>tbd</td>
+      <td>tbd</td>
+      <td>tbd</td>
+      <td>tbd</td>
+      <td></td>
+      <td>tbd</td>
+      <td>tbd</td>
+      <td>tbd</td>
+    </tr>
+    {% endfor %}
+
+  </tbody>
+</table>
+

@@ -106,9 +106,16 @@ def agent_index(request):
     # Adding menu content to context
     agent_list = Agent.objects.order_by('location')
     manager_list = Manager.objects.order_by('firstname')
+    account_table = collections.OrderedDict()
+    for agent in agent_list:
+        key = ("<a href='/sales/agents/" + agent.login + "/'>"
+                + " " + agent.location + " (" + agent.firstname + " "
+                + agent.lastname + ")</a>")
+        account_table[key] = Account.objects.filter(agent=agent)
     context = {
             'manager_list' : manager_list,
-            'agent_list' : agent_list
+            'agent_list' : agent_list,
+            'account_table' : account_table,
             }
     return render(request, 'sales/agent_index.html', context)
 

@@ -4,6 +4,8 @@ from django.db.models.signals import pre_delete
 from django.dispatch import receiver
 # Time packages for dates with timezone management
 import datetime, pytz
+# Could import specific models only but it creates circular import error
+import sales
 
 # SIMPLE WAREHOUSE CLASS
 # Would ideally initiate an inventory item for each product upon creation
