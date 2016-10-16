@@ -3,7 +3,11 @@ from django.db import models
 import datetime, calendar, pytz
 # Some models from the sales app are imported in inventory.models which can
 # create a circular import error
-from inventory.models import Product, Warehouse
+from inventory.models import (Product, Warehouse, Transaction, 
+        TransactionItem, InventoryItem)
+# Imports to receive the post_save signal and create transactions on sale
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 # SIMPLE CLIENT CLASS
 # At the moment only handles 1 phone number per client and uses it as the main
@@ -138,8 +142,9 @@ class Agent(models.Model):
 # PLAN is not a separate class because of how plans can change over time and
 # it would be a nightmare to track (they keep the same name on the hub)
 class Account(models.Model):
-    STATUS = (('e', 'Active'), ('d', 'Deactivated'), 
-            ('u', 'Unlocked'), ('w', 'Written Off'))
+    STATUS = (('e', 'Enabled'), ('d', 'Deactivated'), 
+            ('u', 'Unlocked'), ('w', 'Written Off'),
+            ('r', 'Reposessed'))
 
     account_Angaza = models.CharField(max_length=8)
     account_GLP = models.CharField(max_length=7)
@@ -330,6 +335,27 @@ class Account(models.Model):
         if self.days_disabled(now=True) > days:
             return self.plan_tot - self.get_paid
         return 0
+
+# Creates a transaction and transaction item when an item is sold
+@receiver(post_save, sender=Account,
+        dispatch_uid='Account_save_signal')
+def log_transactions(sender, instance, using, **kwargs):
+    if not instance.pk:
+        transaction = Transaction.objects.create(
+                transaction_type = 2,
+                date = instance.reg_date,
+                origin = instance.agent.warehouse,
+                destination = Warehouse.objects.get(name="_Client"),
+                account = instance,
+                comment = "sale"
+                )
+        transItem = TransactionItem.objects.create(
+                transaction = transaction,
+                item = InventoryItem.objects.get(
+                    product = instance.plan_product,
+                    warehouse = instance.agent.warehouse),
+                qty = 1
+                )
 
 # SIMPLE PAYMENT CLASS, INCLUDES ANGAZA ID TO USE AS PRIMARY KEY WHEN UPDATING
 class Payment(models.Model):

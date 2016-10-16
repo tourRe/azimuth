@@ -34,7 +34,14 @@ def collect():
         agent = Agent.objects.get(label = acc_read['responsible_user'])
 
         # Identifying product
-        product = Product.objects.get(label = acc_read['attached_unit_type'])
+        try: 
+            product = Product.objects.get(
+                    label = acc_read['attached_unit_type'])
+        # in case the account is "detached", there is no 'attached_unit_type
+        # the exception is catched in except and the rest of the loop is
+        # skipped so that the account gets deleted
+        except:
+            pass
 
         # Creating or identifying client
         try: gender = acc_read['customer_gender'][0]
@@ -64,13 +71,17 @@ def collect():
             acc.account_GLP = acc_read['account_number']
             acc.client = client
             acc.plan_name = acc_read['group_name']
-            acc.plan_product = product
+            # Can safely assume product type won't change
+            # acc.plan_product = product
             acc.plan_up = int(acc_read['upfront_price'])
             acc.plan_tot = int(acc_read['unlock_price'])
             acc.plan_week = int(float(acc_read['hour_price'])*24*7)
             acc.reg_date = toDate_ms(acc_read['registration_date_utc'])
             acc.agent = agent
-            acc.status = acc_read['account_status'][0].lower()
+            if acc_read['account_status'] == 'Detached':
+                acc.status = 'r'
+            else:
+                acc.status = acc_read['account_status'][0].lower()
         # otherwise creates a new account
         except:
             acc = Account(
@@ -86,30 +97,16 @@ def collect():
                     agent = agent,
                     status = acc_read['account_status'][0].lower()
                     )
-            transaction = Transaction.objects.create(
-                    transaction_type = 2,
-                    date = acc.reg_date,
-                    origin = agent.warehouse,
-                    destination = Warehouse.objects.get(name="_Client"),
-                    comment = "sale"
-                    )
-            transItem = TransactionItem(
-                    transaction = transaction,
-                    item = InventoryItem.objects.get(
-                        product = acc.plan_product,
-                        warehouse = agent.warehouse),
-                    qty = 1
-                    )
-            # Testing transItem for save, returning an error if necessary
             try:
-                transItem.save()
+                acc.save()
             except ValidationError as e:
-                transaction.delete()
+                # deleting the account in case tranItem couldn't be saved
+                # this also deletes the related Transaction
+                acc.delete()
                 for key, value in e.message_dict.items():
                     print("error in " + key + ": " + value)
 
         updated_accounts.append(acc.account_Angaza)
-        acc.save()
 
     bar.finish()
 
@@ -151,8 +148,14 @@ def collect():
     
     # Deleting all clients (+ accounts) not found in the dump
     print('Deleting deprecated entries')
+    print(' > deleting {} clients'.format(
+        Client.objects.exclude(phone__in = updated_clients).count()))
     Client.objects.exclude(phone__in = updated_clients).delete()
+    print(' > deleting {} accounts'.format(
+        Account.objects.exclude(account_Angaza__in = updated_accounts).count()))
     Account.objects.exclude(account_Angaza__in = updated_accounts).delete()
+    print(' > deleting {} payments'.format(
+        Payment.objects.exclude(id_Angaza__in = updated_payments).count()))
     Payment.objects.exclude(id_Angaza__in = updated_payments).delete()
 
 def csvToList(path):

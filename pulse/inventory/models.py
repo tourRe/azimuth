@@ -4,9 +4,6 @@ from django.db.models.signals import pre_delete
 from django.dispatch import receiver
 # Time packages for dates with timezone management
 import datetime, pytz
-# Not necessary to import all the sales app but importing select models was giving a
-# circular import error
-import sales
 
 # SIMPLE WAREHOUSE CLASS
 # Would ideally initiate an inventory item for each product upon creation
@@ -95,6 +92,8 @@ class Transaction(models.Model):
     date = models.DateTimeField(auto_now_add=True)
     origin = models.ForeignKey(Warehouse, related_name='origin')
     destination = models.ForeignKey(Warehouse, related_name='destination')
+    account = models.ForeignKey('sales.Account', 
+            null=True, on_delete=models.CASCADE)
     comment = models.CharField(max_length=255, blank=True, null=True)
 
     def __str__(self):
@@ -147,7 +146,7 @@ class TransactionItem(models.Model):
 # Mirrors the actions performed on save
 @receiver(pre_delete, sender=TransactionItem, 
         dispatch_uid='TransactionItem_delete_signal')
-def log_deleted_question(sender, instance, using, **kwargs):
+def reverse_transactions(sender, instance, using, **kwargs):
     w_from = instance.transaction.origin
     w_to = instance.transaction.destination
     item_to = InventoryItem.objects.get(
