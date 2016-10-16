@@ -10,9 +10,9 @@
       <th colspan="2">PDP-14</th>
       <th style="display: none">PDP (14 days) pct</th>
       <th></th>
-      <th>Units sold</th>
-      <th>This month</th>
-      <th>Last month</th>
+      <th style="text-align:right">Units sold</th>
+      <th style="text-align:right">This month</th>
+      <th style="text-align:right">Last month</th>
     </tr>
   </thead>
   <tbody>
@@ -50,9 +50,9 @@
       <td>tbd</td>
       <td>tbd</td>
       <td></td>
-      <td>tbd</td>
-      <td>tbd</td>
-      <td>tbd</td>
+      <td>{{ accounts.nb_sold }}</td>
+      <td>{{ accounts.nb_sold_TM }}</td>
+      <td>{{ accounts.nb_sold_LM }}</td>
     </tr>
     {% endfor %}
 

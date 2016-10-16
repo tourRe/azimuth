@@ -84,6 +84,21 @@ class Agent(models.Model):
 # CUSTOM MANAGER FOR THE ACCOUNT CLASS TO DEFINE TABLE LEVEL METHODS
 class AccountQuerySet(models.QuerySet):
 
+    # Returns the number of units sold
+    @cached_property
+    def nb_sold(self):
+        return self.count()
+
+    # Returns the number of units sold this month
+    @cached_property
+    def nb_sold_TM(self):
+        return len([obj for obj in self if obj.get_new_TM])
+
+    # Returns the number of units sold last month
+    @cached_property
+    def nb_sold_LM(self):
+        return len([obj for obj in self if obj.get_new_LM])
+
     # Returns the monthly expected collection for a list of accounts
     @cached_property
     def expct_collection_TM(self):
