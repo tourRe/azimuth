@@ -1,0 +1,24 @@
+<table class="sort table">
+  <thead>
+    <tr>
+      <th>Account</th>
+      <th style="text-align:right">Product</th>
+      <th style="text-align:right">Plan</th>
+      <th style="text-align:right">Current Disabled</th>
+      <th style="text-align:right">Total Disabled</th>
+      <th style="text-align:right">Left to pay</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for line_title, account in active_table.items %}
+    <tr>
+      <th>{{ line_title }} </th>
+      <td>{{ account.plan_product.name }}</td>
+      <td>{{ account.plan_name }}</td>
+      <td>{{ account.days_disabled_current }}</td>
+      <td>{{ account.days_disabled }}</td>
+      <td>tbd</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>

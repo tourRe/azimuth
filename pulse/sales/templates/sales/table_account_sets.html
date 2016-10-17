@@ -1,0 +1,61 @@
+<table class="sort table">
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th></th>
+      <th colspan="2">Collection this month</th>
+      <th style="display: none">Collection ratio</th>
+      <th colspan="2">PAR-7</th>
+      <th style="display: none">PAR (7 days) pct</th>
+      <th colspan="2">PDP-14</th>
+      <th style="display: none">PDP (14 days) pct</th>
+      <th></th>
+      <th style="text-align:right">Units sold</th>
+      <th style="text-align:right">This month</th>
+      <th style="text-align:right">Last month</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for line_title, accounts in account_table.items %}
+    <tr>
+      <th>
+        {% autoescape off %}{{ line_title }}{% endautoescape %}
+      </th>
+      <td></td>
+
+      <td class="progress-cell">
+        <div class="progress">
+          <div class="progress-bar progress-bar-info" role="progressbar" 
+            aria-valuenow="{{ accounts.collected_upfront_PCT }}" 
+            aria-valuemin="0" aria-valuemax="100" 
+            style="width: {{ accounts.collected_upfront_PCT }}%;" 
+            title="Upfront payments"></div>
+          <div class="progress-bar progress-bar-success" role="progressbar" 
+            aria-valuenow="{{ accounts.collected_instalments_PCT }}" 
+            aria-valuemin="0" aria-valuemax="100" 
+            style="width: {{ accounts.collected_instalments_PCT }}%;" 
+            title="Instalments"></div>
+          <div class="progress-bar progress-bar-warning" role="progressbar" 
+            aria-valuenow="{{ accounts.collected_late_PCT }}" 
+            aria-valuemin="0" aria-valuemax="100" 
+            style="width: {{ accounts.collected_late_PCT }}%;" 
+            title="Late payments"></div>
+        </div>
+      </td>
+
+      <td style="text-align:left">{{ accounts.collected_upfront_PCT|add:accounts.collected_instalments_PCT }}%</td>
+
+      <td>{{ accounts.AAR_7 }}</td>
+      <td style="text-align:left">({{ accounts.PAR_7 }})</td>
+      <td>{{ accounts.ADP_14 }}</td>
+      <td style="text-align:left">({{ accounts.PDP_14 }})</td>
+      <td></td>
+      <td>{{ accounts.nb_sold }}</td>
+      <td>{{ accounts.nb_sold_TM }}</td>
+      <td>{{ accounts.nb_sold_LM }}</td>
+    </tr>
+    {% endfor %}
+
+  </tbody>
+</table>
+

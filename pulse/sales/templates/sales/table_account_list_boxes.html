@@ -1,0 +1,48 @@
+{% for line_title, account in active_table.items %}
+  <div class="col-lg-4">
+    <div class="panel panel-primary">
+      <div class="panel-heading"><h4 class="panel-title">
+          {{ account.account_GLP }}</h4></div>
+      <div class="panel-body">
+        <table class="table table-condensed table-striped">
+          <tr>
+            <th>Account</th>
+            <td>{{ line_title }}</td>
+          </tr>
+          <tr>
+            <th>Product</th>
+            <td>{{ account.plan_product.name }}</td>
+          </tr>
+          <tr>
+            <th>Plan</th>
+            <td>{{ account.plan_name }}</td>
+          </tr>
+          <tr>
+            <th>Client</th>
+            <td>{{ account.client.name|title }}</td>
+          </tr>
+          <tr>
+            <th>Client number</th>
+            <td>{{ account.client.phone }}</td>
+          </tr>
+          <tr>
+            <th>Client location</th>
+            <td>{{ account.client.location|title }}</td>
+          </tr>
+          <tr>
+            <th>Current Disabled</th>
+            <td>{{ account.days_disabled_current|floatformat }}</td>
+          </tr>
+          <tr>
+            <th>Total Disabled</th>
+            <td>{{ account.days_disabled|floatformat }}</td>
+          </tr>
+          <tr>
+            <th>Left To Pay</th>
+            <td>tbd</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+  </div>
+{% endfor %}
