@@ -17,68 +17,14 @@ def index(request):
             }
 
     # Preparing Clients table
-    table_clients = collections.OrderedDict()
-    Q = Client.objects.all()
-    table_clients['Number'] = Q.count()
-    table_clients['New this month'] = 0
-    table_clients['New last month'] = 0
-    for c in Q:
-        table_clients['New this month'] += (c.get_new_TM)*1
-        table_clients['New last month'] += (c.get_new_LM)*1
-    table_clients['Accounts per client'] = ratio(
-            Account.objects.all().count(),table_clients['Number'],False,2)
-    # Converting numbers to well presented strings
-    table_clients['Number'] = str("{:,}".format(
-        table_clients['Number']))
-    table_clients['New this month'] =  str("{:,}".format(
-        table_clients['New this month']))
-    table_clients['New last month'] =  str("{:,}".format(
-        table_clients['New last month']))
-
-    context['table_clients'] = table_clients
-
+    all_clients = Client.objects.all()
+    context['all_clients'] = all_clients
     # Preparing Accounts table
-    table_accounts = collections.OrderedDict()
-    Q = Account.objects.all()
-    table_accounts['Number'] = Q.count()
-    table_accounts['New this month'] = 0
-    table_accounts['New last month'] = 0
-    oar_14 = 0
-    outstanding = 0
-    for a in Q:
-        table_accounts['New this month'] += (a.get_new_TM)*1
-        table_accounts['New last month'] += (a.get_new_LM)*1
-        oar_14 += a.OAR(14)
-        outstanding += a.plan_tot - a.get_paid
-    table_accounts['New this month'] =  str("{:,}".format(
-        table_accounts['New this month']))
-    table_accounts['New last month'] =  str("{:,}".format(
-        table_accounts['New last month']))
-    table_accounts['PAR (14 days)'] = ratio(
-            oar_14,outstanding,True,2)
-    context['table_accounts'] = table_accounts
-    
+    all_accounts = Account.objects.all()
+    context['all_accounts'] = all_accounts
     # Preparing Payments table
-    table_payments = collections.OrderedDict()
-    Q = Payment.objects.all()
-    table_payments['Number'] = str("{:,}".format(Q.count()))
-    today = datetime.datetime.today().replace(tzinfo=pytz.utc)
-    today_m2m = today - datetime.timedelta(62,0,0)
-    Q2 = Payment.objects.filter(date__gt = today_m2m)
-    table_payments['Collected this month'] = 0
-    table_payments['Collected last month'] = 0
-    for p in Q2:
-        table_payments['Collected this month'] += (p.get_TM)*1
-        table_payments['Collected last month'] += (p.get_LM)*1
-    table_payments['Collected this month'] =  str("{:,}".format(
-        table_payments['Collected this month']))
-    table_payments['Collected last month'] =  str("{:,}".format(
-        table_payments['Collected last month']))
-    # Check online for averaging a field
-    # table_payments['Average payment amount'] = str("{:,}".format(
-    # Q.amount__average))
-    table_payments['Average payment amount'] = "tbd"
-    context['table_payments'] = table_payments
+    all_payments = Payment.objects.all()
+    context['all_payments'] = all_payments
 
     return render(request, 'sales/index.html', context)
 
@@ -90,6 +36,15 @@ def manager_index(request):
             'manager_list' : manager_list,
             'agent_list' : agent_list
             }
+
+    # Adding account table to context
+    account_table = collections.OrderedDict()
+    for manager in manager_list:
+        key = ("<a href='/sales/managers/" + manager.firstname + "/'>"
+                + " " + manager.firstname + " " + manager.lastname + "</a>")
+        agents = Agent.objects.filter(manager = manager)
+        account_table[key] = Account.objects.filter(agent__in = agents)
+    context['account_table'] = account_table
     return render(request, 'sales/manager_index.html', context)
 
 def manager(request, manager_firstname):
@@ -100,23 +55,37 @@ def manager(request, manager_firstname):
             'manager_list' : manager_list,
             'agent_list' : agent_list
             }
+
+    # Adding account table to context
+    account_table = collections.OrderedDict()
+    manager = Manager.objects.get(firstname = manager_firstname)
+    agents = Agent.objects.filter(manager = manager)
+    for agent in agents:
+        key = ("<a href='/sales/agents/" + agent.login + "/'>"
+                + " " + agent.location + " (" + agent.firstname + " "
+                + agent.lastname + ")</a>")
+        account_table[key] = Account.objects.filter(agent=agent)
+    context['account_table'] = account_table
+    context['manager'] = manager
     return render(request, 'sales/manager.html', context)
 
 def agent_index(request):
     # Adding menu content to context
     agent_list = Agent.objects.order_by('location')
     manager_list = Manager.objects.order_by('firstname')
+    context = {
+            'manager_list' : manager_list,
+            'agent_list' : agent_list,
+            }
+
+    # Adding account table to context
     account_table = collections.OrderedDict()
     for agent in agent_list:
         key = ("<a href='/sales/agents/" + agent.login + "/'>"
                 + " " + agent.location + " (" + agent.firstname + " "
                 + agent.lastname + ")</a>")
         account_table[key] = Account.objects.filter(agent=agent)
-    context = {
-            'manager_list' : manager_list,
-            'agent_list' : agent_list,
-            'account_table' : account_table,
-            }
+    context['account_table'] = account_table
     return render(request, 'sales/agent_index.html', context)
 
 def agent(request, agent_login):

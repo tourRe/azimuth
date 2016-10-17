@@ -104,12 +104,22 @@
               <a href="{% url 'sales:client_index' %}">Clients</a></h4></div>
           <div class="panel-body">
             <table class="table table-condensed table-striped">
-              {% for key, value in table_clients.items %}
               <tr>
-                <th>{{ key }}</th>
-                <td>{{ value }}</td>
+                <th>Number</th>
+                <td>{{ all_clients.nb }}</td>
               </tr>
-              {% endfor %}
+              <tr>
+                <th>New this month</th>
+                <td>{{ all_clients.nb_new_TM }}</td>
+              </tr>
+              <tr>
+                <th>New last month</th>
+                <td>{{ all_clients.nb_new_LM }}</td>
+              </tr>
+              <tr>
+                <th>Accounts per client</th>
+                <td>{{ all_clients.account_per_client }}</td>
+              </tr>
             </table>
           </div>
         </div>
@@ -120,12 +130,22 @@
               <a href="{% url 'sales:account_index' %}">Accounts</a></h4></div>
           <div class="panel-body">
             <table class="table table-condensed table-striped">
-              {% for key, value in table_accounts.items %}
               <tr>
-                <th>{{ key }}</th>
-                <td>{{ value }}</td>
+                <th>Number</th>
+                <td>{{ all_accounts.nb_sold }}</td>
               </tr>
-              {% endfor %}
+              <tr>
+                <th>New this month</th>
+                <td>{{ all_accounts.nb_sold_TM }}</td>
+              </tr>
+              <tr>
+                <th>New last month</th>
+                <td>{{ all_accounts.nb_sold_LM }}</td>
+              </tr>
+              <tr>
+                <th>PAR (14 days)</th>
+                <td>tbd</td>
+              </tr>
             </table>
           </div>
         </div>
@@ -136,12 +156,22 @@
               <a href="{% url 'sales:payment_index' %}">Payments</a></h4></div>
           <div class="panel-body">
             <table class="table table-condensed table-striped">
-              {% for key, value in table_payments.items %}
               <tr>
-                <th>{{ key }}</th>
-                <td>{{ value }}</td>
+                <th>Number</th>
+                <td>{{ all_payments.nb }}</td>
               </tr>
-              {% endfor %}
+              <tr>
+                <th>New this month</th>
+                <td>{{ all_payments.nb_TM }}</td>
+              </tr>
+              <tr>
+                <th>New last month</th>
+                <td>{{ all_payments.nb_LM }}</td>
+              </tr>
+              <tr>
+                <th>Average payment</th>
+                <td>{{ all_payments.average_payment }}</td>
+              </tr>
             </table>
           </div>
         </div>

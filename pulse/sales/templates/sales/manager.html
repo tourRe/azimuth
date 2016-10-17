@@ -1,9 +1,11 @@
 {% extends "sales/base.html" %}
 
 {% block breadcrumbs %}
-Manager
+{{ manager.firstname }} {{manager.lastname }}
 {% endblock %}
 
 {% block content %}
-Manager
+<div class="content">
+  {% include "sales/accounts_list.html" %}
+</div>
 {% endblock %}

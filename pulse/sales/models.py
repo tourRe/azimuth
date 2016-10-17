@@ -12,6 +12,26 @@ from django.dispatch import receiver
 # Used to cache properties and improve performance
 from django.utils.functional import cached_property
 
+# ****************************************************************
+# ************************** CLIENT ******************************
+# ****************************************************************
+
+# CUSTOM QUERYSET CLASS FOR THE ACCOUNT CLASS TO DEFINE TABLE LEVEL METHODS
+class ClientQuerySet(models.QuerySet):
+
+    @cached_property
+    def nb(self): return self.count()
+    @cached_property
+    def nb_new_TM(self): return len([obj for obj in self if obj.is_new_TM])
+    @cached_property
+    def nb_new_LM(self): return len([obj for obj in self if obj.is_new_LM])
+
+    @cached_property
+    def account_per_client(self):
+        nb_accounts = Account.objects.filter(client__in = self).count()
+        nb_clients = self.nb
+        return ratio(nb_accounts,nb_clients,dec=2,toStr=True)
+
 # SIMPLE CLIENT CLASS
 # At the moment only handles 1 phone number per client and uses it as the main
 # key (used to identify duplicates, never updated)
@@ -24,31 +44,30 @@ class Client(models.Model):
             choices=(('M', 'Male'),('F', 'Female')), null=True)
     phone = models.CharField(max_length=16, null=True)
     location = models.CharField(max_length=30, null=True)
+    objects = ClientQuerySet.as_manager()
 
     def __str__(self):
         return ('%s (%s)' % (self.name, self.location))
 
     # Returns the earliest registration date
     @property
-    def get_from(self):
+    def first_registration(self):
         result = datetime.datetime.today().replace(tzinfo=pytz.utc)
         for acc in Account.objects.filter(client=self):
             result = min(acc.reg_date,result)
         return result
 
     # Returns True if the client was created a given month offset from today
-    def new_TM(self,offset):
-        return thisMonth(self.get_from,offset)
-
-    # Returns true if the client was created this month
+    def is_new_by_month(self,offset): 
+        return is_this_month(self.first_registration,offset)
     @property
-    def get_new_TM(self):
-        return self.new_TM(0)
-
-    # Returns true if the client was created last month
+    def is_new_TM(self): return self.is_new_by_month(0)
     @property
-    def get_new_LM(self):
-        return self.new_TM(-1)
+    def is_new_LM(self): return self.is_new_by_month(-1)
+
+# ****************************************************************
+# ************************* MANAGER ******************************
+# ****************************************************************
 
 # MANAGER CLASS, RESPONSIBLE FOR SEVERAL AGENTS
 class Manager(models.Model):
@@ -62,6 +81,10 @@ class Manager(models.Model):
 
     def __str__(self):
         return ('%s %s (%s)' % (self.firstname, self.lastname, self.district))
+
+# ****************************************************************
+# ************************** AGENT *******************************
+# ****************************************************************
 
 # AGENT CLASS, SELLS PRODUCTS FROM A UNIQUE WAREHOUSE
 # Could look into geolocalization...
@@ -81,39 +104,36 @@ class Agent(models.Model):
     def __str__(self):
         return ('%s (%s %s)' % (self.location, self.firstname, self.lastname))
 
-# CUSTOM MANAGER FOR THE ACCOUNT CLASS TO DEFINE TABLE LEVEL METHODS
+# ****************************************************************
+# ************************* ACCOUNT ******************************
+# ****************************************************************
+
+# CUSTOM QUERYSET CLASS FOR THE ACCOUNT CLASS TO DEFINE TABLE LEVEL METHODS
 class AccountQuerySet(models.QuerySet):
 
-    # Returns the number of units sold
+    # Returns the number of units sold, this month and last month
     @cached_property
-    def nb_sold(self):
-        return self.count()
-
-    # Returns the number of units sold this month
+    def nb_sold(self): return self.count()
     @cached_property
-    def nb_sold_TM(self):
-        return len([obj for obj in self if obj.get_new_TM])
-
-    # Returns the number of units sold last month
+    def nb_sold_TM(self): return len([obj for obj in self if obj.is_new_TM])
     @cached_property
-    def nb_sold_LM(self):
-        return len([obj for obj in self if obj.get_new_LM])
+    def nb_sold_LM(self): return len([obj for obj in self if obj.is_new_LM])
 
     # Returns the monthly expected collection for a list of accounts
     @cached_property
     def expct_collection_TM(self):
         result = 0
-        Q = [obj for obj in self if obj.get_isActive_TM]
+        Q = [obj for obj in self if obj.is_active_TM]
         for account in Q:
-            result+= (account.get_paid_expected_TM
-                    - min(0,account.get_pay_deficit))
+            result+= (account.expct_paid_TM
+                    - min(0,account.payment_deficit))
         return result
 
     # Returns the amount collected this month in upfront payments
     @cached_property
     def collected_upfront(self):
         result = 0
-        Q = [obj for obj in self if thisMonth(obj.reg_date,0)]
+        Q = [obj for obj in self if is_this_month(obj.reg_date,0)]
         for account in Q:
             result += account.plan_up
         return result
@@ -128,10 +148,10 @@ class AccountQuerySet(models.QuerySet):
     @cached_property
     def collected_instalments(self):
         result = 0
-        Q = [obj for obj in self if obj.get_isActive_TM]
+        Q = [obj for obj in self if obj.is_active_TM]
         for account in Q:
-            result += account.get_paid_TM
-            if thisMonth(account.reg_date,0):
+            result += account.paid_TM
+            if is_this_month(account.reg_date,0):
                 result -= account.plan_up
         return result
 
@@ -146,8 +166,8 @@ class AccountQuerySet(models.QuerySet):
     def collected_late(self):
         result = 0
         for account in self:
-            if account.get_isActive_TM:
-                result += max(0,account.get_pay_deficit)
+            if account.is_active_TM:
+                result += max(0,account.payment_deficit)
         return result
 
     # Returns this month's instalments as a % of expected collection
@@ -156,6 +176,67 @@ class AccountQuerySet(models.QuerySet):
         return ratio(self.collected_late, self.expct_collection_TM,
                 pc=True)
 
+    # Returns the amount of repayments outstanding
+    @cached_property
+    def outstanding_balance(self):
+        result = 0
+        for account in self:
+            result += account.plan_total - account.paid
+        return result
+
+    # Returns the number of accounts disabled for more than X days
+    # Accounts At Risk
+    def AAR(self, days):
+        return len([obj for obj in self 
+            if obj.days_disabled_current >= days])
+
+    @cached_property
+    def AAR_7(self): return self.AAR(7)
+
+    @cached_property
+    def AAR_14(self): return self.AAR(14)
+
+    # Returns the PCT of outstanding balance for accounts disabled for more
+    # than X days
+    # Portfolio At Risk
+    def PAR(self, days):
+        Q = [obj for obj in self if obj.days_disabled_current >= days]
+        return ratio(Q.outstanding_balance,self.outstanding_balance,
+                dc=2,pc=True,toStr=True)
+
+    @cached_property
+    def PAR_7(self): return self.PAR(7)
+
+    @cached_property
+    def PAR_14(self): return self.PAR(14)
+
+    # Returns the number of accounts disabled for more than X days
+    # Accounts At Risk
+    def ADP(self, days):
+        return len([obj for obj in self 
+            if (obj.days_disabled >= days 
+                and obj.is_active)])
+
+    @cached_property
+    def ADP_14(self): return self.ADP(14)
+
+    @cached_property
+    def ADP_30(self): return self.ADP(30)
+
+    # Returns the PCT of outstanding balance for accounts disabled for more
+    # than X days
+    # Portfolio At Risk
+    def PDP(self, days):
+        Q = [obj for obj in self if (obj.days_disabled >= days
+            and obj.is_active)]
+        return ratio(Q.outstanding_balance,self.outstanding_balance,
+                dc=2,pc=True,toStr=True)
+
+    @cached_property
+    def PDP_14(self): return self.PDP(14)
+
+    @cached_property
+    def PDP_30(self): return self.PDP(30)
 
 # SIMPLE ACCOUNT CLASS WITH PLENTY OF FUNCTIONS FOR ANALYTICS
 # By convention, all @property methods are named get_ to not be confused with
@@ -188,14 +269,14 @@ class Account(models.Model):
 
     # Total payments collected
     @cached_property
-    def get_paid(self):
+    def paid(self):
         result = 0
         for payment in Payment.objects.filter(account = self):
             result += payment.amount
         return result
 
     # Payments collected a given month, 'offset' from current month
-    def paid_TM(self, offset):
+    def paid_by_month(self, offset):
         result = 0
         today = datetime.datetime.today()
         _today = add_months(today,offset).replace(tzinfo=pytz.utc)
@@ -205,21 +286,19 @@ class Account(models.Model):
                 result += payment.amount
         return result
 
-    # Payments collected this month
+    # Payments collected this month and last month
     @cached_property
-    def get_paid_TM(self): return self.paid_TM(0)
-
-    # Payments collected last month
+    def paid_TM(self): return self.paid_by_month(0)
     @cached_property
-    def get_paid_LM(self): return self.paid_TM(-1)
+    def paid_LM(self): return self.paid_by_month(-1)
 
     # Total number of payments
     @cached_property
-    def get_pay_nb(self):
+    def payment_nb(self):
         return Payment.objects.filter(account = self).count()
 
     # Number of payments for a given month, 'offset' from current month
-    def pay_nb_TM(self, offset):
+    def payment_nb_by_month(self, offset):
         result = 0
         today = datetime.datetime.today()
         _today = add_months(today,offset).replace(tzinfo=pytz.utc)
@@ -229,82 +308,77 @@ class Account(models.Model):
                 result += 1
         return result
 
-    # Number of payments this month
+    # Number of payments this month and last month
     @cached_property
-    def get_pay_nb_TM(self): return self.pay_nb_TM(0)
-
-    # Number of payments last month
+    def payment_nb_TM(self): return self.payment_nb_by_month(0)
     @cached_property
-    def get_pay_nb_LM(self): return self.pay_nb_LM(-1)
+    def payment_nb_LM(self): return self.payment_nb_by_month(-1)
 
     # Expected payment as of 'date'
-    def paid_expected(self, date):
+    def expct_paid_at_date(self, date):
         if date < self.reg_date:
             return 0
         delta = date - self.reg_date
-        full_weeks = int(toWeeks(delta))
+        full_weeks = int(to_weeks(delta))
         return min(self.plan_up + self.plan_week*full_weeks, 
                 self.plan_tot)
 
     # Expected payment as of today
     @property
-    def get_paid_expected(self):
+    def expct_paid(self):
         today = datetime.datetime.today().replace(tzinfo=pytz.utc)
-        return self.paid_expected(today)
+        return self.expct_paid_at_date(today)
 
     # Expected payment as of end of month
     @property
-    def get_paid_expected_TM(self):
+    def expct_paid_TM(self):
         today = datetime.datetime.today().replace(tzinfo=pytz.utc)
-        eom = monthEnd(today)
-        return (self.paid_expected(eom) 
-                - self.get_paid 
-                + self.get_paid_TM)
+        eom = month_end(today)
+        return (self.expct_paid_at_date(eom) 
+                - self.paid 
+                + self.paid_TM)
 
     # Expected payment as of end of last month
     @property
-    def get_paid_expected_LM(self):
+    def expct_paid_LM(self):
         today = datetime.datetime.today().replace(tzinfo=pytz.utc)
-        eolm = monthEnd(addmonth(today,-1))
-        return (self.paid_expected(eolm) 
-                - self.get_paid 
-                + self.get_paid_TM + self.get_paid_LM)
+        eolm = month_end(add_month(today,-1))
+        return (self.expct_paid_at_date(eolm) 
+                - self.paid 
+                + self.paid_TM + self.paid_LM)
 
     # Returns True if the account was created a given month offset from today
-    def new_TM(self,offset): return thisMonth(self.reg_date,offset)
-
-    # Returns true if the client was created this month
+    def is_new_by_month(self,offset): return is_this_month(self.reg_date,offset)
     @property
-    def get_new_TM(self): return self.new_TM(0)
-
-    # Returns true if the client was created last month
+    def is_new_TM(self): return self.is_new_by_month(0)
     @property
-    def get_new_LM(self): return self.new_TM(-1)
+    def is_new_LM(self): return self.is_new_by_month(-1)
 
     # Payment deficit, can be negative if in advance
     @property
-    def get_pay_deficit(self): return self.get_paid_expected - self.get_paid
+    def payment_deficit(self): return self.expct_paid - self.paid
 
     # Projected payment deficit at end of month
     @property
-    def get_pay_deficit_TM(self): 
-        return self.get_paid_expected_TM - self.get_paid_TM
+    def payment_deficit_TM(self):
+        return self.expct_paid_TM - self.paid_TM
 
     # Payment deficit at end of last month
     @property
-    def get_pay_deficit_LM(self):
-        return self.get_paid_expected_LM - self.get_paid_LM
+    def payment_deficit_LM(self):
+        return self.expct_paid_LM - self.paid_LM
 
     # Returns a Payment object with the last payment
     @cached_property
-    def get_lastPay(self):
+    def last_payment(self):
         r = list(Payment.objects.filter(account = self).order_by('date')[:1])
         if r:
             return r[0]
         return None
 
     # Total numbers of days disabled. Returns the current disabled if now = True
-    def days_disabled(self, now = False):
+    # tolerance is the number of days of disablement before it starts counting
+    def days_disabled_main(self, tolerance = 0, now = False):
         today = datetime.datetime.today().replace(tzinfo=pytz.utc)
         result = 0
         for idx, payment in enumerate(
@@ -315,7 +389,8 @@ class Account(models.Model):
                 disable_date = (payment.date 
                         + datetime.timedelta(weeks_credit*7,0,0))
             else:
-                result += max(toWeeks(payment.date - disable_date)*7,0)
+                result += max(
+                        to_weeks(payment.date - disable_date)*7 - tolerance,0)
                 weeks_credit = payment.amount / self.plan_week
                 disable_date = (max(disable_date, payment.date) 
                         + datetime.timedelta(weeks_credit*7,0,0))
@@ -323,20 +398,34 @@ class Account(models.Model):
         if now:
             result = 0
         if self.status != 'u':
-            result += max(0,toWeeks(today - disable_date)*7)
+            result += max(0,to_weeks(today - disable_date)*7 - tolerance)
         return result
-    
+
+    @cached_property
+    def days_disabled(self):
+        return self.days_disabled_main(tolerance=1)
+
     # Current disabled, made into a property for use in templates
     @cached_property
-    def get_current_disabled(self): return self.days_disabled(now=True)
+    def days_disabled_current(self): return self.days_disabled_main(
+            tolerance=1, now=True)
 
     # False if account is not active this month
     @property
-    def get_isActive_TM(self):
+    def is_active(self):
         return (
                 (self.status == 'e') 
                 or (self.status == 'd')
-                or (self.status == 'u' and thisMonth(self.get_lastPay.date,0)) 
+                )
+
+    # False if account is not active this month
+    @property
+    def is_active_TM(self):
+        return (
+                (self.status == 'e') 
+                or (self.status == 'd')
+                or (self.status == 'u' 
+                    and is_this_month(self.last_payment.date,0)) 
                 )
 
     # Returns outstanding amount for which no payments in the last 'days'
@@ -366,6 +455,29 @@ def log_transactions(sender, instance, created, *args, **kwargs):
                 qty = 1
                 )
 
+# ****************************************************************
+# ************************* PAYMENTS *****************************
+# ****************************************************************
+
+# CUSTOM QUERYSET CLASS FOR THE ACCOUNT CLASS TO DEFINE TABLE LEVEL METHODS
+class PaymentQuerySet(models.QuerySet):
+
+    # Returns the number of payments, this month and last month
+    @cached_property
+    def nb(self): return self.count()
+    @cached_property
+    def nb_TM(self): return len([obj for obj in self if obj.is_TM])
+    @cached_property
+    def nb_LM(self): return len([obj for obj in self if obj.is_LM])
+
+    # Returns the average payment amount
+    @cached_property
+    def average_payment(self):
+        total_amount = 0
+        for payment in self:
+            total_amount += payment.amount
+        return ratio(total_amount,self.nb,toStr=True)
+
 # SIMPLE PAYMENT CLASS, INCLUDES ANGAZA ID TO USE AS PRIMARY KEY WHEN UPDATING
 class Payment(models.Model):
     account = models.ForeignKey(Account, on_delete=models.CASCADE)
@@ -373,19 +485,24 @@ class Payment(models.Model):
     date = models.DateTimeField('payment date')
     agent = models.ForeignKey(Agent)
     id_Angaza = models.CharField(max_length=8, null=True)
+    objects = PaymentQuerySet.as_manager()
 
     def __str__(self):
         return ('%s (%s)' % (str(self.amount), self.account))
 
     # Returns True if the account was collected this month
     @property
-    def get_TM(self):
-        return thisMonth(self.date,0)
+    def is_TM(self):
+        return is_this_month(self.date,0)
 
     # Returns True if the account was collected last month
     @property
-    def get_LM(self):
-        return thisMonth(self.date,-1)
+    def is_LM(self):
+        return is_this_month(self.date,-1)
+
+# ****************************************************************
+# ********************** CUSTOM METHODS **************************
+# ****************************************************************
 
 # Adds months to a given date
 def add_months(sourcedate,months):
@@ -399,23 +516,23 @@ def add_months(sourcedate,months):
     return datetime.datetime(year,month,day,hour,minute,second)
 
 # Converts a timedelta into weeks, with decimals
-def toWeeks(delta):
+def to_weeks(delta):
     result = delta.days/7
     result += delta.seconds/7/(3600*24)
     result += delta.microseconds/7/(3600*24)/1000000
     return result
 
 # Return the last second of the last day of the month of a given date
-def monthEnd(date):
+def month_end(date):
     result = datetime.datetime(date.year, date.month+1, 1,
             00,00,00,000000).replace(tzinfo=pytz.utc)
     return result - datetime.timedelta(0,1,0)
 
 # Returns Yes if date is of today's month with offset
-def thisMonth(date,offset):
+def is_this_month(date,offset):
     today = datetime.datetime.today().replace(tzinfo=pytz.utc)
-    return (date > monthEnd(add_months(today,-1+offset)) and
-        date <= monthEnd(add_months(today,offset)))
+    return (date > month_end(add_months(today,-1+offset)) and
+        date <= month_end(add_months(today,offset)))
 
 # Returns the ratio of two numbers, handling div by 0 and with options on the
 # number of decimals, display as pc and str output
@@ -436,5 +553,7 @@ def ratio(top, bottom, dec=0, pc=False, toStr=False):
             return str((int(round(top/bottom,2+dec)*math.pow(10,dec+2))
                     /math.pow(10,dec))) + " %"
         else:
-            return str("{:,}".format(int(round(top/bottom,dec)*math.pow(10,dec))
-                    /math.pow(10,dec)))
+            if dec != 0:
+                return str("{:,}".format(int(round(top/bottom,dec)
+                    *math.pow(10,dec))/math.pow(10,dec)))
+            return str("{:,}".format(int(round(top/bottom,dec))))
