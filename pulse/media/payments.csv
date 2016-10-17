@@ -1,4 +1,7 @@
 angaza_id,organization,recorded_utc,account,account_angaza_id,group_name,country,amount,type,new_total_paid,phone,synced,reversal,recorder,provider_transaction,applied_utc
+PA131366,Azimuth Solar,2016-10-17 08:49:03,4233219,AC017882,Eco_Weekly,Sierra Leone,5000,Manual (Activator),25000,+23277736883,False,None,songo,None,2016-10-17 08:49:03
+PA131328,Azimuth Solar,2016-10-17 07:55:17,9584210,AC017810,Pro_Weekly_New Customer,Sierra Leone,10000,Manual (Activator),110000,+23276980253,False,None,ma lamina,None,2016-10-17 07:55:17
+PA131224,Azimuth Solar,2016-10-16 20:02:34,4364915,AC016786,Eco_Weekly,Sierra Leone,5000,Manual (Activator),30000,+23288559293,False,None,songo,None,2016-10-16 20:02:34
 PA131218,Azimuth Solar,2016-10-16 19:29:27,4127312,AC016113,Eco_Weekly,Sierra Leone,10000,Manual (Activator),40000,+23288244830,False,None,songo,None,2016-10-16 19:29:27
 PA131212,Azimuth Solar,2016-10-16 19:08:45,4114211,AC015710,Eco_Weekly,Sierra Leone,5000,Manual (Activator),40000,+23278695351,False,None,songo,None,2016-10-16 19:08:45
 PA131205,Azimuth Solar,2016-10-16 18:53:40,4363818,AC018491,Eco_Weekly,Sierra Leone,20000,Manual (Activator),20000,+23277856878,False,None,makiteh,None,2016-10-16 18:53:40

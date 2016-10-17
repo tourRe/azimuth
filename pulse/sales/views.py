@@ -16,15 +16,10 @@ def index(request):
             'agent_list' : agent_list
             }
 
-    # Preparing Clients table
-    all_clients = Client.objects.all()
-    context['all_clients'] = all_clients
-    # Preparing Accounts table
-    all_accounts = Account.objects.all()
-    context['all_accounts'] = all_accounts
-    # Preparing Payments table
-    all_payments = Payment.objects.all()
-    context['all_payments'] = all_payments
+    # Preparing tables
+    context['all_clients'] = Client.objects.all()
+    context['all_accounts'] = Account.objects.all()
+    context['all_payments'] = Payment.objects.all()
 
     return render(request, 'sales/index.html', context)
 
@@ -37,7 +32,7 @@ def manager_index(request):
             'agent_list' : agent_list
             }
 
-    # Adding account table to context
+    # Preparing table for account_sets display
     account_table = collections.OrderedDict()
     for manager in manager_list:
         key = ("<a href='/sales/managers/" + manager.firstname + "/'>"
@@ -56,7 +51,7 @@ def manager(request, manager_firstname):
             'agent_list' : agent_list
             }
 
-    # Adding account table to context
+    # Preparing table for account_sets display
     account_table = collections.OrderedDict()
     manager = Manager.objects.get(firstname = manager_firstname)
     agents = Agent.objects.filter(manager = manager)
@@ -78,7 +73,7 @@ def agent_index(request):
             'agent_list' : agent_list,
             }
 
-    # Adding account table to context
+    # Preparing table for account_sets display
     account_table = collections.OrderedDict()
     for agent in agent_list:
         key = ("<a href='/sales/agents/" + agent.login + "/'>"
@@ -96,6 +91,38 @@ def agent(request, agent_login):
             'manager_list' : manager_list,
             'agent_list' : agent_list
             }
+
+    # Identifying agent and adding it to context
+    agent = Agent.objects.get(login = agent_login)
+    context['agent'] = agent
+
+    # Adding PAR7 table to context
+    par7_table = collections.OrderedDict()
+    Q = Account.objects.filter(agent=agent).order_by('account_GLP')
+    for acc in Q:
+        if acc.is_active_TM and acc.days_disabled_current >= 7:
+            key = acc.account_GLP + " (" + acc.account_Angaza + ")"
+            par7_table[key] = acc
+    context['par7_table'] = par7_table
+
+    # Adding PDP14 table to context
+    pdp14_table = collections.OrderedDict()
+    Q = Account.objects.filter(agent=agent).order_by('account_GLP')
+    for acc in Q:
+        if acc.is_active_TM and acc.days_disabled >= 14:
+            key = acc.account_GLP + " (" + acc.account_Angaza + ")"
+            pdp14_table[key] = acc
+    context['pdp14_table'] = pdp14_table
+
+    # Adding PDP14 table to context
+    pdp30_table = collections.OrderedDict()
+    Q = Account.objects.filter(agent=agent).order_by('account_GLP')
+    for acc in Q:
+        if acc.is_active_TM and acc.days_disabled >= 30:
+            key = acc.account_GLP + " (" + acc.account_Angaza + ")"
+            pdp30_table[key] = acc
+    context['pdp30_table'] = pdp30_table
+
     return render(request, 'sales/agent.html', context)
 
 def client_index(request):

@@ -181,14 +181,14 @@ class AccountQuerySet(models.QuerySet):
     def outstanding_balance(self):
         result = 0
         for account in self:
-            result += account.plan_total - account.paid
+            result += account.plan_tot - account.paid
         return result
 
     # Returns the number of accounts disabled for more than X days
     # Accounts At Risk
     def AAR(self, days):
         return len([obj for obj in self 
-            if obj.days_disabled_current >= days])
+            if obj.days_disabled_current >= days and obj.is_active_TM])
 
     @cached_property
     def AAR_7(self): return self.AAR(7)
@@ -201,8 +201,11 @@ class AccountQuerySet(models.QuerySet):
     # Portfolio At Risk
     def PAR(self, days):
         Q = [obj for obj in self if obj.days_disabled_current >= days]
-        return ratio(Q.outstanding_balance,self.outstanding_balance,
-                dc=2,pc=True,toStr=True)
+        par = 0
+        for account in Q:
+            par += account.plan_tot - account.paid
+        return ratio(par,self.outstanding_balance,
+                dec=2,pc=True,toStr=True)
 
     @cached_property
     def PAR_7(self): return self.PAR(7)
@@ -229,8 +232,11 @@ class AccountQuerySet(models.QuerySet):
     def PDP(self, days):
         Q = [obj for obj in self if (obj.days_disabled >= days
             and obj.is_active)]
-        return ratio(Q.outstanding_balance,self.outstanding_balance,
-                dc=2,pc=True,toStr=True)
+        pdp = 0
+        for account in Q:
+            pdp += account.plan_tot - account.paid
+        return ratio(pdp,self.outstanding_balance,
+                dec=2,pc=True,toStr=True)
 
     @cached_property
     def PDP_14(self): return self.PDP(14)
