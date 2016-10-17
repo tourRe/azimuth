@@ -23,6 +23,8 @@ h1 {
 }
 .nav-pills {
     margin-bottom: 20px;
+    margin-right: 15px;
+    margin-left: 15px;
 }
 footer ul {
     padding:0;
