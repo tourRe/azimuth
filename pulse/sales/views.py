@@ -100,7 +100,7 @@ def agent(request, agent_login):
     par7_table = collections.OrderedDict()
     Q = Account.objects.filter(agent=agent).order_by('account_GLP')
     for acc in Q:
-        if acc.is_active_TM and acc.days_disabled_current >= 7:
+        if acc.is_active and acc.days_disabled_current >= 7:
             key = acc.account_GLP + " (" + acc.account_Angaza + ")"
             par7_table[key] = acc
     context['par7_table'] = par7_table
@@ -109,7 +109,7 @@ def agent(request, agent_login):
     pdp14_table = collections.OrderedDict()
     Q = Account.objects.filter(agent=agent).order_by('account_GLP')
     for acc in Q:
-        if acc.is_active_TM and acc.days_disabled >= 14:
+        if acc.is_active and acc.days_disabled >= 14:
             key = acc.account_GLP + " (" + acc.account_Angaza + ")"
             pdp14_table[key] = acc
     context['pdp14_table'] = pdp14_table
@@ -118,7 +118,7 @@ def agent(request, agent_login):
     pdp30_table = collections.OrderedDict()
     Q = Account.objects.filter(agent=agent).order_by('account_GLP')
     for acc in Q:
-        if acc.is_active_TM and acc.days_disabled >= 30:
+        if acc.is_active and acc.days_disabled >= 30:
             key = acc.account_GLP + " (" + acc.account_Angaza + ")"
             pdp30_table[key] = acc
     context['pdp30_table'] = pdp30_table

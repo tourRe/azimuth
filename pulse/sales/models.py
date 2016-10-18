@@ -188,7 +188,7 @@ class AccountQuerySet(models.QuerySet):
     # Accounts At Risk
     def AAR(self, days):
         return len([obj for obj in self 
-            if obj.days_disabled_current >= days and obj.is_active_TM])
+            if obj.days_disabled_current >= days and obj.is_active])
 
     @cached_property
     def AAR_7(self): return self.AAR(7)

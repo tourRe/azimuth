@@ -16,12 +16,17 @@
     <li><a href="#par7" data-toggle="tab">PAR (7 days)</a></li>
     <li><a href="#pdp14" data-toggle="tab">PDP (14 days)</a></li>
     <li><a href="#reposess" data-toggle="tab">To Reposess</a></li>
+    <li><a href="#transaction" data-toggle="tab">Transaction History</a></li>
   </ul>
 
   <div class="tab-content">
+
     <div class="tab-pane active" id="summary">
-      yo
+      <div class="panel panel-primary">
+        <div class="panel-heading"><h4 class="panel-title">Summary</h4></div>
+      </div>
     </div>
+
     <div class="tab-pane" id="par7">
       <div class="panel panel-primary">
         <div class="panel-heading"><h4 class="panel-title">Accounts currently disabled for 7 days+</h4></div>
@@ -30,6 +35,7 @@
       {% include "sales/table_account_list_boxes.html" %}
       {% endwith %}
     </div>
+
     <div class="tab-pane" id="pdp14">
       <div class="panel panel-primary">
         <div class="panel-heading"><h4 class="panel-title">Accounts disabled in total for 14 days+</h4></div>
@@ -38,6 +44,7 @@
       {% include "sales/table_account_list_boxes.html" %}
       {% endwith %}
     </div>
+
     <div class="tab-pane" id="reposess">
       <div class="panel panel-primary">
         <div class="panel-heading"><h4 class="panel-title">Products to reposess (disabled in total for 30 days+)</h4></div>
@@ -46,4 +53,13 @@
       {% include "sales/table_account_list_boxes.html" %}
       {% endwith %}
     </div>
+
+    <div class="tab-pane" id="transaction">
+      <div class="panel panel-primary">
+        <div class="panel-heading"><h4 class="panel-title">Summary of last payments received</h4></div>
+      </div>
+    </div>
+
+  </div>
+</div>
 {% endblock %}

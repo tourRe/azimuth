@@ -28,7 +28,9 @@ h1 {
 }
 footer ul {
     padding:0;
-    margin:1em;
+    margin-bottom: 15px;
+    margin-right: 15px;
+    margin-left: 15px;
     max-width:none;
     clear:both;
 }
@@ -36,7 +38,7 @@ footer li{
     font-size:smaller;
     list-style:none;
     float:left;
-    padding:1em;
+    padding:15px;
     color:gray;
     border:none;
 }
