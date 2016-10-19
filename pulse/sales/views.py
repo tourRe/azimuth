@@ -143,6 +143,8 @@ def client(request, client_pk):
             'manager_list' : manager_list,
             'agent_list' : agent_list
             }
+    client = Client.objects.get(pk = client_pk)
+    context['client'] = client
     return render(request, 'sales/client.html', context)
 
 def account_index(request):
