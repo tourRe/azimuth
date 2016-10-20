@@ -1,4 +1,14 @@
-{% extends "sales/base.html" %}
+{% extends "base.html" %}
+
+<head>
+  <title>Pulse > Managers</title>
+  <meta name="description" content="Managers" />
+</head>
+
+{% block menu %}
+{% include "sales/menu.html" %}
+{% endblock %}
+
 
 {% block breadcrumbs %}
 {{ manager.firstname }} {{manager.lastname }}

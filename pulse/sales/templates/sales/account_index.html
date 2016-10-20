@@ -1,15 +1,22 @@
-{% extends "sales/base.html" %}
+{% extends "base.html" %}
+
+<head>
+  <title>Pulse > Accounts</title>
+  <meta name="description" content="Index of accounts" />
+</head>
+
+{% block menu %}
+  {% include "sales/menu.html" %}
+{% endblock %}
 
 {% block breadcrumbs %}
-Accounts index
+  <li>
+    Accounts index
+  </li>
 {% endblock %}
 
 {% block content %}
 <div class="content">
-
-  <p class="alert alert-info">
-  This site is in Beta version. Please visit Angaza's <a href="https://payg.angazadesign.com">Energy Hub</a> for accurate transaction information at this stage.
-  </p>
 
   <ul class="nav nav-pills">
     <li class="active"><a href="#stats" data-toggle="tab">Statistics</a></li>

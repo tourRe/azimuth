@@ -1,4 +1,13 @@
-{% extends "sales/base.html" %}
+{% extends "base.html" %}
+
+<head>
+  <title>Pulse > Clients</title>
+  <meta name="description" content="Clients" />
+</head>
+
+{% block menu %}
+  {% include "sales/menu.html" %}
+{% endblock %}
 
 {% block breadcrumbs %}
 {{ client.name|title }} ({{ client.location|title }})
@@ -7,8 +16,6 @@
 {% block content %}
 
 <div class="content">
-
-  <p class="alert alert-info"> This site is in Beta version. Please visit Angaza's <a href="https://payg.angazadesign.com">Energy Hub</a> for accurate transaction information at this stage.</p>
 
   <ul class="nav nav-pills">
     <li class="active"><a href="#summary" data-toggle="tab">Summary</a></li>

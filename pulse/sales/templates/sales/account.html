@@ -1,15 +1,22 @@
-{% extends "sales/base.html" %}
+{% extends "base.html" %}
+
+<head>
+  <title>Pulse > Account detail</title>
+  <meta name="description" content="Account detail" />
+</head>
+
+{% block menu %}
+  {% include "sales/menu.html" %}
+{% endblock %}
 
 {% block breadcrumbs %}
-{{ account.account_GLP }} ({{ account.account_Angaza }})
+  <li>
+    {{ account.account_GLP }} ({{ account.account_Angaza }})
+  </li>
 {% endblock %}
 
 {% block content %}
 <div class="content">
-
-  <p class="alert alert-info">
-  This site is in Beta version. Please visit Angaza's <a href="https://payg.angazadesign.com">Energy Hub</a> for accurate transaction information at this stage.
-  </p>
 
   <ul class="nav nav-pills">
     <li class="active"><a href="#summary" data-toggle="tab">Summary</a></li>

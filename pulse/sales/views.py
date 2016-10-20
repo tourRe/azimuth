@@ -1,5 +1,5 @@
 # Used to generated views withour HTTPResponse
-from django.shortcuts import render
+from django.shortcuts import render, render_to_response
 # Module that has the ordered dictionnary class
 import collections
 # Modules to handle dates and timwezones
@@ -276,7 +276,16 @@ def payment_index(request):
             'manager_list' : manager_list,
             'agent_list' : agent_list
             }
+
     return render(request, 'sales/payment_index.html', context)
+
+#***************************************************************
+#************************* GRAPHS ******************************
+#***************************************************************
+
+#***************************************************************
+#******************** CUSTOM FUNCTIONS *************************
+#***************************************************************
 
 def ratio(top, bottom, pc=False, dec=0):
     if bottom == 0:
