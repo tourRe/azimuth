@@ -280,6 +280,10 @@ class Account(models.Model):
         for payment in Payment.objects.filter(account = self):
             result += payment.amount
         return result
+    
+    @cached_property
+    def left_to_pay(self):
+        return self.plan_tot - self.paid
 
     # Payments collected a given month, 'offset' from current month
     def paid_by_month(self, offset):
@@ -433,12 +437,6 @@ class Account(models.Model):
                 or (self.status == 'u' 
                     and is_this_month(self.last_payment.date,0)) 
                 )
-
-    # Returns outstanding amount for which no payments in the last 'days'
-    def OAR(self,days):
-        if self.days_disabled(now=True) > days:
-            return self.plan_tot - self.get_paid
-        return 0
 
 # CREATES A TRANSACTION AND TRANSACTION ITEM WHEN AN ACCOUNT IS CREATED
 @receiver(post_save, sender=Account,

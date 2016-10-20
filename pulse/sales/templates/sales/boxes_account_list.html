@@ -1,13 +1,14 @@
+{% load humanize %}
 {% for line_title, account in active_table.items %}
   <div class="col-lg-4">
     <div class="panel panel-primary">
       <div class="panel-heading"><h4 class="panel-title">
-          {{ account.account_GLP }}</h4></div>
+          {% autoescape off %}{{ line_title }}{% endautoescape %}</h4></div>
       <div class="panel-body">
         <table class="table table-condensed table-striped">
           <tr>
             <th>Account</th>
-            <td>{{ line_title }}</td>
+            <td><a href='/sales/accounts/{{ account.account_Angaza }}/'>{{ account.account_GLP }}</a></td>
           </tr>
           <tr>
             <th>Product</th>
@@ -18,8 +19,8 @@
             <td>{{ account.plan_name }}</td>
           </tr>
           <tr>
-            <th>Client</th>
-            <td>{{ account.client.name|title }}</td>
+            <th>Client name</th>
+            <td><a href='/sales/clients/{{ account.client.pk }}/'>{{ account.client.name|title }}</a></td>
           </tr>
           <tr>
             <th>Client number</th>
@@ -39,7 +40,7 @@
           </tr>
           <tr>
             <th>Left To Pay</th>
-            <td>tbd</td>
+            <td>{{ account.left_to_pay|intcomma }}</td>
           </tr>
         </table>
       </div>

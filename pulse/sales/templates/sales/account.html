@@ -1,9 +1,33 @@
 {% extends "sales/base.html" %}
 
 {% block breadcrumbs %}
-Manager
+{{ account.account_GLP }} ({{ account.account_Angaza }})
 {% endblock %}
 
 {% block content %}
-Manager
+<div class="content">
+
+  <p class="alert alert-info">
+  This site is in Beta version. Please visit Angaza's <a href="https://payg.angazadesign.com">Energy Hub</a> for accurate transaction information at this stage.
+  </p>
+
+  <ul class="nav nav-pills">
+    <li class="active"><a href="#summary" data-toggle="tab">Summary</a></li>
+    <li><a href="#payments" data-toggle="tab">Payments history</a></li>
+  </ul>
+
+  <div class="tab-content">
+
+    <div class="tab-pane active" id="summary">
+      <div class="panel panel-primary">
+        <div class="panel-heading"><h4 class="panel-title">Account information</h4></div>
+      </div>
+    </div>
+
+    <div class="tab-pane" id="payments">
+      <div class="panel panel-primary">
+        <div class="panel-heading"><h4 class="panel-title">Payments history</h4></div>
+      </div>
+    </div>
+
 {% endblock %}

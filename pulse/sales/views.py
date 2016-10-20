@@ -101,7 +101,9 @@ def agent(request, agent_login):
     Q = Account.objects.filter(agent=agent).order_by('account_GLP')
     for acc in Q:
         if acc.is_active and acc.days_disabled_current >= 7:
-            key = acc.account_GLP + " (" + acc.account_Angaza + ")"
+            key = ("<a href='/sales/accounts/" + acc.account_Angaza + "/'>"
+                    + " " + acc.account_GLP + " (" + acc.account_Angaza 
+                    + ")</a>")
             par7_table[key] = acc
     context['par7_table'] = par7_table
 
@@ -110,7 +112,9 @@ def agent(request, agent_login):
     Q = Account.objects.filter(agent=agent).order_by('account_GLP')
     for acc in Q:
         if acc.is_active and acc.days_disabled >= 14:
-            key = acc.account_GLP + " (" + acc.account_Angaza + ")"
+            key = ("<a href='/sales/accounts/" + acc.account_Angaza + "/'>"
+                    + " " + acc.account_GLP + " (" + acc.account_Angaza 
+                    + ")</a>")
             pdp14_table[key] = acc
     context['pdp14_table'] = pdp14_table
 
@@ -119,7 +123,9 @@ def agent(request, agent_login):
     Q = Account.objects.filter(agent=agent).order_by('account_GLP')
     for acc in Q:
         if acc.is_active and acc.days_disabled >= 30:
-            key = acc.account_GLP + " (" + acc.account_Angaza + ")"
+            key = ("<a href='/sales/accounts/" + acc.account_Angaza + "/'>"
+                    + " " + acc.account_GLP + " (" + acc.account_Angaza 
+                    + ")</a>")
             pdp30_table[key] = acc
     context['pdp30_table'] = pdp30_table
 
@@ -145,6 +151,16 @@ def client(request, client_pk):
             }
     client = Client.objects.get(pk = client_pk)
     context['client'] = client
+
+    # Adding related accounts to context
+    related_accounts = collections.OrderedDict()
+    Q = Account.objects.filter(client=client).order_by('account_GLP')
+    for acc in Q:
+        key = ("<a href='/sales/accounts/" + acc.account_Angaza + "/'>"
+                + " " + acc.account_GLP + " (" + acc.account_Angaza 
+                + ")</a>")
+        related_accounts[key] = acc
+    context['related_accounts'] = related_accounts
     return render(request, 'sales/client.html', context)
 
 def account_index(request):
@@ -249,6 +265,8 @@ def account(request, account_Angaza):
             'manager_list' : manager_list,
             'agent_list' : agent_list
             }
+    account = Account.objects.get(account_Angaza = account_Angaza)
+    context['account'] = account
     return render(request, 'sales/account.html', context)
 
 def payment_index(request):

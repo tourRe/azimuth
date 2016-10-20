@@ -1,7 +1,7 @@
 {% extends "sales/base.html" %}
 
 {% block breadcrumbs %}
-{{ client.name }} ({{ client.location }})
+{{ client.name|title }} ({{ client.location|title }})
 {% endblock %}
 
 {% block content %}
@@ -24,13 +24,16 @@
       </div>
     </div>
 
-    <div class="tab-pane active" id="accounts">
+    <div class="tab-pane" id="accounts">
       <div class="panel panel-primary">
         <div class="panel-heading"><h4 class="panel-title">Related accounts</h4></div>
       </div>
+      {% with active_table=related_accounts %}
+      {% include "sales/boxes_account_list.html" %}
+      {% endwith %}
     </div>
 
-    <div class="tab-pane active" id="credit">
+    <div class="tab-pane" id="credit">
       <div class="panel panel-primary">
         <div class="panel-heading"><h4 class="panel-title">Credit scoring details</h4></div>
       </div>

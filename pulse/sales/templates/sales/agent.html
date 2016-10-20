@@ -32,7 +32,7 @@
         <div class="panel-heading"><h4 class="panel-title">Accounts currently disabled for 7 days+</h4></div>
       </div>
       {% with active_table=par7_table %}
-      {% include "sales/table_account_list_boxes.html" %}
+      {% include "sales/boxes_account_list.html" %}
       {% endwith %}
     </div>
 
@@ -41,7 +41,7 @@
         <div class="panel-heading"><h4 class="panel-title">Accounts disabled in total for 14 days+</h4></div>
       </div>
       {% with active_table=pdp14_table %}
-      {% include "sales/table_account_list_boxes.html" %}
+      {% include "sales/boxes_account_list.html" %}
       {% endwith %}
     </div>
 
@@ -50,7 +50,7 @@
         <div class="panel-heading"><h4 class="panel-title">Products to reposess (disabled in total for 30 days+)</h4></div>
       </div>
       {% with active_table=pdp30_table %}
-      {% include "sales/table_account_list_boxes.html" %}
+      {% include "sales/boxes_account_list.html" %}
       {% endwith %}
     </div>
 
