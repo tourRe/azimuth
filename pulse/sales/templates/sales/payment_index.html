@@ -18,7 +18,8 @@ Payments
 
   <ul class="nav nav-pills">
     <li class="active"><a href="#summary" data-toggle="tab">Summary</a></li>
-    <li><a href="#history" data-toggle="tab"  data-load="activity">History</a></li>
+    <li><a href="#history" data-toggle="tab" data-load="activity" 
+      data-pay_vol_week="{% url 'sales:pay_vol_week' %}">History</a></li>
     <li><a href="#seasonality" data-toggle="tab">Seasonality</a></li>
   </ul>
 
@@ -33,9 +34,9 @@ Payments
     <div class="tab-pane" id="history">
       <div class="panel panel-primary">
         <div class="panel-heading"><h4 class="panel-title">History of payment
-            volume per month</h4></div>
+            volume per week</h4></div>
       </div>
-      <div id="activity-month" class="ct-chart ct-double-octave"></div>
+      <div id="pay-vol-week" class="ct-chart ct-double-octave"></div>
     </div>
 
     <div class="tab-pane" id="seasonality">

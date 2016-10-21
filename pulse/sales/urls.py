@@ -23,4 +23,6 @@ urlpatterns = [
             views.account, name='account'),
         url(r'^payments/$', 
             views.payment_index, name='payment_index'),
+        url(r'^payments/volume/weekly/$',
+            views.payment_volume_weekly, name='pay_vol_week'),
         ]

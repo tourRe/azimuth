@@ -1,5 +1,6 @@
-# Used to generated views withour HTTPResponse
-from django.shortcuts import render, render_to_response
+# Used to generated views without HTTPResponse and generate the graphs
+from django.shortcuts import render, get_object_or_404
+from django.http import JsonResponse
 # Module that has the ordered dictionnary class
 import collections
 # Modules to handle dates and timwezones
@@ -282,6 +283,26 @@ def payment_index(request):
 #***************************************************************
 #************************* GRAPHS ******************************
 #***************************************************************
+
+def payment_volume_weekly(request):
+    today = datetime.datetime.today().replace(tzinfo=pytz.utc)
+    date_start = today - datetime.timedelta(7*52,0,0)
+    payments = Payment.objects.filter(date__gt = date_start)
+    #Computing the nb of payments per week
+    parse = [0] * 52
+    dates = []
+    for pay in payments:
+        delta = int((pay.date - date_start).days/7)
+        parse[delta] += 1
+    #Format
+    serie = []
+    labels = []
+    for idx,dummy in enumerate(parse):
+        serie.append(dummy)
+        labels.append('')
+
+    return JsonResponse(
+            data={'series': [serie], 'labels': labels})
 
 #***************************************************************
 #******************** CUSTOM FUNCTIONS *************************

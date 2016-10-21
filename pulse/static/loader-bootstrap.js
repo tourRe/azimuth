@@ -98,7 +98,7 @@ function configureChart($chart) {
     });
 }
 
-
+/* Edit this function to add new chart types */
 function loadActivityChart(element) {
     if (activityDataLoaded) {
         return;
@@ -107,10 +107,10 @@ function loadActivityChart(element) {
 
     increaseLoading('#activity-loading');
     $.ajax({
-        url: element.data('monthly'),
+        url: element.data('pay_vol_week'),
         success: function(data) {
-            Chartist.Bar('#activity-month', data);
-            configureChart($('#activity-month'));
+            Chartist.Bar('#pay-vol-week', data);
+            configureChart($('#pay-vol-week'));
             decreaseLoading('#activity-loading');
         },
         dataType: 'json'
