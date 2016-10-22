@@ -19,7 +19,7 @@ def collect():
     url2 = 'https://payg.angazadesign.com/api/snapshots/payments'
     url3 = 'https://payg.angazadesign.com/api/snapshots/users'
     url4 = 'https://payg.angazadesign.com/api/snapshots/sms_messages'
-    with s as requests.Session():
+    with requests.Session() as s:
         download = s.get(url1, cookies=cookies)
 
     print('Importing dump files')
