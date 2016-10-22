@@ -9,9 +9,19 @@ from inventory.models import (
 from progress.bar import Bar
 import csv, datetime
 import pytz
+import requests
 
 @app.shared_task
 def collect():
+    # Preparing for automated import of files
+    cookies = dict(_ga='GA1.2.1862213469.1457357349')
+    url1 = 'https://payg.angazadesign.com/api/snapshots/accounts'
+    url2 = 'https://payg.angazadesign.com/api/snapshots/payments'
+    url3 = 'https://payg.angazadesign.com/api/snapshots/users'
+    url4 = 'https://payg.angazadesign.com/api/snapshots/sms_messages'
+    with s as requests.Session():
+        download = s.get(url1, cookies=cookies)
+
     print('Importing dump files')
     accounts_raw = csvToList('media/accounts.csv')
     payments_raw = csvToList('media/payments.csv')
