@@ -284,22 +284,87 @@ def payment_index(request):
 #************************* GRAPHS ******************************
 #***************************************************************
 
+def payment_season_hour(request):
+    payments = Payment.objects.all()
+    #Computing the nb of payments per week
+    parse = [0] * 24
+    for pay in payments:
+        index = pay.date.hour
+        parse[index] += 1
+    #Format
+    serie = []
+    labels = []
+    for idx,dummy in enumerate(parse):
+        serie.append(dummy)
+        labels.append(str(idx)+'h')
+
+    return JsonResponse(
+            data={'series': [serie], 'labels': labels})
+
+def payment_season_day(request):
+    payments = Payment.objects.all()
+    #Computing the nb of payments per week
+    parse = [0] * 7
+    for pay in payments:
+        parse[pay.date.weekday()-1] += 1
+    #Format
+    serie = []
+    labels = ['Monday','Tuesday','Wednesday','Thursday'
+            ,'Friday','Saturday','Sunday']
+    for idx,dummy in enumerate(parse):
+        serie.append(dummy)
+
+    return JsonResponse(
+            data={'series': [serie], 'labels': labels})
+
 def payment_volume_weekly(request):
     today = datetime.datetime.today().replace(tzinfo=pytz.utc)
     date_start = today - datetime.timedelta(7*52,0,0)
     payments = Payment.objects.filter(date__gt = date_start)
     #Computing the nb of payments per week
     parse = [0] * 52
-    dates = []
     for pay in payments:
-        delta = int((pay.date - date_start).days/7)
-        parse[delta] += 1
+        index = int((pay.date - date_start).days/7)
+        parse[index] += pay.amount
     #Format
     serie = []
     labels = []
+    dates = []
     for idx,dummy in enumerate(parse):
         serie.append(dummy)
-        labels.append('')
+        dates.append(date_start + datetime.timedelta(idx*7,0,0))
+        if idx == 0:
+            labels.append(str(dates[idx].month) + '/' + str(dates[idx].year))
+        elif dates[idx].month != dates[idx-1].month:
+            labels.append(str(dates[idx].month) + '/' + str(dates[idx].year))
+        else:
+            labels.append('')
+
+    return JsonResponse(
+            data={'series': [serie], 'labels': labels})
+
+def payment_number_weekly(request):
+    today = datetime.datetime.today().replace(tzinfo=pytz.utc)
+    date_start = today - datetime.timedelta(7*52,0,0)
+    payments = Payment.objects.filter(date__gt = date_start)
+    #Computing the nb of payments per week
+    parse = [0] * 52
+    for pay in payments:
+        index = int((pay.date - date_start).days/7)
+        parse[index] += 1
+    #Format
+    serie = []
+    labels = []
+    dates = []
+    for idx,dummy in enumerate(parse):
+        serie.append(dummy)
+        dates.append(date_start + datetime.timedelta(idx*7,0,0))
+        if idx == 0:
+            labels.append(str(dates[idx].month) + '/' + str(dates[idx].year))
+        elif dates[idx].month != dates[idx-1].month:
+            labels.append(str(dates[idx].month) + '/' + str(dates[idx].year))
+        else:
+            labels.append('')
 
     return JsonResponse(
             data={'series': [serie], 'labels': labels})

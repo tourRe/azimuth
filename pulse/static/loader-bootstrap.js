@@ -103,7 +103,7 @@ function loadActivityChart(element) {
     if (activityDataLoaded) {
         return;
     }
-    activityDataLoaded = true;
+    /* activityDataLoaded = true; */
 
     increaseLoading('#activity-loading');
     $.ajax({
@@ -118,10 +118,32 @@ function loadActivityChart(element) {
 
     increaseLoading('#activity-loading');
     $.ajax({
-        url: element.data('yearly'),
+        url: element.data('pay_num_week'),
         success: function(data) {
-            Chartist.Bar('#activity-year', data);
-            configureChart($('#activity-year'));
+            Chartist.Bar('#pay-num-week', data);
+            configureChart($('#pay-num-week'));
+            decreaseLoading('#activity-loading');
+        },
+        dataType: 'json'
+    });
+
+    increaseLoading('#activity-loading');
+    $.ajax({
+        url: element.data('pay_seas_hour'),
+        success: function(data) {
+            Chartist.Bar('#pay-seas-hour', data);
+            configureChart($('#pay-seas-hour'));
+            decreaseLoading('#activity-loading');
+        },
+        dataType: 'json'
+    });
+
+    increaseLoading('#activity-loading');
+    $.ajax({
+        url: element.data('pay_seas_day'),
+        success: function(data) {
+            Chartist.Bar('#pay-seas-day', data);
+            configureChart($('#pay-seas-day'));
             decreaseLoading('#activity-loading');
         },
         dataType: 'json'
@@ -495,6 +517,9 @@ $(function () {
             }
         );
     });
+
+/* Will probably have to duplicate those to handle data loading on different
+ * tabs separately */
 
     /* Activity charts on tabs */
     $document.on('show.bs.tab', '[data-load="activity"]', function (e) {

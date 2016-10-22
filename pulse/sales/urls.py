@@ -25,4 +25,10 @@ urlpatterns = [
             views.payment_index, name='payment_index'),
         url(r'^payments/volume/weekly/$',
             views.payment_volume_weekly, name='pay_vol_week'),
+        url(r'^payments/number/weekly/$',
+            views.payment_number_weekly, name='pay_num_week'),
+        url(r'^payments/season/hour/$',
+            views.payment_season_hour, name='pay_seas_hour'),
+        url(r'^payments/season/day/$',
+            views.payment_season_day, name='pay_seas_day'),
         ]

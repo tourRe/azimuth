@@ -19,8 +19,13 @@ Payments
   <ul class="nav nav-pills">
     <li class="active"><a href="#summary" data-toggle="tab">Summary</a></li>
     <li><a href="#history" data-toggle="tab" data-load="activity" 
-      data-pay_vol_week="{% url 'sales:pay_vol_week' %}">History</a></li>
-    <li><a href="#seasonality" data-toggle="tab">Seasonality</a></li>
+      data-pay_vol_week="{% url 'sales:pay_vol_week' %}"
+      data-pay_num_week="{% url 'sales:pay_num_week' %}"
+      >History</a></li>
+    <li><a href="#seasonality" data-toggle="tab" data-load="activity"
+      data-pay_seas_hour="{% url 'sales:pay_seas_hour' %}"
+      data-pay_seas_day="{% url 'sales:pay_seas_day' %}"
+      >Seasonality</a></li>
   </ul>
 
   <div class="tab-content">
@@ -33,17 +38,25 @@ Payments
 
     <div class="tab-pane" id="history">
       <div class="panel panel-primary">
-        <div class="panel-heading"><h4 class="panel-title">History of payment
-            volume per week</h4></div>
+        <div class="panel-heading"><h4 class="panel-title">History of payments per week</h4></div>
       </div>
-      <div id="pay-vol-week" class="ct-chart ct-double-octave"></div>
+      <div style="margin-left:15px; margin-right:15px">
+        <h5>Number of payments</h5>
+        <div id="pay-num-week" class="ct-chart ct-double-octave"></div>
+        <h5>Volume of payments</h5>
+        <div id="pay-vol-week" class="ct-chart ct-double-octave"></div>
+      </div>
     </div>
 
     <div class="tab-pane" id="seasonality">
       <div class="panel panel-primary">
-        <div class="panel-heading"><h4 class="panel-title">Seasonality of
-            payment volume</h4></div>
-        average number of payments per day of the week and per hour of the day
+        <div class="panel-heading"><h4 class="panel-title">Seasonality</h4></div>
+      </div>
+      <div style="margin-left:15px; margin-right:15px">
+        <h5>Number of payments per hour of the day</h5>
+        <div id="pay-seas-hour" class="ct-chart ct-double-octave"></div>
+        <h5>Number of payments per day of the week</h5>
+        <div id="pay-seas-day" class="ct-chart ct-double-octave"></div>
       </div>
     </div>
 </div>
