@@ -123,13 +123,15 @@ class Agent(models.Model):
 # CUSTOM QUERYSET CLASS FOR THE ACCOUNT CLASS TO DEFINE TABLE LEVEL METHODS
 class AccountQuerySet(models.QuerySet):
 
-    # Filtering new accounts LM and TM
-    @property
+    # Filtering new accounts
+    def new(self,start,end):
+        return self.filter(reg_date__gt = start, reg_date__lt = eolm)
+    @cached_property
     def new_TM(self):
         today = datetime.datetime.today().replace(tzinfo=pytz.utc)
         month_start = month_end(add_months(today,-1))
-        return self.filter(reg_date__gt = month_start, reg_date__lt = today)
-    @property
+        return self.filter(reg_date__gt = month_start)
+    @cached_property
     def new_LM(self):
         today = datetime.datetime.today().replace(tzinfo=pytz.utc)
         eolm = month_end(add_months(today,-1))
@@ -137,39 +139,41 @@ class AccountQuerySet(models.QuerySet):
         return self.filter(reg_date__gt = bolm, reg_date__lt = eolm)
 
     # Filtering active accounts
-    @property
+    @cached_property
     def active(self):
         return self.filter(Q(status = 'e') | Q(status = 'd'))
+    @cached_property
+    def active_TM(self):
+        today = datetime.datetime.today().replace(tzinfo=pytz.utc)
+        month_start = month_end(add_months(today,-1))
+        return self.filter(Q(status = 'e') 
+                | Q(status = 'd')
+                | Q(payment__date__gt = month_start)).distinct()
 
     # Returns the number of units sold, this month and last month
     @cached_property
     def nb_sold(self): return self.count()
-    @cached_property
-    def nb_sold_TM(self): return self.new_TM.count()
-    @cached_property
-    def nb_sold_LM(self): return self.new_LM.count()
 
     # Returns the total "revenue" (total sold)
     @cached_property
-    def revenue(self): return self.aggregate(Sum('plan_tot'))
+    def revenue(self): 
+        if not self: return 0
+        return self.aggregate(Sum('plan_tot'))['plan_tot__sum']
 
     # Returns the monthly expected collection for a list of accounts
     @cached_property
     def expct_collection_TM(self):
         result = 0
-        Q = [obj for obj in self if obj.is_active_TM]
-        for account in Q:
-            result+= (account.expct_paid_TM
-                    - min(0,account.payment_deficit))
+        for account in self.active_TM:
+            result+= (account.expct_paid_TM - min(0,account.payment_deficit))
         return result
 
     # Returns the amount collected this month in upfront payments
     @cached_property
     def collected_upfront(self):
-        result = 0
-        for account in self.new_TM:
-            result += account.plan_up
-        return result
+        Q = self.new_TM
+        if not Q: return 0
+        return Q.aggregate(Sum('plan_up'))['plan_up__sum']
 
     # Returns this month's upfront payments as a % of expected collection
     @property
@@ -181,10 +185,9 @@ class AccountQuerySet(models.QuerySet):
     @cached_property
     def collected_instalments(self):
         result = 0
-        Q = [obj for obj in self if obj.is_active_TM]
-        for account in Q:
+        for account in self.active_TM: 
             result += account.paid_TM
-            if is_this_month(account.reg_date,0):
+            if account.is_new_TM:
                 result -= account.plan_up
         return result
 
@@ -198,9 +201,8 @@ class AccountQuerySet(models.QuerySet):
     @cached_property
     def collected_late(self):
         result = 0
-        for account in self:
-            if account.is_active_TM:
-                result += max(0,account.payment_deficit)
+        for account in self.active_TM:
+            result += max(0,account.payment_deficit)
         return result
 
     # Returns this month's instalments as a % of expected collection
@@ -261,8 +263,7 @@ class AccountQuerySet(models.QuerySet):
     # than X days
     # Portfolio At Risk
     def PDP(self, days):
-        Q = [obj for obj in self if (obj.days_disabled >= days
-            and obj.is_active)]
+        Q = [obj for obj in self.active if obj.days_disabled >= days]
         pdp = 0
         for account in Q:
             pdp += account.plan_tot - account.paid
@@ -304,56 +305,41 @@ class Account(models.Model):
     def __str__(self):
         return '%s - %s' % (self.account_GLP, self.plan_name)
 
-    # Total payments collected
+    # Caching payments queryset
+    @cached_property
+    def payments(self):
+        return Payment.objects.filter(account = self)
+
+    # Total amount paid
     @cached_property
     def paid(self):
-        result = 0
-        for payment in Payment.objects.filter(account = self):
-            result += payment.amount
-        return result
-    
+        Q = self.payments
+        if not Q: return 0
+        return (Q.aggregate(Sum('amount'))['amount__sum'])
     @cached_property
-    def left_to_pay(self):
-        return self.plan_tot - self.paid
-
-    # Payments collected a given month, 'offset' from current month
-    def paid_by_month(self, offset):
-        result = 0
-        today = datetime.datetime.today()
-        _today = add_months(today,offset).replace(tzinfo=pytz.utc)
-        for payment in Payment.objects.filter(account = self): 
-            if (payment.date.year == _today.year and 
-                    payment.date.month == _today.month):
-                result += payment.amount
-        return result
-
-    # Payments collected this month and last month
+    def paid_TM(self): 
+        Q = self.payments.TM
+        if not Q: return 0
+        return (Q.aggregate(Sum('amount'))['amount__sum'])
     @cached_property
-    def paid_TM(self): return self.paid_by_month(0)
-    @cached_property
-    def paid_LM(self): return self.paid_by_month(-1)
+    def paid_LM(self): 
+        Q = self.payments.LM
+        if not Q: return 0
+        return (Q.aggregate(Sum('amount'))['amount__sum'])
 
     # Total number of payments
     @cached_property
     def payment_nb(self):
         return Payment.objects.filter(account = self).count()
+    def payment_nb_TM(self):
+        return Payment.objects.filter(account = self).TM.count()
+    def payment_nb_LM(self):
+        return Payment.objects.filter(account = self).LM.count()
 
-    # Number of payments for a given month, 'offset' from current month
-    def payment_nb_by_month(self, offset):
-        result = 0
-        today = datetime.datetime.today()
-        _today = add_months(today,offset).replace(tzinfo=pytz.utc)
-        for payment in Payment.objects.filter(account = self): 
-            if (payment.date.year == _today.year and 
-                    payment.date.month == _today.month):
-                result += 1
-        return result
-
-    # Number of payments this month and last month
+    # Outstanding balance
     @cached_property
-    def payment_nb_TM(self): return self.payment_nb_by_month(0)
-    @cached_property
-    def payment_nb_LM(self): return self.payment_nb_by_month(-1)
+    def left_to_pay(self):
+        return self.plan_tot - self.paid
 
     # Expected payment as of 'date'
     def expct_paid_at_date(self, date):
@@ -361,8 +347,7 @@ class Account(models.Model):
             return 0
         delta = date - self.reg_date
         full_weeks = int(to_weeks(delta))
-        return min(self.plan_up + self.plan_week*full_weeks, 
-                self.plan_tot)
+        return min(self.plan_up + self.plan_week*full_weeks, self.plan_tot)
 
     # Expected payment as of today
     @property
@@ -398,16 +383,10 @@ class Account(models.Model):
     # Payment deficit, can be negative if in advance
     @property
     def payment_deficit(self): return self.expct_paid - self.paid
-
-    # Projected payment deficit at end of month
     @property
-    def payment_deficit_TM(self):
-        return self.expct_paid_TM - self.paid_TM
-
-    # Payment deficit at end of last month
+    def payment_deficit_TM(self): return self.expct_paid_TM - self.paid_TM
     @property
-    def payment_deficit_LM(self):
-        return self.expct_paid_LM - self.paid_LM
+    def payment_deficit_LM(self): return self.expct_paid_LM - self.paid_LM
 
     # Returns a Payment object with the last payment
     @cached_property
@@ -497,13 +476,22 @@ def log_transactions(sender, instance, created, *args, **kwargs):
 # CUSTOM QUERYSET CLASS FOR THE ACCOUNT CLASS TO DEFINE TABLE LEVEL METHODS
 class PaymentQuerySet(models.QuerySet):
 
+    # Filtering payments LM and TM
+    @property
+    def TM(self):
+        today = datetime.datetime.today().replace(tzinfo=pytz.utc)
+        month_start = month_end(add_months(today,-1))
+        return self.filter(date__gt = month_start)
+    @property
+    def LM(self):
+        today = datetime.datetime.today().replace(tzinfo=pytz.utc)
+        eolm = month_end(add_months(today,-1))
+        bolm = datetime.datetime(eolm.year,eolm.month,1,0,0,0)
+        return self.filter(date__gt = bolm, date__lt = eolm)
+
     # Returns the number of payments, this month and last month
     @cached_property
     def nb(self): return self.count()
-    @cached_property
-    def nb_TM(self): return len([obj for obj in self if obj.is_TM])
-    @cached_property
-    def nb_LM(self): return len([obj for obj in self if obj.is_LM])
 
     # Returns the average payment amount
     @cached_property
