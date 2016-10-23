@@ -125,7 +125,7 @@ class AccountQuerySet(models.QuerySet):
 
     # Filtering new accounts
     def new(self,start,end):
-        return self.filter(reg_date__gt = start, reg_date__lt = eolm)
+        return self.filter(reg_date__lt = end, reg_date__gt = start)
     @cached_property
     def new_TM(self):
         today = datetime.datetime.today().replace(tzinfo=pytz.utc)
@@ -184,12 +184,10 @@ class AccountQuerySet(models.QuerySet):
     # Returns the amount collected this month in instalments
     @cached_property
     def collected_instalments(self):
-        result = 0
-        for account in self.active_TM: 
-            result += account.paid_TM
-            if account.is_new_TM:
-                result -= account.plan_up
-        return result
+        Q = Payment.objects.filter(account__in = self.active_TM).TM
+        if not Q: return 0
+        result = Q.aggregate(Sum('amount'))['amount__sum']
+        return result - self.collected_upfront
 
     # Returns this month's instalments as a % of expected collection
     @property
@@ -214,10 +212,10 @@ class AccountQuerySet(models.QuerySet):
     # Returns the amount of repayments outstanding
     @cached_property
     def outstanding_balance(self):
-        result = 0
-        for account in self:
-            result += account.plan_tot - account.paid
-        return result
+        if not self: return 0
+        paid = (Payment.objects.filter(account__in = self)
+                .aggregate(Sum('amount'))['amount__sum'])
+        return self.revenue - paid
 
     # Returns the number of accounts disabled for more than X days
     # Accounts At Risk
@@ -246,7 +244,8 @@ class AccountQuerySet(models.QuerySet):
     def PAR_7(self): return self.PAR(7)
 
     @cached_property
-    def PAR_14(self): return self.PAR(14)
+    def PAR_14(self): 
+        return self.PAR(14)
 
     # Returns the number of accounts disabled for more than X days
     # Accounts At Risk
@@ -496,9 +495,8 @@ class PaymentQuerySet(models.QuerySet):
     # Returns the average payment amount
     @cached_property
     def average_payment(self):
-        total_amount = 0
-        for payment in self:
-            total_amount += payment.amount
+        if not self: return 0
+        total_amount = self.aggregate(Sum('amount'))['amount__sum']
         return ratio(total_amount,self.nb,toStr=True)
 
 # SIMPLE PAYMENT CLASS, INCLUDES ANGAZA ID TO USE AS PRIMARY KEY WHEN UPDATING

@@ -148,6 +148,17 @@ function loadActivityChart(element) {
         },
         dataType: 'json'
     });
+
+    increaseLoading('#activity-loading');
+    $.ajax({
+        url: element.data('acc_new_week'),
+        success: function(data) {
+            new Chartist.Bar('#acc-new-week', data, {stackBars: true});
+            configureChart($('#acc-new-week'));
+            decreaseLoading('#activity-loading');
+        },
+        dataType: 'json'
+    });
 }
 
 function initEditor(editors) {

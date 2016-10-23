@@ -384,6 +384,49 @@ def payment_number_weekly(request):
     return JsonResponse(
             data={'series': [serie], 'labels': labels})
 
+def account_new_week(request):
+    # Grabbing accounts in the relevant period
+    today = datetime.datetime.today().replace(tzinfo=pytz.utc)
+    week = datetime.timedelta(7,0,0)
+    last_monday = today
+    while last_monday.weekday() != 1:
+        last_monday -= datetime.timedelta(1,0,0)
+    date_start = last_monday - datetime.timedelta(7*51,0,0)
+    accounts_ecos = Account.objects.filter(reg_date__gt = date_start,
+            plan_product__name = 'Sunking Eco')
+    accounts_pros = Account.objects.filter(reg_date__gt = date_start,
+            plan_product__name = 'Sunking Pro')
+    accounts_shs = Account.objects.filter(reg_date__gt = date_start,
+            plan_product__name = 'Sunking Home')
+
+    # Computing the nb of payments per week
+    parse_eco = [0] * 52
+    parse_pro = [0] * 52
+    parse_shs = [0] * 52
+    week_start = date_start
+    week_end = date_start + week
+    for i in range(0,52):
+        parse_eco[i] = accounts_ecos.new(week_start,week_end).count()
+        parse_pro[i] = accounts_pros.new(week_start,week_end).count()
+        parse_shs[i] = accounts_shs.new(week_start,week_end).count()
+        week_start = week_end
+        week_end = week_start + week
+
+    #Format
+    labels = []
+    dates = []
+    for idx,dummy in enumerate(parse_eco):
+        dates.append(date_start + datetime.timedelta(idx*7,0,0))
+        if idx == 0:
+            labels.append(str(dates[idx].month) + '/' + str(dates[idx].year))
+        elif dates[idx].month != dates[idx-1].month:
+            labels.append(str(dates[idx].month) + '/' + str(dates[idx].year))
+        else:
+            labels.append('')
+
+    return JsonResponse(
+            data={'series': [parse_eco,parse_pro,parse_shs], 'labels': labels})
+
 #***************************************************************
 #******************** CUSTOM FUNCTIONS *************************
 #***************************************************************
