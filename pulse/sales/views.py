@@ -328,7 +328,10 @@ def payment_season_day(request):
 
 def payment_volume_weekly(request):
     today = datetime.datetime.today().replace(tzinfo=pytz.utc)
-    date_start = today - datetime.timedelta(7*52,0,0)
+    last_monday = today
+    while last_monday.weekday() != 1:
+        last_monday -= datetime.timedelta(1,0,0)
+    date_start = last_monday - datetime.timedelta(7*51,0,0)
     payments = Payment.objects.filter(date__gt = date_start)
     #Computing the nb of payments per week
     parse = [0] * 52
@@ -354,7 +357,10 @@ def payment_volume_weekly(request):
 
 def payment_number_weekly(request):
     today = datetime.datetime.today().replace(tzinfo=pytz.utc)
-    date_start = today - datetime.timedelta(7*52,0,0)
+    last_monday = today
+    while last_monday.weekday() != 1:
+        last_monday -= datetime.timedelta(1,0,0)
+    date_start = last_monday - datetime.timedelta(7*51,0,0)
     payments = Payment.objects.filter(date__gt = date_start)
     #Computing the nb of payments per week
     parse = [0] * 52

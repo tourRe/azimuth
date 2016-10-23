@@ -154,11 +154,11 @@
               </tr>
               <tr>
                 <th>New this month</th>
-                <td>{{ all_accounts.nb_sold_TM|intcomma }}</td>
+                <td>{{ all_accounts.new_TM.nb_sold|intcomma }}</td>
               </tr>
               <tr>
                 <th>New last month</th>
-                <td>{{ all_accounts.nb_sold_LM|intcomma }}</td>
+                <td>{{ all_accounts.new_LM.nb_sold|intcomma }}</td>
               </tr>
               <tr>
                 <th>PAR (14 days)</th>
@@ -180,11 +180,11 @@
               </tr>
               <tr>
                 <th>New this month</th>
-                <td>{{ all_payments.nb_TM|intcomma }}</td>
+                <td>{{ all_payments.TM.nb|intcomma }}</td>
               </tr>
               <tr>
                 <th>New last month</th>
-                <td>{{ all_payments.nb_LM|intcomma }}</td>
+                <td>{{ all_payments.LM.nb|intcomma }}</td>
               </tr>
               <tr>
                 <th>Average payment</th>
