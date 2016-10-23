@@ -11,6 +11,8 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 # Used to cache properties and improve performance
 from django.utils.functional import cached_property
+# Complex queries and filters
+from django.db.models import Q, Sum
 
 # ****************************************************************
 # ************************** CLIENT ******************************
@@ -69,6 +71,15 @@ class Client(models.Model):
 # ************************* MANAGER ******************************
 # ****************************************************************
 
+# CUSTOM QUERYSET CLASS FOR THE MANAGER CLASS TO DEFINE TABLE LEVEL METHODS
+class ManagerQuerySet(models.QuerySet):
+    
+    def top_seller_list(self):
+        managers = Manager.objects.all()
+        accounts = Account.objects.all()
+        for man in managers:
+            rev = (accounts.filter(agent__manager = man)).revenue
+
 # MANAGER CLASS, RESPONSIBLE FOR SEVERAL AGENTS
 class Manager(models.Model):
     firstname = models.CharField(max_length=30)
@@ -78,6 +89,7 @@ class Manager(models.Model):
             choices=(('M', 'Male'),('F', 'Female')))
     district = models.CharField(max_length=30)
     phone = models.CharField(max_length=16)
+    objects = ManagerQuerySet.as_manager()
 
     def __str__(self):
         return ('%s %s (%s)' % (self.firstname, self.lastname, self.district))
@@ -111,13 +123,35 @@ class Agent(models.Model):
 # CUSTOM QUERYSET CLASS FOR THE ACCOUNT CLASS TO DEFINE TABLE LEVEL METHODS
 class AccountQuerySet(models.QuerySet):
 
+    # Filtering new accounts LM and TM
+    @property
+    def new_TM(self):
+        today = datetime.datetime.today().replace(tzinfo=pytz.utc)
+        month_start = month_end(add_months(today,-1))
+        return self.filter(reg_date__gt = month_start, reg_date__lt = today)
+    @property
+    def new_LM(self):
+        today = datetime.datetime.today().replace(tzinfo=pytz.utc)
+        eolm = month_end(add_months(today,-1))
+        bolm = datetime.datetime(eolm.year,eolm.month,1,0,0,0)
+        return self.filter(reg_date__gt = bolm, reg_date__lt = eolm)
+
+    # Filtering active accounts
+    @property
+    def active(self):
+        return self.filter(Q(status = 'e') | Q(status = 'd'))
+
     # Returns the number of units sold, this month and last month
     @cached_property
     def nb_sold(self): return self.count()
     @cached_property
-    def nb_sold_TM(self): return len([obj for obj in self if obj.is_new_TM])
+    def nb_sold_TM(self): return self.new_TM.count()
     @cached_property
-    def nb_sold_LM(self): return len([obj for obj in self if obj.is_new_LM])
+    def nb_sold_LM(self): return self.new_LM.count()
+
+    # Returns the total "revenue" (total sold)
+    @cached_property
+    def revenue(self): return self.aggregate(Sum('plan_tot'))
 
     # Returns the monthly expected collection for a list of accounts
     @cached_property
@@ -133,8 +167,7 @@ class AccountQuerySet(models.QuerySet):
     @cached_property
     def collected_upfront(self):
         result = 0
-        Q = [obj for obj in self if is_this_month(obj.reg_date,0)]
-        for account in Q:
+        for account in self.new_TM:
             result += account.plan_up
         return result
 
@@ -187,8 +220,8 @@ class AccountQuerySet(models.QuerySet):
     # Returns the number of accounts disabled for more than X days
     # Accounts At Risk
     def AAR(self, days):
-        return len([obj for obj in self 
-            if obj.days_disabled_current >= days and obj.is_active])
+        return len([obj for obj in self.active 
+            if obj.days_disabled_current >= days])
 
     @cached_property
     def AAR_7(self): return self.AAR(7)
@@ -216,9 +249,7 @@ class AccountQuerySet(models.QuerySet):
     # Returns the number of accounts disabled for more than X days
     # Accounts At Risk
     def ADP(self, days):
-        return len([obj for obj in self 
-            if (obj.days_disabled >= days 
-                and obj.is_active)])
+        return len([obj for obj in self.active if obj.days_disabled >= days])
 
     @cached_property
     def ADP_14(self): return self.ADP(14)
@@ -352,7 +383,7 @@ class Account(models.Model):
     @property
     def expct_paid_LM(self):
         today = datetime.datetime.today().replace(tzinfo=pytz.utc)
-        eolm = month_end(add_month(today,-1))
+        eolm = month_end(add_months(today,-1))
         return (self.expct_paid_at_date(eolm) 
                 - self.paid 
                 + self.paid_TM + self.paid_LM)
