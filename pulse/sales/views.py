@@ -378,8 +378,7 @@ def payment_number_weekly(request):
             labels.append(str(dates[idx].month) + '/' + str(dates[idx].year))
         elif dates[idx].month != dates[idx-1].month:
             labels.append(str(dates[idx].month) + '/' + str(dates[idx].year))
-        else:
-            labels.append('')
+        else: labels.append('')
 
     return JsonResponse(
             data={'series': [serie], 'labels': labels})
@@ -421,8 +420,7 @@ def account_new_week(request):
             labels.append(str(dates[idx].month) + '/' + str(dates[idx].year))
         elif dates[idx].month != dates[idx-1].month:
             labels.append(str(dates[idx].month) + '/' + str(dates[idx].year))
-        else:
-            labels.append('')
+        else: labels.append('')
 
     return JsonResponse(
             data={'series': [parse_eco,parse_pro,parse_shs], 'labels': labels})
