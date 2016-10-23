@@ -10,21 +10,33 @@ from progress.bar import Bar
 import csv, datetime
 import pytz
 import requests
+from requests.auth import HTTPBasicAuth
 
 @app.shared_task
-def collect():
-    # Preparing for automated import of files
-    cookies = dict(_ga='GA1.2.1862213469.1457357349')
-    url1 = 'https://payg.angazadesign.com/api/snapshots/accounts'
-    url2 = 'https://payg.angazadesign.com/api/snapshots/payments'
-    url3 = 'https://payg.angazadesign.com/api/snapshots/users'
-    url4 = 'https://payg.angazadesign.com/api/snapshots/sms_messages'
-    with requests.Session() as s:
-        download = s.get(url1, cookies=cookies)
+def collect(online=False):
 
     print('Importing dump files')
-    accounts_raw = csvToList('media/accounts.csv')
-    payments_raw = csvToList('media/payments.csv')
+    if online:
+        login = 'op=alex@azimuth-solar.com'
+        pw = 'raw=Lapoudre2009'
+        url1 = 'https://payg.angazadesign.com/api/snapshots/accounts'
+        url2 = 'https://payg.angazadesign.com/api/snapshots/payments'
+        url3 = 'https://payg.angazadesign.com/api/snapshots/users'
+        url4 = 'https://payg.angazadesign.com/api/snapshots/sms_messages'
+        with requests.Session() as s:
+
+            print(' > downloading accounts')
+            download = s.get(url1, auth=(login,pw))
+            decoded_content = download.content.decode('utf-8')
+            accounts_raw = csvToList2(decoded_content.splitlines())
+
+            print(' > downloading payments')
+            download = s.get(url2, auth=(login,pw))
+            decoded_content = download.content.decode('utf-8')
+            payments_raw = csvToList2(decoded_content.splitlines())
+    else:
+        accounts_raw = csvToList('media/accounts.csv')
+        payments_raw = csvToList('media/payments.csv')
 
     # List of updated clients + accounts to delete those not found in the dumps
     updated_clients = []
@@ -170,6 +182,13 @@ def collect():
 
 def csvToList(path):
     reader = csv.DictReader(open(path))
+    result = []
+    for dict in reader:
+        result.append(dict)
+    return result
+
+def csvToList2(path):
+    reader = csv.DictReader(path, delimiter=',')
     result = []
     for dict in reader:
         result.append(dict)
