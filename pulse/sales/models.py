@@ -130,7 +130,7 @@ class AccountQuerySet(models.QuerySet):
         return result
 
     # Returns the amount collected this month in upfront payments
-    cached_property
+    @cached_property
     def collected_upfront(self):
         result = 0
         Q = [obj for obj in self if is_this_month(obj.reg_date,0)]

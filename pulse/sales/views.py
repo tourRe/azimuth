@@ -7,6 +7,7 @@ import collections
 import datetime, pytz
 # Importing necessary models
 from .models import Agent, Manager, Account, Client, Payment
+from inventory.models import Product
 
 def index(request):
     # Adding menu content to context
@@ -96,6 +97,14 @@ def agent(request, agent_login):
     # Identifying agent and adding it to context
     agent = Agent.objects.get(login = agent_login)
     context['agent'] = agent
+
+    # Preparing table for account_sets display
+    account_table = collections.OrderedDict()
+    products = Product.objects.all()
+    accounts = Account.objects.filter(agent = agent)
+    for prod in products:
+        account_table[prod.name] = accounts.filter(plan_product = prod)
+    context['account_table'] = account_table
 
     # Adding PAR7 table to context
     par7_table = collections.OrderedDict()
