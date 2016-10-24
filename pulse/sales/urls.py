@@ -33,4 +33,8 @@ urlpatterns = [
             views.payment_season_day, name='pay_seas_day'),
         url(r'^accounts/graph/new_week/$',
             views.account_new_week, name='acc_new_week'),
+        url(r'^accounts/graph/number_by_disable/$',
+            views.account_number_by_disable, name='acc_num_dis'),
+        url(r'^accounts/graph/outstanding_by_disable/$',
+            views.account_outstanding_by_disable, name='acc_out_dis'),
         ]

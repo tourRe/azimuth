@@ -3,7 +3,8 @@
   <div class="col-lg-4">
     <div class="panel panel-primary">
       <div class="panel-heading"><h4 class="panel-title">
-          {% autoescape off %}{{ line_title }}{% endautoescape %}</h4></div>
+          {% autoescape off %}{{ line_title }}{% endautoescape %} - <a href='https://payg.angazadesign.com/ui/accounts/detailed/{{ account.account_Angaza }}'>see on Angaza</a>
+      </h4></div>
       <div class="panel-body">
         <table class="table table-condensed table-striped">
           <tr>
@@ -16,7 +17,7 @@
           </tr>
           <tr>
             <th>Plan</th>
-            <td>{{ account.plan_name }}</td>
+            <td>{{ account.plan_name|cut:" Customer"|cut:"ly" }}</td>
           </tr>
           <tr>
             <th>Client name</th>
@@ -31,15 +32,15 @@
             <td>{{ account.client.location|title }}</td>
           </tr>
           <tr>
-            <th>Current Disabled</th>
+            <th>Current disabled</th>
             <td>{{ account.days_disabled_current|floatformat }}</td>
           </tr>
           <tr>
-            <th>Total Disabled</th>
+            <th>Total disabled</th>
             <td>{{ account.days_disabled|floatformat }}</td>
           </tr>
           <tr>
-            <th>Left To Pay</th>
+            <th>Left to pay</th>
             <td>{{ account.left_to_pay|intcomma }}</td>
           </tr>
         </table>

@@ -159,6 +159,28 @@ function loadActivityChart(element) {
         },
         dataType: 'json'
     });
+
+    increaseLoading('#activity-loading');
+    $.ajax({
+        url: element.data('acc_num_dis'),
+        success: function(data) {
+            new Chartist.Bar('#acc-num-dis', data, {stackBars: true});
+            configureChart($('#acc-num-dis'));
+            decreaseLoading('#activity-loading');
+        },
+        dataType: 'json'
+    });
+
+    increaseLoading('#activity-loading');
+    $.ajax({
+        url: element.data('acc_out_dis'),
+        success: function(data) {
+            new Chartist.Bar('#acc-out-dis', data, {stackBars: true});
+            configureChart($('#acc-out-dis'));
+            decreaseLoading('#activity-loading');
+        },
+        dataType: 'json'
+    });
 }
 
 function initEditor(editors) {

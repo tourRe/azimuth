@@ -345,7 +345,7 @@ def payment_volume_weekly(request):
     dates = []
     for idx,dummy in enumerate(parse):
         serie.append(dummy)
-        dates.append(date_start + datetime.timedelta(idx*7,0,0))
+        dates.append(date_start + datetime.timedelta((idx+1)*7,0,0))
         if idx == 0:
             labels.append(str(dates[idx].month) + '/' + str(dates[idx].year))
         elif dates[idx].month != dates[idx-1].month:
@@ -375,7 +375,7 @@ def payment_number_weekly(request):
     dates = []
     for idx,dummy in enumerate(parse):
         serie.append(dummy)
-        dates.append(date_start + datetime.timedelta(idx*7,0,0))
+        dates.append(date_start + datetime.timedelta((idx+1)*7,0,0))
         if idx == 0:
             labels.append(str(dates[idx].month) + '/' + str(dates[idx].year))
         elif dates[idx].month != dates[idx-1].month:
@@ -407,26 +407,59 @@ def account_new_week(request):
     week = datetime.timedelta(7,0,0)
     week_start = date_start
     week_end = date_start + week
+    labels = []
     for i in range(0,52):
         parse_eco[i] = accounts_ecos.new(week_start,week_end).count()
         parse_pro[i] = accounts_pros.new(week_start,week_end).count()
         parse_shs[i] = accounts_shs.new(week_start,week_end).count()
+        if i == 0:
+            labels.append(str(week_end.month) + '/' + str(week_end.year))
+        elif week_end.month != week_start.month:
+            labels.append(str(week_end.month) + '/' + str(week_end.year))
+        else: labels.append('')
         week_start = week_end
         week_end = week_start + week
 
-    #Format
-    labels = []
-    dates = []
-    for idx,dummy in enumerate(parse_eco):
-        dates.append(date_start + datetime.timedelta(idx*7,0,0))
-        if idx == 0:
-            labels.append(str(dates[idx].month) + '/' + str(dates[idx].year))
-        elif dates[idx].month != dates[idx-1].month:
-            labels.append(str(dates[idx].month) + '/' + str(dates[idx].year))
-        else: labels.append('')
-
     return JsonResponse(
             data={'series': [parse_eco,parse_pro,parse_shs], 'labels': labels})
+
+def account_number_by_disable(request):
+    accounts = Account.objects.all().active
+    serie_e = [0] * 51
+    serie_d = [0] * 51
+    for acc in accounts:
+        index = int(min(50,max(0,acc.days_credit*(-1)+25)))
+        if index >= 25: serie_e[index] += 1
+        else: serie_d[index] += 1
+
+    #Format
+    labels = []
+    for idx,dummy in enumerate(serie_e):
+        if idx == 0: labels.append('-25(+)')
+        elif idx == 50: labels.append('25(+)')
+        else: labels.append(str(idx-25))
+
+    return JsonResponse(
+            data={'series': [serie_e,serie_d], 'labels': labels})
+
+def account_outstanding_by_disable(request):
+    accounts = Account.objects.all().active
+    serie_e = [0] * 51
+    serie_d = [0] * 51
+    for acc in accounts:
+        index = int(min(50,max(0,acc.days_credit*(-1)+25)))
+        if index >= 25: serie_e[index] += acc.left_to_pay
+        else: serie_d[index] += acc.left_to_pay
+
+    #Format
+    labels = []
+    for idx,dummy in enumerate(serie_e):
+        if idx == 0: labels.append('-25(+)')
+        elif idx == 50: labels.append('25(+)')
+        else: labels.append(str(idx-25))
+
+    return JsonResponse(
+            data={'series': [serie_e,serie_d], 'labels': labels})
 
 #***************************************************************
 #******************** CUSTOM FUNCTIONS *************************

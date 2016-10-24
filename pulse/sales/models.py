@@ -395,6 +395,26 @@ class Account(models.Model):
             return r[0]
         return None
 
+    @cached_property
+    def days_credit(self):
+        today = datetime.datetime.today().replace(tzinfo=pytz.utc)
+        for idx, payment in enumerate(
+                Payment.objects.filter(account = self).order_by('date')):
+            if idx == 0:
+                weeks_credit = ((payment.amount - self.plan_up)/self.plan_week 
+                        + 1)
+                disable_date = (payment.date 
+                        + datetime.timedelta(weeks_credit*7,0,0))
+            else:
+                weeks_credit = payment.amount / self.plan_week
+                disable_date = (max(disable_date, payment.date) 
+                        + datetime.timedelta(weeks_credit*7,0,0))
+            prev_pay = payment
+        result = 0
+        if self.status != 'u':
+            result += to_weeks(today - disable_date)*7
+        return result
+
     # Total numbers of days disabled. Returns the current disabled if now = True
     # tolerance is the number of days of disablement before it starts counting
     def days_disabled_main(self, tolerance = 0, now = False):

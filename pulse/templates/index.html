@@ -23,6 +23,8 @@
     <li><a href="#graphs" data-toggle="tab" data-load="activity"
       data-pay_vol_week="{% url 'sales:pay_vol_week' %}"
       data-acc_new_week="{% url 'sales:acc_new_week' %}"
+      data-acc_num_dis="{% url 'sales:acc_num_dis' %}"
+      data-acc_out_dis="{% url 'sales:acc_out_dis' %}"
       >Graphs</a></li>
   </ul>
 
@@ -37,6 +39,10 @@
         <div id="pay-vol-week" class="ct-chart ct-double-octave"></div>
         <h5>Weekly accounts creation for last year</h5>
         <div id="acc-new-week" class="ct-chart ct-double-octave"></div>
+        <h5>Number of accounts per days of credit</h5>
+        <div id="acc-num-dis" class="ct-chart ct-double-octave"></div>
+        <h5>Outstanding balance per days of credit</h5>
+        <div id="acc-out-dis" class="ct-chart ct-double-octave"></div>
       </div>
     </div>
 
