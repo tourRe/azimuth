@@ -328,8 +328,9 @@ def payment_season_day(request):
 
 def payment_volume_weekly(request):
     today = datetime.datetime.today().replace(tzinfo=pytz.utc)
-    last_monday = today
-    while last_monday.weekday() != 1:
+    last_monday = today - datetime.timedelta(0
+            ,today.hour*60*60+today.minute*60+today.second,0)
+    while last_monday.weekday() != 0:
         last_monday -= datetime.timedelta(1,0,0)
     date_start = last_monday - datetime.timedelta(7*51,0,0)
     payments = Payment.objects.filter(date__gt = date_start)
@@ -357,8 +358,9 @@ def payment_volume_weekly(request):
 
 def payment_number_weekly(request):
     today = datetime.datetime.today().replace(tzinfo=pytz.utc)
-    last_monday = today
-    while last_monday.weekday() != 1:
+    last_monday = today - datetime.timedelta(0
+            ,today.hour*60*60+today.minute*60+today.second,0)
+    while last_monday.weekday() != 0:
         last_monday -= datetime.timedelta(1,0,0)
     date_start = last_monday - datetime.timedelta(7*51,0,0)
     payments = Payment.objects.filter(date__gt = date_start)
@@ -386,9 +388,9 @@ def payment_number_weekly(request):
 def account_new_week(request):
     # Grabbing accounts in the relevant period
     today = datetime.datetime.today().replace(tzinfo=pytz.utc)
-    week = datetime.timedelta(7,0,0)
-    last_monday = today
-    while last_monday.weekday() != 1:
+    last_monday = today - datetime.timedelta(0
+            ,today.hour*60*60+today.minute*60+today.second,0)
+    while last_monday.weekday() != 0:
         last_monday -= datetime.timedelta(1,0,0)
     date_start = last_monday - datetime.timedelta(7*51,0,0)
     accounts_ecos = Account.objects.filter(reg_date__gt = date_start,
@@ -402,6 +404,7 @@ def account_new_week(request):
     parse_eco = [0] * 52
     parse_pro = [0] * 52
     parse_shs = [0] * 52
+    week = datetime.timedelta(7,0,0)
     week_start = date_start
     week_end = date_start + week
     for i in range(0,52):
