@@ -50,7 +50,7 @@ def collect(online=False):
     for i in range(0,len(accounts_raw)):
         bar.next()
         j = len(accounts_raw) - i - 1
-        acc_read = accounts_raw[j]
+        acc_read = accounts_raw[i]
 
         # Identifying agent
         agent = Agent.objects.get(label = acc_read['responsible_user'])
@@ -74,16 +74,16 @@ def collect(online=False):
             client.name = acc_read['owner_name']
             client.gender = gender
             client.location = acc_read['location']
+            client.save()
         # if not creates a new client
         except:
-            client = Client(
+            client = Client.objects.create(
                     name = acc_read['owner_name'],
                     gender = gender,
                     phone = acc_read['owner_msisdn'],
-                    location = acc_read['location']
+                    location = acc_read['owner_location']
                     )
         updated_clients.append(client.phone)
-        client.save()
 
         # Creating or identifying account
         # if the account exists (based on acc #), updates info

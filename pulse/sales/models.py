@@ -476,7 +476,7 @@ class Account(models.Model):
     # Total disablement score
     @property
     def score_disable(self):
-        return (28-min(self.days_disabled,28))/28
+        return (42-min(self.days_disabled,42))/42
 
     # Max payment score
     @property
@@ -489,7 +489,7 @@ class Account(models.Model):
     def score(self):
         weight_social = 0.2
         weight_disable = 0.8
-        weight_bullet = 0.4
+        weight_bullet = 0.3
         return ((self.score_social * weight_social 
                 + self.score_disable * weight_disable
                 + self.score_bullet * weight_bullet)
