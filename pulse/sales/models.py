@@ -329,11 +329,11 @@ class Account(models.Model):
     # Total number of payments
     @cached_property
     def payment_nb(self):
-        return Payment.objects.filter(account = self).count()
+        return self.payments.count()
     def payment_nb_TM(self):
-        return Payment.objects.filter(account = self).TM.count()
+        return self.payments.TM.count()
     def payment_nb_LM(self):
-        return Payment.objects.filter(account = self).LM.count()
+        return self.payments.LM.count()
 
     # Outstanding balance
     @cached_property
@@ -342,8 +342,7 @@ class Account(models.Model):
 
     # Expected payment as of 'date'
     def expct_paid_at_date(self, date):
-        if date < self.reg_date:
-            return 0
+        if date < self.reg_date: return 0
         delta = date - self.reg_date
         full_weeks = int(to_weeks(delta))
         return min(self.plan_up + self.plan_week*full_weeks, self.plan_tot)
@@ -390,9 +389,8 @@ class Account(models.Model):
     # Returns a Payment object with the last payment
     @cached_property
     def last_payment(self):
-        r = list(Payment.objects.filter(account = self).order_by('date')[:1])
-        if r:
-            return r[0]
+        r = list(self.payments.order_by('date')[:1])
+        if r: return r[0]
         return None
 
     @cached_property
@@ -466,6 +464,36 @@ class Account(models.Model):
                 or (self.status == 'u' 
                     and is_this_month(self.last_payment.date,0)) 
                 )
+# CREDIT SCORING
+
+    # Socio economic score
+    @property
+    def score_social(self):
+        if self.client.gender == 'M': return 0.43
+        elif self.client.gender == 'F': return 0.62
+        else: return 0.5
+
+    # Total disablement score
+    @property
+    def score_disable(self):
+        return (28-min(self.days_disabled,28))/28
+
+    # Max payment score
+    @property
+    def score_bullet(self):
+        max_pay = list(self.payments.order_by('amount')[:1])[0].amount
+        return min(max_pay,100000)/100000
+
+    # Combined score
+    @property
+    def score(self):
+        weight_social = 0.2
+        weight_disable = 0.8
+        weight_bullet = 0.4
+        return ((self.score_social * weight_social 
+                + self.score_disable * weight_disable
+                + self.score_bullet * weight_bullet)
+                / (weight_social + weight_disable + weight_bullet))
 
 # CREATES A TRANSACTION AND TRANSACTION ITEM WHEN AN ACCOUNT IS CREATED
 @receiver(post_save, sender=Account,

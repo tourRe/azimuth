@@ -43,6 +43,27 @@
             <th>Left to pay</th>
             <td>{{ account.left_to_pay|intcomma }}</td>
           </tr>
+          <tr>
+            <th>Credit Score</th>
+            <td>
+              {% with account.score as score %}
+              {% if score < 0.25 %}
+              <span class="label-danger badge">
+              {% endif %}
+              {% if score < 0.5 and score >= 0.25 %}
+              <span class="label-warning badge">
+              {% endif %}
+              {% if score < 0.75 and score >= 0.5 %}
+              <span class="label-success badge">
+              {% endif %}
+              {% if score >= 0.75 %}
+              <span class="label-info badge">
+              {% endif %}
+              {{ score|floatformat:2 }}
+              {% endwith %}
+            </span>
+            </td>
+          </tr>
         </table>
       </div>
     </div>
