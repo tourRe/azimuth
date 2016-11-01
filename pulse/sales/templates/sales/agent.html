@@ -24,6 +24,12 @@
     <li><a href="#pdp14" data-toggle="tab">PDP (14 days)</a></li>
     <li><a href="#reposess" data-toggle="tab">To Reposess</a></li>
     <li><a href="#transaction" data-toggle="tab">Transaction History</a></li>
+    <li><a href="#graphs" data-toggle="tab" data-load="activity"
+      data-pay_vol_week="{% url 'sales:pay_vol_week' agent=agent.login %}"
+      data-acc_new_week="{% url 'sales:acc_new_week' agent=agent.login %}"
+      data-acc_num_dis="{% url 'sales:acc_num_dis' agent=agent.login %}"
+      data-acc_out_dis="{% url 'sales:acc_out_dis' agent=agent.login %}"
+      >Graphs</a></li>
   </ul>
 
   <div class="tab-content">
@@ -66,6 +72,10 @@
       <div class="panel panel-primary">
         <div class="panel-heading"><h4 class="panel-title">Summary of last payments received</h4></div>
       </div>
+    </div>
+
+    <div class="tab-pane" id="graphs">
+      {% include "sales/activity_graphs.html" %}
     </div>
 
   </div>

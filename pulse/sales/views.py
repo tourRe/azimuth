@@ -326,7 +326,7 @@ def payment_season_day(request):
     return JsonResponse(
             data={'series': [serie], 'labels': labels})
 
-def payment_volume_weekly(request):
+def payment_volume_weekly(request, agent=None):
     today = datetime.datetime.today().replace(tzinfo=pytz.utc)
     last_monday = today - datetime.timedelta(0
             ,today.hour*60*60+today.minute*60+today.second,0)
@@ -334,6 +334,10 @@ def payment_volume_weekly(request):
         last_monday -= datetime.timedelta(1,0,0)
     date_start = last_monday - datetime.timedelta(7*51,0,0)
     payments = Payment.objects.filter(date__gt = date_start)
+    if not agent: pass
+    else:
+        this_agent = Agent.objects.get(login=agent)
+        payments = payments.filter(account__agent = this_agent)
     #Computing the nb of payments per week
     parse = [0] * 52
     for pay in payments:
@@ -356,7 +360,7 @@ def payment_volume_weekly(request):
     return JsonResponse(
             data={'series': [serie], 'labels': labels})
 
-def payment_number_weekly(request):
+def payment_number_weekly(request, agent=None):
     today = datetime.datetime.today().replace(tzinfo=pytz.utc)
     last_monday = today - datetime.timedelta(0
             ,today.hour*60*60+today.minute*60+today.second,0)
@@ -364,6 +368,10 @@ def payment_number_weekly(request):
         last_monday -= datetime.timedelta(1,0,0)
     date_start = last_monday - datetime.timedelta(7*51,0,0)
     payments = Payment.objects.filter(date__gt = date_start)
+    if not agent: pass
+    else:
+        this_agent = Agent.objects.get(login=agent)
+        payments = payments.filter(account__agent = this_agent)
     #Computing the nb of payments per week
     parse = [0] * 52
     for pay in payments:
@@ -385,7 +393,7 @@ def payment_number_weekly(request):
     return JsonResponse(
             data={'series': [serie], 'labels': labels})
 
-def account_new_week(request):
+def account_new_week(request, agent=None):
     # Grabbing accounts in the relevant period
     today = datetime.datetime.today().replace(tzinfo=pytz.utc)
     last_monday = today - datetime.timedelta(0
@@ -393,12 +401,14 @@ def account_new_week(request):
     while last_monday.weekday() != 0:
         last_monday -= datetime.timedelta(1,0,0)
     date_start = last_monday - datetime.timedelta(7*51,0,0)
-    accounts_ecos = Account.objects.filter(reg_date__gt = date_start,
-            plan_product__name = 'Sunking Eco')
-    accounts_pros = Account.objects.filter(reg_date__gt = date_start,
-            plan_product__name = 'Sunking Pro')
-    accounts_shs = Account.objects.filter(reg_date__gt = date_start,
-            plan_product__name = 'Sunking Home')
+    accounts = Account.objects.filter(reg_date__gt = date_start)
+    if not agent: pass
+    else:
+        this_agent = Agent.objects.get(login=agent)
+        accounts = accounts.filter(agent = this_agent)
+    accounts_ecos = accounts.filter(plan_product__name = 'Sunking Eco')
+    accounts_pros = accounts.filter(plan_product__name = 'Sunking Pro')
+    accounts_shs = accounts.filter(plan_product__name = 'Sunking Home')
 
     # Computing the nb of payments per week
     parse_eco = [0] * 52
@@ -423,8 +433,12 @@ def account_new_week(request):
     return JsonResponse(
             data={'series': [parse_eco,parse_pro,parse_shs], 'labels': labels})
 
-def account_number_by_disable(request):
+def account_number_by_disable(request, agent=None):
     accounts = Account.objects.all().active
+    if not agent: pass
+    else: 
+        this_agent = Agent.objects.get(login=agent)
+        accounts = accounts.filter(agent = this_agent)
     serie_e = [0] * 51
     serie_d = [0] * 51
     for acc in accounts:
@@ -442,8 +456,12 @@ def account_number_by_disable(request):
     return JsonResponse(
             data={'series': [serie_e,serie_d], 'labels': labels})
 
-def account_outstanding_by_disable(request):
+def account_outstanding_by_disable(request, agent=None):
     accounts = Account.objects.all().active
+    if not agent: pass
+    else: 
+        this_agent = Agent.objects.get(login=agent)
+        accounts = accounts.filter(agent = this_agent)
     serie_e = [0] * 51
     serie_d = [0] * 51
     for acc in accounts:

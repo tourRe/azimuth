@@ -34,16 +34,7 @@
     </div>
 
     <div class="tab-pane" id="graphs">
-      <div style="margin-left:15px; margin-right:15px">
-        <h5>Weekly payments collection for last year</h5>
-        <div id="pay-vol-week" class="ct-chart ct-double-octave"></div>
-        <h5>Weekly accounts creation for last year</h5>
-        <div id="acc-new-week" class="ct-chart ct-double-octave"></div>
-        <h5>Number of accounts per days of credit</h5>
-        <div id="acc-num-dis" class="ct-chart ct-double-octave"></div>
-        <h5>Outstanding balance per days of credit</h5>
-        <div id="acc-out-dis" class="ct-chart ct-double-octave"></div>
-      </div>
+      {% include "sales/activity_graphs.html" %}
     </div>
 
   </div>

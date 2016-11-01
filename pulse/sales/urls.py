@@ -1,6 +1,10 @@
 from django.conf.urls import url
 from . import views
 
+# defining common REGEX expressions
+AGENT = r'(?P<agent>[^/]+)/'
+
+
 app_name = 'sales'
 urlpatterns = [
         url(r'^$', 
@@ -23,18 +27,34 @@ urlpatterns = [
             views.account, name='account'),
         url(r'^payments/$', 
             views.payment_index, name='payment_index'),
-        url(r'^payments/graph/volume_week/$',
-            views.payment_volume_weekly, name='pay_vol_week'),
-        url(r'^payments/graph/number_week/$',
-            views.payment_number_weekly, name='pay_num_week'),
+
         url(r'^payments/graph/season_hour/$',
             views.payment_season_hour, name='pay_seas_hour'),
         url(r'^payments/graph/season_day/$',
             views.payment_season_day, name='pay_seas_day'),
+
+        url(r'^payments/graph/volume_week/$',
+            views.payment_volume_weekly, name='pay_vol_week'),
+        url(r'^payments/graph/volume_week/' + AGENT + '$',
+            views.payment_volume_weekly, name='pay_vol_week'),
+
+        url(r'^payments/graph/number_week/$',
+            views.payment_number_weekly, name='pay_num_week'),
+        url(r'^payments/graph/number_week/' + AGENT + '$',
+            views.payment_number_weekly, name='pay_num_week'),
+
         url(r'^accounts/graph/new_week/$',
             views.account_new_week, name='acc_new_week'),
+        url(r'^accounts/graph/new_week/' + AGENT + '$',
+            views.account_new_week, name='acc_new_week'),
+
         url(r'^accounts/graph/number_by_disable/$',
             views.account_number_by_disable, name='acc_num_dis'),
+        url(r'^accounts/graph/number_by_disable/' + AGENT + '$',
+            views.account_number_by_disable, name='acc_num_dis'),
+
         url(r'^accounts/graph/outstanding_by_disable/$',
+            views.account_outstanding_by_disable, name='acc_out_dis'),
+        url(r'^accounts/graph/outstanding_by_disable/' + AGENT + '$',
             views.account_outstanding_by_disable, name='acc_out_dis'),
         ]
