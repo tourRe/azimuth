@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load humanize %}
 
 <head>
   <title>Pulse > Accounts</title>
@@ -16,77 +17,41 @@
 {% endblock %}
 
 {% block content %}
+
 <div class="content">
 
   <ul class="nav nav-pills">
-    <li class="active"><a href="#stats" data-toggle="tab">Statistics</a></li>
-    <li><a href="#plans" data-toggle="tab">By payment plan</a></li>
+    <li class="active"><a href="#stats" data-toggle="tab">General Stats</a></li>
+    <li><a href="#graphs" data-toggle="tab">Graphs</a></li>
   </ul>
 
   <div class="tab-content">
+
     <div class="tab-pane active" id="stats">
-      <div class="container-fluid">
-        <div class="row">
-          <div class="col-lg-6">
-            <div class="panel panel-primary">
-              <div class="panel-heading"><h4 class="panel-title">Global summary</h4></div>
-              <div class="panel-body">
-                <table class="table table-condensed table-striped">
-                  {% for key, value in table_1.items %}
-                  <tr>
-                    <th>{{ key }}</th>
-                    <td>{{ value }}</td>   
-                  </tr>
-                  {% endfor %}
-                </table>
-              </div>
+
+      {% with accounts as active %}
+      <div class="col-lg-4">
+        <div class="panel panel-primary">
+          <div class="panel-heading"><h4 class="panel-title">Total</h4></div>
+            <div class="panel-body">
+              <table class="table table-condensed table-striped">
+                <tr><th>Nb of accounts</th>
+                  <td>{{ active.nb_sold|intcomma }}</td></tr>
+                <tr><th>Revenue</th>
+                  <td>{{ active.revenue|intcomma }}</td></tr>
+                <tr><th>Avg unit price</th>
+                  <td>{{ active.avg_price|intcomma }}</td></tr>
+              </table>
             </div>
-          </div>
-          <div class="col-lg-6">
-            <div class="panel panel-primary">
-              <div class="panel-heading"><h4 class="panel-title">Previous month summary</h4></div>
-              <div class="panel-body">
-                <table class="table table-condensed table-striped">
-                  {% for key, value in table_2.items %}
-                  <tr>
-                    <th>{{ key }}</th>
-                    <td>{{ value }}</td>   
-                  </tr>
-                  {% endfor %}
-                </table>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
+      {% endwith %}
+
     </div>
 
-    <div class="tab-pane" id="plans">
-      <table class="sort table" style="width:100%">
-        <thead>
-          <tr>
-            <th> Payment plan </th>
-            <th></th>
-            <th> Monthly collection </th>
-            <th> # Enabled </th>
-            <th> # Disabled </th>
-            <th> # Unlocked </th>
-            <th> PAR (14 days) </th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for plan_name, values in table_2.items %}
-          <tr>
-            <th>{{ plan_name }}</th>
-            <td></td>
-            {% for n in values %}
-            <td>{{ n }}</td>
-            {% endfor %}
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+    <div class="tab-pane" id="graphs">
     </div>
+
   </div>
 </div>
 

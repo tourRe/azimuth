@@ -12,7 +12,40 @@ from django.dispatch import receiver
 # Used to cache properties and improve performance
 from django.utils.functional import cached_property
 # Complex queries and filters
-from django.db.models import Q, Sum
+from django.db.models import F, Q, Sum
+
+# ****************************************************************
+# ********************** GLOBAL VARIABLES ************************
+# ****************************************************************
+
+# Return the last second of the last day of the month of a given date
+def month_end(date):
+    result = datetime.datetime(date.year, date.month+1, 1,
+            00,00,00,000000).replace(tzinfo=pytz.utc)
+    return result - datetime.timedelta(0,1,0)
+
+# Converts a timedelta into days, with decimals
+def to_days(delta):
+    return delta / datetime.timedelta(days=1)
+
+# Adds months to a given date
+def add_months(sourcedate,months):
+    month = sourcedate.month - 1 + months
+    year = int(sourcedate.year + month / 12 )
+    month = month % 12 + 1
+    day = min(sourcedate.day,calendar.monthrange(year,month)[1])
+    return datetime.datetime(year,month,day,
+            sourcedate.hour,sourcedate.minute,sourcedate.second)
+
+today = datetime.datetime.today().replace(tzinfo=pytz.utc)
+TM_end = month_end(today)
+LM_end = month_end(add_months(today,-1))
+TM_start = LM_end
+LM_start = month_end(add_months(today,-2))
+TM_days = to_days(TM_end - TM_start)
+LM_days = to_days(LM_end - LM_start)
+
+tolerance = 1
 
 # ****************************************************************
 # ************************** CLIENT ******************************
@@ -123,42 +156,72 @@ class Agent(models.Model):
 # CUSTOM QUERYSET CLASS FOR THE ACCOUNT CLASS TO DEFINE TABLE LEVEL METHODS
 class AccountQuerySet(models.QuerySet):
 
+    # *** FILTERS ***
+
     # Filtering new accounts
-    def new(self,start,end):
-        return self.filter(reg_date__lt = end, reg_date__gt = start)
     @cached_property
-    def new_TM(self):
-        today = datetime.datetime.today().replace(tzinfo=pytz.utc)
-        month_start = month_end(add_months(today,-1))
-        return self.filter(reg_date__gt = month_start)
+    def new_TM(self): return self.filter(reg_date__gt = TM_start)
     @cached_property
-    def new_LM(self):
-        today = datetime.datetime.today().replace(tzinfo=pytz.utc)
-        eolm = month_end(add_months(today,-1))
-        bolm = datetime.datetime(eolm.year,eolm.month,1,0,0,0)
-        return self.filter(reg_date__gt = bolm, reg_date__lt = eolm)
+    def new_LM(self): return self.filter(
+            reg_date__gt = LM_start,
+            reg_date__lt = LM_end)
 
     # Filtering active accounts
     @cached_property
-    def active(self):
-        return self.filter(Q(status = 'e') | Q(status = 'd'))
+    def active(self): return self.filter(Q(status = 'e') | Q(status = 'd'))
     @cached_property
-    def active_TM(self):
-        today = datetime.datetime.today().replace(tzinfo=pytz.utc)
-        month_start = month_end(add_months(today,-1))
-        return self.filter(Q(status = 'e') 
-                | Q(status = 'd')
-                | Q(payment__date__gt = month_start)).distinct()
+    def active_TM(self): return self.filter(
+            Q(payment__date__lt = TM_start), 
+            Q(payment__pay_left > 0)
+            ).distinct()
+    @cached_property
+    def active_LM(self): return self.filter(
+            Q(payment__date__lt = LM_start), 
+            Q(payment__pay_left > 0)
+            ).distinct()
 
-    # Returns the number of units sold, this month and last month
+    def at_risk(self, days, tol):
+        return self.active.last_payments.filter(
+                next_disable__lt = today - datetime.timedelta(days=days + tol))
+
+    # *** PROXYING OBJECT PROPERTIES ***
+
+    @cached_property
+    def plan_tot(self):
+        if not self: return 0
+        return self.aggregate(Sum('plan_tot'))['plan_tot__sum']
+
+    # *** METHODS ***
+
+    # Caching payments queryset
+    @cached_property
+    def payments(self): 
+        return Payment.objects.filter(account__in = self)
+    @cached_property
+    def last_payments(self): 
+        return self.payments.filter(is_last = True)
+
+    # Total amount paid
+    @property
+    def paid(self): return self.payments.sum_amount
+    @property
+    def paid_TM(self): return self.payments.TM.sum_amount
+    @property
+    def paid_EOLM(self): return self.payments.EOLM.sum_amount
+    @property
+    def paid_LM(self): return self.payments.LM.sum_amount
+    @property
+    def paid_EOLLM(self): return self.payments.EOLLM.sum_amount
+
+    # Returns the number of units sold
     @cached_property
     def nb_sold(self): return self.count()
 
-    # Returns the total "revenue" (total sold)
+    # Returns the average price
     @cached_property
-    def revenue(self): 
+    def avg_price(self): 
         if not self: return 0
-        return self.aggregate(Sum('plan_tot'))['plan_tot__sum']
+        return ratio(self.plan_tot,self.nb_sold)
 
     # Returns the monthly expected collection for a list of accounts
     @cached_property
@@ -168,36 +231,40 @@ class AccountQuerySet(models.QuerySet):
             result+= (account.expct_paid_TM - min(0,account.payment_deficit))
         return result
 
-    # Returns the amount collected this month in upfront payments
+    # Returns various collected amounts
+    @cached_property
+    def collected(self):
+        return self.payments.sum_amount
     @cached_property
     def collected_upfront(self):
-        Q = self.new_TM
-        if not Q: return 0
-        return Q.aggregate(Sum('plan_up'))['plan_up__sum']
+        if not self: return 0
+        return self.aggregate(Sum('plan_up'))['plan_up__sum']
+    @cached_property
+    def collected_instalments(self):
+        return self.collected - self.collected_upfront
 
     # Returns this month's upfront payments as a % of expected collection
     @property
-    def collected_upfront_PCT(self):
-        return ratio(self.collected_upfront, self.expct_collection_TM,
+    def collected_upfront_TM_PCT(self):
+        return ratio(self.new_TM.collected_upfront, self.expct_collection_TM,
                 pc=True)
 
-    # Returns the amount collected this month in instalments
     @cached_property
-    def collected_instalments(self):
-        Q = Payment.objects.filter(account__in = self.active_TM).TM
-        if not Q: return 0
-        result = Q.aggregate(Sum('amount'))['amount__sum']
-        return result - self.collected_upfront
+    def collected_instalments_TM(self):
+        return self.payments.TM.sum_amount - self.new_TM.collected_upfront
+    @cached_property
+    def collected_instalments_LM(self):
+        return self.payments.LM.sum_amount - self.new_LM.collected_upfront
 
     # Returns this month's instalments as a % of expected collection
     @property
-    def collected_instalments_PCT(self):
-        return ratio(self.collected_instalments, self.expct_collection_TM,
+    def collected_instalments_TM_PCT(self):
+        return ratio(self.collected_instalments_TM, self.expct_collection_TM,
                 pc=True)
 
     # Returns the amount of late payments for this month
     @cached_property
-    def collected_late(self):
+    def collected_late_TM(self):
         result = 0
         for account in self.active_TM:
             result += max(0,account.payment_deficit)
@@ -205,73 +272,54 @@ class AccountQuerySet(models.QuerySet):
 
     # Returns this month's instalments as a % of expected collection
     @property
-    def collected_late_PCT(self):
-        return ratio(self.collected_late, self.expct_collection_TM,
+    def collected_late_TM_PCT(self):
+        return ratio(self.collected_late_TM, self.expct_collection_TM,
                 pc=True)
 
     # Returns the amount of repayments outstanding
     @cached_property
     def outstanding_balance(self):
-        if not self: return 0
-        paid = (Payment.objects.filter(account__in = self)
-                .aggregate(Sum('amount'))['amount__sum'])
-        return self.revenue - paid
+        Q = self.active.last_payments
+        if not Q: return 0
+        return Q.aggregate(Sum('paid_left'))['paid_left__sum']
 
     # Returns the number of accounts disabled for more than X days
-    # Accounts At Risk
-    def AAR(self, days):
-        return len([obj for obj in self.active 
-            if obj.days_disabled_current >= days])
-
+    def AAR(self, days, tol):
+        return self.at_risk(days,tol).count()
     @cached_property
-    def AAR_7(self): return self.AAR(7)
-
+    def AAR_7(self): return self.AAR(7, tolerance)
     @cached_property
-    def AAR_14(self): return self.AAR(14)
+    def AAR_14(self): return self.AAR(14, tolerance)
 
     # Returns the PCT of outstanding balance for accounts disabled for more
     # than X days
-    # Portfolio At Risk
-    def PAR(self, days):
-        Q = [obj for obj in self if obj.days_disabled_current >= days]
-        par = 0
-        for account in Q:
-            par += account.plan_tot - account.paid
-        return ratio(par,self.outstanding_balance,
-                dec=2,pc=True,toStr=True)
-
+    def PAR(self, days, tol):
+        return ratio(self.at_risk(days,tol).outstanding_balance,
+                self.outstanding_balance, dec=2,pc=True,toStr=True)
     @cached_property
     def PAR_7(self): return self.PAR(7)
-
     @cached_property
-    def PAR_14(self): 
-        return self.PAR(14)
+    def PAR_14(self): return self.PAR(14)
 
     # Returns the number of accounts disabled for more than X days
-    # Accounts At Risk
     def ADP(self, days):
-        return len([obj for obj in self.active if obj.days_disabled >= days])
-
+        return len([obj for obj in self.active if obj.days_disabled_tot >= days])
     @cached_property
     def ADP_14(self): return self.ADP(14)
-
     @cached_property
     def ADP_30(self): return self.ADP(30)
 
     # Returns the PCT of outstanding balance for accounts disabled for more
     # than X days
-    # Portfolio At Risk
     def PDP(self, days):
-        Q = [obj for obj in self.active if obj.days_disabled >= days]
+        Q = [obj for obj in self.active if obj.days_disabled_tot >= days]
         pdp = 0
         for account in Q:
             pdp += account.plan_tot - account.paid
         return ratio(pdp,self.outstanding_balance,
                 dec=2,pc=True,toStr=True)
-
     @cached_property
     def PDP_14(self): return self.PDP(14)
-
     @cached_property
     def PDP_30(self): return self.PDP(30)
 
@@ -304,166 +352,137 @@ class Account(models.Model):
     def __str__(self):
         return '%s - %s' % (self.account_GLP, self.plan_name)
 
+    # *** FILTERS ***
+
+    @property
+    def is_new_TM(self): return is_this_month(self.reg_date,0)
+    @property
+    def is_new_LM(self): return is_this_month(self.reg_date,-1)
+
+    @property
+    def is_active(self): return self.last_payment.pay_left > 0
+    @property
+    def is_active_TM(self): 
+        try: return self.last_payment_EOLM.pay_left > 0
+        except: return self.payments.TM.filter(pay_left__gt = 0).nb != 0
+    @property
+    def is_active_LM(self): 
+        try: return self.last_payment_EOLLM.pay_left > 0
+        except: return self.payments.LM.filter(pay_left__gt = 0).nb != 0
+
+    # *** METHODS ***
+
     # Caching payments queryset
     @cached_property
     def payments(self):
-        return Payment.objects.filter(account = self)
+        return Payment.objects.filter(account = self).order_by('date').reverse()
+    @cached_property
+    def last_payment(self): return self.payments[0]
+    @cached_property
+    def last_payment_EOLM(self): return self.payments.EOLM[0]
+    @cached_property
+    def last_payment_EOLLM(self): return self.payments.EOLLM[0]
+
+    # Credit
+    def credit(self,date):
+        pays = self.payment.filter(date__lt = date.order_by('date').reverse())
+        if not pays: return 0
+        return max(0,to_days(pays[0].next_disable - date))
+    @property
+    def credit_now(self): return credit(self,today)
+
+    # Total days disabled
+    @cached_property
+    def days_disabled_tot(self):
+        result = self.credit
+        for pay in self.payments:
+            result += min(0, pay.credit_before)
+        return result
 
     # Total amount paid
-    @cached_property
-    def paid(self):
-        Q = self.payments
-        if not Q: return 0
-        return (Q.aggregate(Sum('amount'))['amount__sum'])
-    @cached_property
-    def paid_TM(self): 
-        Q = self.payments.TM
-        if not Q: return 0
-        return (Q.aggregate(Sum('amount'))['amount__sum'])
-    @cached_property
-    def paid_LM(self): 
-        Q = self.payments.LM
-        if not Q: return 0
-        return (Q.aggregate(Sum('amount'))['amount__sum'])
-
-    # Total number of payments
-    @cached_property
-    def payment_nb(self):
-        return self.payments.count()
-    def payment_nb_TM(self):
-        return self.payments.TM.count()
-    def payment_nb_LM(self):
-        return self.payments.LM.count()
+    @property
+    def paid(self): return self.last_payment.paid_after
+    @property
+    def paid_EOLM(self): 
+        try: return self.last_payment_EOLM.paid_after
+        except: return 0
+    @property
+    def paid_EOLLM(self): 
+        try: return self.last_payment_EOLLM.paid_after
+        except: return 0
+    @property
+    def paid_TM(self): return self.payments.TM.sum_amount
+    @property
+    def paid_LM(self): return self.payments.LM.sum_amount
 
     # Outstanding balance
-    @cached_property
-    def left_to_pay(self):
-        return self.plan_tot - self.paid
+    @property
+    def outstanding(self): return self.plan_tot - self.paid
 
-    # Expected payment as of 'date'
-    def expct_paid_at_date(self, date):
+    # Expected payment according to initial plan
+    def ex_plan_at(self, date):
         if date < self.reg_date: return 0
-        delta = date - self.reg_date
-        full_weeks = int(to_weeks(delta))
+        full_weeks = int(to_weeks(date - self.reg_date))
         return min(self.plan_up + self.plan_week*full_weeks, self.plan_tot)
-
-    # Expected payment as of today
     @property
-    def expct_paid(self):
-        today = datetime.datetime.today().replace(tzinfo=pytz.utc)
-        return self.expct_paid_at_date(today)
-
-    # Expected payment as of end of month
+    def ex_plan(self): return self.ex_paid_at(today)
     @property
-    def expct_paid_TM(self):
-        today = datetime.datetime.today().replace(tzinfo=pytz.utc)
-        eom = month_end(today)
-        return (self.expct_paid_at_date(eom) 
-                - self.paid 
-                + self.paid_TM)
+    def ex_plan_EOLM(self): return self.ex_paid_at(LM_end)
 
-    # Expected payment as of end of last month
+    # Expected payment according to initial plan or best
     @property
-    def expct_paid_LM(self):
-        today = datetime.datetime.today().replace(tzinfo=pytz.utc)
-        eolm = month_end(add_months(today,-1))
-        return (self.expct_paid_at_date(eolm) 
-                - self.paid 
-                + self.paid_TM + self.paid_LM)
-
-    # Returns True if the account was created a given month offset from today
-    def is_new_by_month(self,offset): return is_this_month(self.reg_date,offset)
+    def ex_plan_or(self): return max(self.ex_plan, self.paid)
     @property
-    def is_new_TM(self): return self.is_new_by_month(0)
+    def ex_plan_EOLM_or(self): return max(self.ex_plan_EOLM, self.paid_EOLM)
+
+    # Expected payment assuming full catch-up
     @property
-    def is_new_LM(self): return self.is_new_by_month(-1)
-
-    # Payment deficit, can be negative if in advance
+    def ex_catchup(self): return self.ex_plan
     @property
-    def payment_deficit(self): return self.expct_paid - self.paid
+    def ex_catchup_TM(self):
+        return max(0,self.ex_plan_EOM + self.paid_TM - self.paid)
     @property
-    def payment_deficit_TM(self): return self.expct_paid_TM - self.paid_TM
+    def ex_catchup_LM(self):
+        return max(0,self.ex_plan_EOLM + self.paid_TM + self.paid_LM -self.paid)
+
+    # Expected collection
+    def ex_collect_TM(self):
+        if self.is_new_TM: return self.ex_plan_at(TM_end)
+        else:
+            return max(int((TM_days - self.credit(TM_start))/7)*self.plan_week,
+                    self.paid_TM)
+    def ex_collect_TM_today(self):
+        if self.is_new_TM: return self.ex_plan_at(today)
+        else:
+            days = to_days(today - TM_start)
+            return max(int((days - self.credit(TM_start))/7)*self.plan_week,
+                    self.paid_TM)
+    def ex_collect_LM(self):
+        if self.is_new_TM: return 0
+        elif self.is_new_LM: return self.ex_plan_at(LM_end)
+        else:
+            return max(int((LM_days - self.credit(LM_start))/7)*self.plan_week,
+                    self.paid_LM)
+
+    # Soft and normal repayment and ratio
     @property
-    def payment_deficit_LM(self): return self.expct_paid_LM - self.paid_LM
-
-    # Returns a Payment object with the last payment
-    @cached_property
-    def last_payment(self):
-        r = list(self.payments.order_by('date')[:1])
-        if r: return r[0]
-        return None
-
-    @cached_property
-    def days_credit(self):
-        today = datetime.datetime.today().replace(tzinfo=pytz.utc)
-        for idx, payment in enumerate(
-                Payment.objects.filter(account = self).order_by('date')):
-            if idx == 0:
-                weeks_credit = ((payment.amount - self.plan_up)/self.plan_week 
-                        + 1)
-                disable_date = (payment.date 
-                        + datetime.timedelta(weeks_credit*7,0,0))
-            else:
-                weeks_credit = payment.amount / self.plan_week
-                disable_date = (max(disable_date, payment.date) 
-                        + datetime.timedelta(weeks_credit*7,0,0))
-            prev_pay = payment
-        result = 0
-        if self.status != 'u':
-            result += to_weeks(today - disable_date)*7
-        return result
-
-    # Total numbers of days disabled. Returns the current disabled if now = True
-    # tolerance is the number of days of disablement before it starts counting
-    def days_disabled_main(self, tolerance = 0, now = False):
-        today = datetime.datetime.today().replace(tzinfo=pytz.utc)
-        result = 0
-        for idx, payment in enumerate(
-                Payment.objects.filter(account = self).order_by('date')):
-            if idx == 0:
-                weeks_credit = ((payment.amount - self.plan_up)/self.plan_week 
-                        + 1)
-                disable_date = (payment.date 
-                        + datetime.timedelta(weeks_credit*7,0,0))
-            else:
-                result += max(
-                        to_weeks(payment.date - disable_date)*7 - tolerance,0)
-                weeks_credit = payment.amount / self.plan_week
-                disable_date = (max(disable_date, payment.date) 
-                        + datetime.timedelta(weeks_credit*7,0,0))
-            prev_pay = payment
-        if now:
-            result = 0
-        if self.status != 'u':
-            result += max(0,to_weeks(today - disable_date)*7 - tolerance)
-        return result
-
-    @cached_property
-    def days_disabled(self):
-        return self.days_disabled_main(tolerance=1)
-
-    # Current disabled, made into a property for use in templates
-    @cached_property
-    def days_disabled_current(self): return self.days_disabled_main(
-            tolerance=1, now=True)
-
-    # False if account is not active this month
+    def soft_repay_ratio(self): 
+        return self.paid / self.ex_plan
     @property
-    def is_active(self):
-        return (
-                (self.status == 'e') 
-                or (self.status == 'd')
-                )
-
-    # False if account is not active this month
+    def repay_ratio(self):
+        return (self.paid - self.plan_up) / (self.ex_plan - self.plan_up)
     @property
-    def is_active_TM(self):
-        return (
-                (self.status == 'e') 
-                or (self.status == 'd')
-                or (self.status == 'u' 
-                    and is_this_month(self.last_payment.date,0)) 
-                )
+    def soft_collect_ratio_TM(self):
+        return self.paid_TM / self.ex_collect_TM
+    @property
+    def soft_collect_ratio_LM(self):
+        return self.paid_LM / self.ex_collect_LM
+    @property
+    def collect_ratio_TM(self):
+        if self.is_new_TM:
+            return (self.paid_TM - self.plan_up) / (self.ex_collect_TM - self.plan_up)
+        else: return self.soft_collect_TM
+
 # CREDIT SCORING
 
     # Socio economic score
@@ -476,7 +495,7 @@ class Account(models.Model):
     # Total disablement score
     @property
     def score_disable(self):
-        return (42-min(self.days_disabled,42))/42
+        return (42-min(self.days_disabled_tot,42))/42
 
     # Max payment score
     @property
@@ -523,66 +542,102 @@ def log_transactions(sender, instance, created, *args, **kwargs):
 # CUSTOM QUERYSET CLASS FOR THE ACCOUNT CLASS TO DEFINE TABLE LEVEL METHODS
 class PaymentQuerySet(models.QuerySet):
 
-    # Filtering payments LM and TM
+    # Filtering payments by date
     @property
-    def TM(self):
-        today = datetime.datetime.today().replace(tzinfo=pytz.utc)
-        month_start = month_end(add_months(today,-1))
-        return self.filter(date__gt = month_start)
+    def TM(self): return self.filter(date__gt = TM_start)
     @property
-    def LM(self):
-        today = datetime.datetime.today().replace(tzinfo=pytz.utc)
-        eolm = month_end(add_months(today,-1))
-        bolm = datetime.datetime(eolm.year,eolm.month,1,0,0,0)
-        return self.filter(date__gt = bolm, date__lt = eolm)
+    def EOLM(self): return self.filter(date__lt = LM_end)
+    @property
+    def LM(self): return self.filter(date__gt = LM_start, date__lt = LM_end)
+    @property
+    def EOLLM(self): return self.filter(date__lt = LM_start)
 
     # Returns the number of payments, this month and last month
     @cached_property
     def nb(self): return self.count()
 
+    # Returns the total payment amount
+    @cached_property
+    def sum_amount(self):
+        if not self: return 0
+        return self.aggregate(Sum('amount'))['amount__sum']
+
     # Returns the average payment amount
     @cached_property
     def average_payment(self):
         if not self: return 0
-        total_amount = self.aggregate(Sum('amount'))['amount__sum']
-        return ratio(total_amount,self.nb,toStr=True)
+        return ratio(self.sum_amount,self.nb,toStr=True)
 
 # SIMPLE PAYMENT CLASS, INCLUDES ANGAZA ID TO USE AS PRIMARY KEY WHEN UPDATING
 class Payment(models.Model):
     account = models.ForeignKey(Account, on_delete=models.CASCADE)
     amount = models.PositiveIntegerField(default=0)
     date = models.DateTimeField('payment date')
-    agent = models.ForeignKey(Agent)
     id_Angaza = models.CharField(max_length=8, null=True)
+    agent = models.ForeignKey(Agent)
+    # convenience fields to avoid querying all the payments each time
+    credit_before = models.FloatField(default=0, null=True)
+    next_disable = models.DateTimeField('next disable date', null=True)
+    paid_after = models.PositiveIntegerField(default=0, null=True)
+    paid_left = models.PositiveIntegerField(default=0, null=True)
+    is_last = models.NullBooleanField()
+    # manager
     objects = PaymentQuerySet.as_manager()
 
     def __str__(self):
         return ('%s (%s)' % (str(self.amount), self.account))
 
-    # Returns True if the account was collected this month
+    # Returns True if the payment was collected this month
     @property
-    def is_TM(self):
-        return is_this_month(self.date,0)
+    def is_TM(self): return is_this_month(self.date,0)
+    @property
+    def is_LM(self): return is_this_month(self.date,-1)
 
-    # Returns True if the account was collected last month
+    # Returns True is the payment is an upfront payment
     @property
-    def is_LM(self):
-        return is_this_month(self.date,-1)
+    def is_upfront(self):
+        return self.account.payments.filter(date__lt = self.date).count() == 0
+
+    # Returns the value in days of credit for a "normal" payment
+    @property
+    def days_value(self): return (self.amount/self.account.plan_week) * 7
+    # Returns the value in days of credit of a payment for a deposit
+    @property
+    def days_value_up(self): 
+        return ((self.amount - self.account.plan_up)
+                / self.account.plan_week + 1) * 7
+
+# UPDATES THE CREDIT_AFTER FIELD WHEN A PAYMENT IS CREATED
+@receiver(post_save, sender=Payment,
+        dispatch_uid='Payment_save_signal')
+def record_payment(sender, instance, created, *args, **kwargs):
+    if created:
+        payments = (instance.account.payments.filter(date__lt = instance.date)
+                .order_by('date'))
+
+        if not payments:
+            instance.credit_before = 0
+            instance.paid_after = instance.amount
+            instance.next_disable = instance.date + datetime.timedelta(
+                    days=instance.days_value_up)
+
+        else:
+            last_pay = payments[0]
+            instance.credit_before = to_days(
+                    last_pay.next_disable - instance.date)
+            instance.paid_after = last_pay.paid_after + instance.amount
+            instance.next_disable = (max(instance.date, last_pay.next_disable) 
+                    + datetime.timedelta(days=instance.days_value))
+            last_pay.is_last = False
+            last_pay.save()
+
+        instance.paid_left = instance.account.plan_tot - instance.paid_after
+        instance.is_last = True
+        instance.save()
 
 # ****************************************************************
 # ********************** CUSTOM METHODS **************************
 # ****************************************************************
-
-# Adds months to a given date
-def add_months(sourcedate,months):
-    month = sourcedate.month - 1 + months
-    year = int(sourcedate.year + month / 12 )
-    month = month % 12 + 1
-    day = min(sourcedate.day,calendar.monthrange(year,month)[1])
-    hour = sourcedate.hour
-    minute = sourcedate.minute
-    second = sourcedate.second
-    return datetime.datetime(year,month,day,hour,minute,second)
 
 # Converts a timedelta into weeks, with decimals
 def to_weeks(delta):
@@ -590,12 +645,6 @@ def to_weeks(delta):
     result += delta.seconds/7/(3600*24)
     result += delta.microseconds/7/(3600*24)/1000000
     return result
-
-# Return the last second of the last day of the month of a given date
-def month_end(date):
-    result = datetime.datetime(date.year, date.month+1, 1,
-            00,00,00,000000).replace(tzinfo=pytz.utc)
-    return result - datetime.timedelta(0,1,0)
 
 # Returns Yes if date is of today's month with offset
 def is_this_month(date,offset):

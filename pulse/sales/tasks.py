@@ -151,18 +151,22 @@ def collect(online=False):
         try:
             pay = Payment.objects.get(
                     id_Angaza = pay_read['angaza_id'])
-            pay.account = acc
-            pay.amount = pay_read['amount']
-            pay.date = toDate(pay_read['recorded_utc'])
-            pay.agent = agent
+            if pay_read['reversal'] != 'None':
+                pay.delete()
+            else:
+                pay.account = acc
+                pay.amount = int(pay_read['amount'])
+                pay.date = toDate(pay_read['recorded_utc'])
+                pay.agent = agent
         except:
-            pay = Payment(
-                    account = acc,
-                    amount = pay_read['amount'],
-                    date = toDate(pay_read['recorded_utc']),
-                    agent = agent,
-                    id_Angaza = pay_read['angaza_id']
-                    )
+            if pay_read['reversal'] == 'None':
+                pay = Payment(
+                        account = acc,
+                        amount = int(pay_read['amount']),
+                        date = toDate(pay_read['recorded_utc']),
+                        agent = agent,
+                        id_Angaza = pay_read['angaza_id']
+                        )
         updated_payments.append(pay.id_Angaza)
         pay.save()
 
@@ -196,12 +200,10 @@ def csvToList2(path):
 
 def toDate(date):
     result = datetime.datetime.strptime(date,'%Y-%m-%d %H:%M:%S')
-    result = result - datetime.timedelta(0,result.minute*60 + result.second,0)
     result = result.replace(tzinfo=pytz.utc)
     return result
 
 def toDate_ms(date):
     result = datetime.datetime.strptime(date,'%Y-%m-%d %H:%M:%S.%f')
-    result = result - datetime.timedelta(0,result.minute*60 + result.second,0)
     result = result.replace(tzinfo=pytz.utc)
     return result

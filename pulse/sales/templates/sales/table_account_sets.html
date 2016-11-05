@@ -26,24 +26,24 @@
       <td class="progress-cell">
         <div class="progress">
           <div class="progress-bar progress-bar-info" role="progressbar" 
-            aria-valuenow="{{ accounts.collected_upfront_PCT }}" 
+            aria-valuenow="{{ accounts.collected_upfront_TM_PCT }}" 
             aria-valuemin="0" aria-valuemax="100" 
-            style="width: {{ accounts.collected_upfront_PCT }}%;" 
+            style="width: {{ accounts.collected_upfront_TM_PCT }}%;" 
             title="Upfront payments"></div>
           <div class="progress-bar progress-bar-success" role="progressbar" 
-            aria-valuenow="{{ accounts.collected_instalments_PCT }}" 
+            aria-valuenow="{{ accounts.collected_instalments_TM_PCT }}" 
             aria-valuemin="0" aria-valuemax="100" 
-            style="width: {{ accounts.collected_instalments_PCT }}%;" 
+            style="width: {{ accounts.collected_instalments_TM_PCT }}%;" 
             title="Instalments"></div>
           <div class="progress-bar progress-bar-warning" role="progressbar" 
-            aria-valuenow="{{ accounts.collected_late_PCT }}" 
+            aria-valuenow="{{ accounts.collected_late_TM_PCT }}" 
             aria-valuemin="0" aria-valuemax="100" 
-            style="width: {{ accounts.collected_late_PCT }}%;" 
+            style="width: {{ accounts.collected_late_TM_PCT }}%;" 
             title="Late payments"></div>
         </div>
       </td>
 
-      <td style="text-align:left">{{ accounts.collected_upfront_PCT|add:accounts.collected_instalments_PCT }}%</td>
+      <td style="text-align:left">{{ accounts.collected_upfront_TM_PCT|add:accounts.collected_instalments_TM_PCT }}%</td>
 
       <td>{{ accounts.AAR_7 }}</td>
       <td style="text-align:left">({{ accounts.PAR_7 }})</td>
