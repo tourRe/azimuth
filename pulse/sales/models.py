@@ -158,7 +158,7 @@ class AccountQuerySet(models.QuerySet):
 
     # *** FILTERS ***
 
-    # Filtering new accounts
+    # New accounts
     @cached_property
     def new_TM(self): return self.filter(reg_date__gt = TM_start)
     @cached_property
@@ -166,52 +166,36 @@ class AccountQuerySet(models.QuerySet):
             reg_date__gt = LM_start,
             reg_date__lt = LM_end)
 
-    # Filtering active accounts
+    # Active accounts
     @cached_property
     def active(self): return self.filter(Q(status = 'e') | Q(status = 'd'))
     @cached_property
     def active_TM(self): return self.filter(
             Q(payment__date__lt = TM_start), 
-            Q(payment__pay_left > 0)
+            Q(payment__paid_left__gt = 0)
             ).distinct()
     @cached_property
     def active_LM(self): return self.filter(
             Q(payment__date__lt = LM_start), 
-            Q(payment__pay_left > 0)
+            Q(payment__paid_left__gt = 0)
             ).distinct()
 
+    # Accounts at risk
     def at_risk(self, days, tol):
         return self.active.last_payments.filter(
                 next_disable__lt = today - datetime.timedelta(days=days + tol))
 
-    # *** PROXYING OBJECT PROPERTIES ***
+    # *** QUERYSET UNIQUE METHODS ***
 
     @cached_property
     def plan_tot(self):
         if not self: return 0
         return self.aggregate(Sum('plan_tot'))['plan_tot__sum']
 
-    # *** METHODS ***
-
-    # Caching payments queryset
     @cached_property
-    def payments(self): 
-        return Payment.objects.filter(account__in = self)
-    @cached_property
-    def last_payments(self): 
-        return self.payments.filter(is_last = True)
-
-    # Total amount paid
-    @property
-    def paid(self): return self.payments.sum_amount
-    @property
-    def paid_TM(self): return self.payments.TM.sum_amount
-    @property
-    def paid_EOLM(self): return self.payments.EOLM.sum_amount
-    @property
-    def paid_LM(self): return self.payments.LM.sum_amount
-    @property
-    def paid_EOLLM(self): return self.payments.EOLLM.sum_amount
+    def plan_up(self):
+        if not self: return 0
+        return self.aggregate(Sum('plan_up'))['plan_up__sum']
 
     # Returns the number of units sold
     @cached_property
@@ -223,65 +207,103 @@ class AccountQuerySet(models.QuerySet):
         if not self: return 0
         return ratio(self.plan_tot,self.nb_sold)
 
-    # Returns the monthly expected collection for a list of accounts
-    @cached_property
-    def expct_collection_TM(self):
-        result = 0
-        for account in self.active_TM:
-            result+= (account.expct_paid_TM - min(0,account.payment_deficit))
-        return result
+    # *** METHODS ***
 
-    # Returns various collected amounts
+    # Caching payments queryset
     @cached_property
-    def collected(self):
-        return self.payments.sum_amount
-    @cached_property
-    def collected_upfront(self):
-        if not self: return 0
-        return self.aggregate(Sum('plan_up'))['plan_up__sum']
-    @cached_property
-    def collected_instalments(self):
-        return self.collected - self.collected_upfront
+    def payments(self): 
+        return Payment.objects.filter(account__in = self)
 
-    # Returns this month's upfront payments as a % of expected collection
+    @cached_property
+    def last_payments(self): 
+        return self.payments.filter(is_last = True)
+
+    # Total amount paid
     @property
-    def collected_upfront_TM_PCT(self):
-        return ratio(self.new_TM.collected_upfront, self.expct_collection_TM,
-                pc=True)
-
-    @cached_property
-    def collected_instalments_TM(self):
-        return self.payments.TM.sum_amount - self.new_TM.collected_upfront
-    @cached_property
-    def collected_instalments_LM(self):
-        return self.payments.LM.sum_amount - self.new_LM.collected_upfront
-
-    # Returns this month's instalments as a % of expected collection
+    def paid(self): return self.payments.sum_amount
     @property
-    def collected_instalments_TM_PCT(self):
-        return ratio(self.collected_instalments_TM, self.expct_collection_TM,
-                pc=True)
-
-    # Returns the amount of late payments for this month
-    @cached_property
-    def collected_late_TM(self):
-        result = 0
-        for account in self.active_TM:
-            result += max(0,account.payment_deficit)
-        return result
-
-    # Returns this month's instalments as a % of expected collection
+    def paid_EOLM(self): return self.payments.EOLM.sum_amount
     @property
-    def collected_late_TM_PCT(self):
-        return ratio(self.collected_late_TM, self.expct_collection_TM,
-                pc=True)
+    def paid_EOLLM(self): return self.payments.EOLLM.sum_amount
+    @property
+    def paid_TM(self): return self.payments.TM.sum_amount
+    @property
+    def paid_LM(self): return self.payments.LM.sum_amount
 
-    # Returns the amount of repayments outstanding
+    # Outstanding balance
     @cached_property
-    def outstanding_balance(self):
+    def outstanding(self):
         Q = self.active.last_payments
         if not Q: return 0
         return Q.aggregate(Sum('paid_left'))['paid_left__sum']
+
+    # Expected payment according to initial plan
+    def ex_plan_at(self, date):
+        Q = self.filter(reg_date__lt = date)
+        result = 0 
+        for acc in Q:
+            result += acc.ex_plan_at(date)
+        return result
+    @property
+    def ex_plan(self): return self.ex_plan_at(today)
+    @property
+    def ex_plan_EOLM(self): return self.ex_plan_at(LM_END)
+
+    # Returns the monthly expected collection for a list of accounts
+    @property
+    def ex_collect_TM(self):
+        Q = self.active_TM
+        result = 0
+        for acc in Q:
+            result += acc.ex_collect_TM
+        return result
+
+    @property
+    def ex_collect_TM_today(self):
+        Q = self.active_TM
+        result = 0
+        for acc in Q:
+            result += acc.ex_collect_TM_today
+        return result
+
+    @property
+    def ex_collect_LM(self):
+        Q = self.active_LM
+        result = 0
+        for acc in Q:
+            result += acc.ex_collect_LM
+        return result
+
+    # Repayment ratios
+    @property
+    def soft_repayR(self): 
+        return self.paid / self.ex_plan
+    @property
+    def repayR(self):
+        return (self.paid - self.plan_up) / (self.ex_plan - self.plan_up)
+    @property
+    def soft_repayR_EOLM(self): 
+        return self.paid_EOLM / self.ex_plan_EOLM
+    @property
+    def repayR_EOLM(self):
+        if self.is_new_TM: return 0
+        return (self.paid_EOLM - self.plan_up) / (self.ex_plan_EOLM - self.plan_up)
+    @property
+    def soft_collectR_TM(self):
+        return self.paid_TM / self.ex_collect_TM
+    @property
+    def soft_collectR_LM(self):
+        return self.paid_LM / self.ex_collect_LM
+    @property
+    def collectR_TM(self):
+        if self.is_new_TM:
+            return (self.paid_TM - self.plan_up) / (self.ex_collect_TM - self.plan_up)
+        else: return self.soft_collectR_TM
+    @property
+    def collectR_LM(self):
+        if self.is_new_LM:
+            return (self.paid_LM - self.plan_up) / (self.ex_collect_LM - self.plan_up)
+        return self.soft_collectR_LM
 
     # Returns the number of accounts disabled for more than X days
     def AAR(self, days, tol):
@@ -355,61 +377,63 @@ class Account(models.Model):
     # *** FILTERS ***
 
     @property
-    def is_new_TM(self): return is_this_month(self.reg_date,0)
+    def is_new_TM(self): return self.reg_date >= TM_start
     @property
-    def is_new_LM(self): return is_this_month(self.reg_date,-1)
+    def is_new_LM(self): return self.reg_date >= LM_start and not self.is_new_TM
 
     @property
-    def is_active(self): return self.last_payment.pay_left > 0
+    def is_active(self): return self.last_pay.paid_left > 0
     @property
     def is_active_TM(self): 
-        try: return self.last_payment_EOLM.pay_left > 0
-        except: return self.payments.TM.filter(pay_left__gt = 0).nb != 0
+        if self.is_new_TM: return True
+        return self.last_pay_at(TM_start).paid_left > 0
     @property
     def is_active_LM(self): 
-        try: return self.last_payment_EOLLM.pay_left > 0
-        except: return self.payments.LM.filter(pay_left__gt = 0).nb != 0
+        if self.is_new_TM: return False
+        if self.is_new_LM: return True
+        return self.last_pay_at(LM_start).paid_left > 0
 
     # *** METHODS ***
 
-    # Caching payments queryset
+    # Payments
     @cached_property
     def payments(self):
         return Payment.objects.filter(account = self).order_by('date').reverse()
+
+    def last_pay_at(self, date):
+        try: return self.payments.filter(date__lt = date)[0]
+        except: return None
+
     @cached_property
-    def last_payment(self): return self.payments[0]
-    @cached_property
-    def last_payment_EOLM(self): return self.payments.EOLM[0]
-    @cached_property
-    def last_payment_EOLLM(self): return self.payments.EOLLM[0]
+    def last_pay(self): return self.last_pay_at(today)
 
     # Credit
-    def credit(self,date):
-        pays = self.payment.filter(date__lt = date.order_by('date').reverse())
-        if not pays: return 0
-        return max(0,to_days(pays[0].next_disable - date))
-    @property
-    def credit_now(self): return credit(self,today)
+    def credit_at(self,date):
+        try: return max(0,to_days(self.last_pay_at(date).next_disable - date))
+        except: return 0
+
+    @cached_property
+    def credit(self): return credit(self,today)
 
     # Total days disabled
     @cached_property
     def days_disabled_tot(self):
-        result = self.credit
-        for pay in self.payments:
-            result += min(0, pay.credit_before)
+        result = min(0,to_days(self.last_pay_at(date).next_disable - today))
+        for pay in self.payments: result += min(0, pay.days_left_before)
         return result
 
     # Total amount paid
-    @property
+    def paid_at(self, date):
+        try: return self.last_pay.at(date).paid_after
+        except: return 0
+    @cached_property
     def paid(self): return self.last_payment.paid_after
     @property
     def paid_EOLM(self): 
-        try: return self.last_payment_EOLM.paid_after
-        except: return 0
+        return self.payments.EOLM.sum_amount
     @property
     def paid_EOLLM(self): 
-        try: return self.last_payment_EOLLM.paid_after
-        except: return 0
+        return self.payments.EOLLM.sum_amount
     @property
     def paid_TM(self): return self.payments.TM.sum_amount
     @property
@@ -425,63 +449,71 @@ class Account(models.Model):
         full_weeks = int(to_weeks(date - self.reg_date))
         return min(self.plan_up + self.plan_week*full_weeks, self.plan_tot)
     @property
-    def ex_plan(self): return self.ex_paid_at(today)
+    def ex_plan(self): return self.ex_plan_at(today)
     @property
-    def ex_plan_EOLM(self): return self.ex_paid_at(LM_end)
+    def ex_plan_EOLM(self): return self.ex_plan_at(LM_end)
 
     # Expected payment according to initial plan or best
     @property
-    def ex_plan_or(self): return max(self.ex_plan, self.paid)
+    def ex_plan_or(self): return max(self.ex_plan_at(today), self.paid)
     @property
-    def ex_plan_EOLM_or(self): return max(self.ex_plan_EOLM, self.paid_EOLM)
-
-    # Expected payment assuming full catch-up
-    @property
-    def ex_catchup(self): return self.ex_plan
-    @property
-    def ex_catchup_TM(self):
-        return max(0,self.ex_plan_EOM + self.paid_TM - self.paid)
-    @property
-    def ex_catchup_LM(self):
-        return max(0,self.ex_plan_EOLM + self.paid_TM + self.paid_LM -self.paid)
+    def ex_plan_EOLM_or(self): return max(self.ex_plan_at(LM_end),
+            self.paid_at(LM_end))
 
     # Expected collection
-    def ex_collect_TM(self):
-        if self.is_new_TM: return self.ex_plan_at(TM_end)
-        else:
-            return max(int((TM_days - self.credit(TM_start))/7)*self.plan_week,
-                    self.paid_TM)
-    def ex_collect_TM_today(self):
-        if self.is_new_TM: return self.ex_plan_at(today)
-        else:
-            days = to_days(today - TM_start)
-            return max(int((days - self.credit(TM_start))/7)*self.plan_week,
-                    self.paid_TM)
-    def ex_collect_LM(self):
-        if self.is_new_TM: return 0
-        elif self.is_new_LM: return self.ex_plan_at(LM_end)
-        else:
-            return max(int((LM_days - self.credit(LM_start))/7)*self.plan_week,
-                    self.paid_LM)
-
-    # Soft and normal repayment and ratio
     @property
-    def soft_repay_ratio(self): 
+    def ex_collect_TM(self):
+        if not self.is_active_TM: return 0
+        if self.is_new_TM: return self.ex_plan_at(TM_end)
+        return max(int((TM_days - self.credit_at(TM_start))/7 + 1)*
+                self.plan_week, self.paid_TM)
+
+    @property
+    def ex_collect_TM_today(self):
+        if not self.is_active_TM: return 0
+        if self.is_new_TM: return self.ex_plan_at(today)
+        days = to_days(today - TM_start)
+        return max(int((days - self.credit_at(TM_start))/7 + 1)*
+                self.plan_week, self.paid_TM)
+
+    @property
+    def ex_collect_LM(self):
+        if not self.is_active_LM: return 0
+        if self.is_new_TM: return 0
+        if self.is_new_LM: return self.ex_plan_at(LM_end)
+        return max(int((LM_days - self.credit_at(LM_start))/7 + 1)*
+                self.plan_week, self.paid_LM)
+
+    # Repayment ratios
+    @property
+    def soft_repayR(self): 
         return self.paid / self.ex_plan
     @property
-    def repay_ratio(self):
+    def repayR(self):
         return (self.paid - self.plan_up) / (self.ex_plan - self.plan_up)
     @property
-    def soft_collect_ratio_TM(self):
+    def soft_repayR_EOLM(self): 
+        return self.paid_EOLM / self.ex_plan_EOLM
+    @property
+    def repayR_EOLM(self):
+        if self.is_new_TM: return 0
+        return (self.paid_EOLM - self.plan_up) / (self.ex_plan_EOLM - self.plan_up)
+    @property
+    def soft_collectR_TM(self):
         return self.paid_TM / self.ex_collect_TM
     @property
-    def soft_collect_ratio_LM(self):
+    def soft_collectR_LM(self):
         return self.paid_LM / self.ex_collect_LM
     @property
-    def collect_ratio_TM(self):
+    def collectR_TM(self):
         if self.is_new_TM:
             return (self.paid_TM - self.plan_up) / (self.ex_collect_TM - self.plan_up)
-        else: return self.soft_collect_TM
+        else: return self.soft_collectR_TM
+    @property
+    def collectR_LM(self):
+        if self.is_new_LM:
+            return (self.paid_LM - self.plan_up) / (self.ex_collect_LM - self.plan_up)
+        return self.soft_collectR_LM
 
 # CREDIT SCORING
 
@@ -576,7 +608,7 @@ class Payment(models.Model):
     id_Angaza = models.CharField(max_length=8, null=True)
     agent = models.ForeignKey(Agent)
     # convenience fields to avoid querying all the payments each time
-    credit_before = models.FloatField(default=0, null=True)
+    days_left_before = models.FloatField(default=0, null=True)
     next_disable = models.DateTimeField('next disable date', null=True)
     paid_after = models.PositiveIntegerField(default=0, null=True)
     paid_left = models.PositiveIntegerField(default=0, null=True)
