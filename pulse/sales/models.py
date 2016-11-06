@@ -162,6 +162,8 @@ class AccountQuerySet(models.QuerySet):
     @cached_property
     def new_TM(self): return self.filter(reg_date__gt = TM_start)
     @cached_property
+    def not_new_TM(self): return self.filter(reg_date__lt = TM_start)
+    @cached_property
     def new_LM(self): return self.filter(
             reg_date__gt = LM_start,
             reg_date__lt = LM_end)
@@ -170,15 +172,11 @@ class AccountQuerySet(models.QuerySet):
     @cached_property
     def active(self): return self.filter(Q(status = 'e') | Q(status = 'd'))
     @cached_property
-    def active_TM(self): return self.filter(
-            Q(payment__date__lt = TM_start), 
-            Q(payment__paid_left__gt = 0)
-            ).distinct()
+    def active_TM(self): return self.exclude(
+            Q(payment__date__lt = TM_start), Q(payment__paid_left = 0))
     @cached_property
-    def active_LM(self): return self.filter(
-            Q(payment__date__lt = LM_start), 
-            Q(payment__paid_left__gt = 0)
-            ).distinct()
+    def active_LM(self): return self.not_new_TM.exclude(
+            Q(payment__date__lt = LM_start), Q(payment__paid_left = 0))
 
     # Accounts at risk
     def at_risk(self, days, tol):
@@ -189,12 +187,12 @@ class AccountQuerySet(models.QuerySet):
 
     @cached_property
     def plan_tot(self):
-        if not self: return 0
+        if not self.exists(): return 0
         return self.aggregate(Sum('plan_tot'))['plan_tot__sum']
 
     @cached_property
     def plan_up(self):
-        if not self: return 0
+        if not self.exists(): return 0
         return self.aggregate(Sum('plan_up'))['plan_up__sum']
 
     # Returns the number of units sold
@@ -204,7 +202,7 @@ class AccountQuerySet(models.QuerySet):
     # Returns the average price
     @cached_property
     def avg_price(self): 
-        if not self: return 0
+        if not self.exists(): return 0
         return ratio(self.plan_tot,self.nb_sold)
 
     # *** METHODS ***
@@ -234,7 +232,7 @@ class AccountQuerySet(models.QuerySet):
     @cached_property
     def outstanding(self):
         Q = self.active.last_payments
-        if not Q: return 0
+        if not Q.exists(): return 0
         return Q.aggregate(Sum('paid_left'))['paid_left__sum']
 
     # Expected payment according to initial plan
@@ -277,33 +275,33 @@ class AccountQuerySet(models.QuerySet):
     # Repayment ratios
     @property
     def soft_repayR(self): 
-        return self.paid / self.ex_plan
+        return Q.paid / Q.ex_plan
     @property
     def repayR(self):
-        return (self.paid - self.plan_up) / (self.ex_plan - self.plan_up)
+        return (Q.paid - Q.plan_up) / (Q.ex_plan - Q.plan_up)
     @property
     def soft_repayR_EOLM(self): 
         return self.paid_EOLM / self.ex_plan_EOLM
     @property
     def repayR_EOLM(self):
-        if self.is_new_TM: return 0
-        return (self.paid_EOLM - self.plan_up) / (self.ex_plan_EOLM - self.plan_up)
+        Q = self.not_new_TM
+        return (Q.paid_EOLM - Q.plan_up) / (Q.ex_plan_EOLM - Q.plan_up)
     @property
     def soft_collectR_TM(self):
-        return self.paid_TM / self.ex_collect_TM
+        Q = self.active_TM
+        return Q.paid_TM / Q.ex_collect_TM
     @property
     def soft_collectR_LM(self):
-        return self.paid_LM / self.ex_collect_LM
+        Q = self.active_LM
+        return Q.paid_LM / Q.ex_collect_LM
     @property
     def collectR_TM(self):
-        if self.is_new_TM:
-            return (self.paid_TM - self.plan_up) / (self.ex_collect_TM - self.plan_up)
-        else: return self.soft_collectR_TM
+        Q = self.new_TM
+        return (self.paid_TM - Q.plan_up) / (self.ex_collect_TM - Q.plan_up)
     @property
     def collectR_LM(self):
-        if self.is_new_LM:
-            return (self.paid_LM - self.plan_up) / (self.ex_collect_LM - self.plan_up)
-        return self.soft_collectR_LM
+        Q = self.new_LM
+        return (self.paid_LM - Q.plan_up) / (self.ex_collect_LM - Q.plan_up)
 
     # Returns the number of accounts disabled for more than X days
     def AAR(self, days, tol):
@@ -479,7 +477,6 @@ class Account(models.Model):
     @property
     def ex_collect_LM(self):
         if not self.is_active_LM: return 0
-        if self.is_new_TM: return 0
         if self.is_new_LM: return self.ex_plan_at(LM_end)
         return max(int((LM_days - self.credit_at(LM_start))/7 + 1)*
                 self.plan_week, self.paid_LM)
@@ -487,13 +484,13 @@ class Account(models.Model):
     # Repayment ratios
     @property
     def soft_repayR(self): 
-        return self.paid / self.ex_plan
+        return ratio(self.paid, self.ex_plan)
     @property
     def repayR(self):
-        return (self.paid - self.plan_up) / (self.ex_plan - self.plan_up)
+        return ratio(self.paid - self.plan_up, self.ex_plan - self.plan_up)
     @property
     def soft_repayR_EOLM(self): 
-        return self.paid_EOLM / self.ex_plan_EOLM
+        return ratio(self.paid_EOLM, self.ex_plan_EOLM)
     @property
     def repayR_EOLM(self):
         if self.is_new_TM: return 0
