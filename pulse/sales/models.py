@@ -63,8 +63,10 @@ class ClientQuerySet(models.QuerySet):
 
     @cached_property
     def account_per_client(self):
-        nb_accounts = Account.objects.filter(client__in = self).count()
-        nb_clients = self.nb
+        Q = self.exclude(account__agent__login__in = 
+                ['hq.freetown', 'hq.demo', 'hq.marketing'])
+        nb_accounts = Account.objects.filter(client__in = Q).count()
+        nb_clients = Q.nb
         return ratio(nb_accounts,nb_clients,dec=2,toStr=True)
 
 # SIMPLE CLIENT CLASS
@@ -172,16 +174,19 @@ class AccountQuerySet(models.QuerySet):
     @cached_property
     def active(self): return self.filter(Q(status = 'e') | Q(status = 'd'))
     @cached_property
-    def active_TM(self): return self.exclude(
-            Q(payment__date__lt = TM_start), Q(payment__paid_left = 0))
+    def active_TM(self): 
+        pays = self.payments.filter(date__lt = TM_start, paid_left = 0)
+        return self.exclude(payment__in = pays)
     @cached_property
-    def active_LM(self): return self.not_new_TM.exclude(
-            Q(payment__date__lt = LM_start), Q(payment__paid_left = 0))
+    def active_LM(self):
+        pays = self.payments.filter(date__lt = LM_start, paid_left = 0)
+        return self.not_new_TM.exclude(payment__in = pays)
 
     # Accounts at risk
     def at_risk(self, days, tol):
-        return self.active.last_payments.filter(
-                next_disable__lt = today - datetime.timedelta(days=days + tol))
+        return self.filter(payment__in = 
+                self.active.last_payments.filter(next_disable__lt = 
+                    today - datetime.timedelta(days=days + tol)))
 
     # *** QUERYSET UNIQUE METHODS ***
 
@@ -248,60 +253,95 @@ class AccountQuerySet(models.QuerySet):
     def ex_plan_EOLM(self): return self.ex_plan_at(LM_END)
 
     # Returns the monthly expected collection for a list of accounts
+
     @property
-    def ex_collect_TM(self):
+    def ex_paid_TM(self):
         Q = self.active_TM
         result = 0
         for acc in Q:
-            result += acc.ex_collect_TM
+            result += acc.ex_paid_TM
         return result
-
     @property
-    def ex_collect_TM_today(self):
+    def ex_paid_TM_today(self):
         Q = self.active_TM
         result = 0
         for acc in Q:
-            result += acc.ex_collect_TM_today
+            result += acc.ex_paid_TM_today
         return result
-
     @property
-    def ex_collect_LM(self):
+    def ex_paid_LM(self):
         Q = self.active_LM
         result = 0
         for acc in Q:
+            result += acc.ex_paid_LM
+        return result
+
+    @property
+    def ex_collect(self):
+        result = 0
+        for acc in self.active:
+            result += acc.ex_collect
+        return result
+    @property
+    def ex_collect_TM(self):
+        result = 0
+        for acc in self.active:
+            result += acc.ex_collect_TM
+        return result
+    @property
+    def ex_collect_TM_today(self):
+        result = 0
+        for acc in self.active_TM:
+            result += acc.ex_collect_TM_today
+        return result
+    @property
+    def ex_collect_LM(self):
+        result = 0
+        for acc in self.active_LM:
             result += acc.ex_collect_LM
         return result
 
     # Repayment ratios
     @property
-    def soft_repayR(self): 
-        return Q.paid / Q.ex_plan
-    @property
     def repayR(self):
-        return (Q.paid - Q.plan_up) / (Q.ex_plan - Q.plan_up)
+        Q = self.active
+        return ratio(Q.paid - Q.plan_up, Q.ex_plan - Q.plan_up,
+                dec=0, pc=True, toStr=True)
     @property
-    def soft_repayR_EOLM(self): 
-        return self.paid_EOLM / self.ex_plan_EOLM
+    def repayR_TM(self):
+        Q = self.new_TM
+        return ratio(self.paid_TM - Q.plan_up, self.ex_paid_TM - Q.plan_up,
+                dec=0, pc=True, toStr=True)
     @property
-    def repayR_EOLM(self):
-        Q = self.not_new_TM
-        return (Q.paid_EOLM - Q.plan_up) / (Q.ex_plan_EOLM - Q.plan_up)
+    def repayR_TM_today(self):
+        Q = self.new_TM
+        return ratio(self.paid_TM - Q.plan_up, self.ex_paid_TM_today - Q.plan_up,
+                dec=0, pc=True, toStr=True)
     @property
-    def soft_collectR_TM(self):
-        Q = self.active_TM
-        return Q.paid_TM / Q.ex_collect_TM
+    def repayR_LM(self):
+        Q = self.new_LM
+        return ratio(self.paid_LM - Q.plan_up, self.ex_paid_LM - Q.plan_up,
+                dec=0, pc=True, toStr=True)
     @property
-    def soft_collectR_LM(self):
-        Q = self.active_LM
-        return Q.paid_LM / Q.ex_collect_LM
+    def collectR(self):
+        Q = self.active
+        return ratio(Q.paid - Q.plan_up, Q.ex_collect - Q.plan_up,
+                dec=0, pc=True, toStr=True)
     @property
     def collectR_TM(self):
         Q = self.new_TM
-        return (self.paid_TM - Q.plan_up) / (self.ex_collect_TM - Q.plan_up)
+        return ratio(self.paid_TM - Q.plan_up, self.ex_collect_TM - Q.plan_up,
+                dec=0, pc=True, toStr=True)
+    @property
+    def collectR_TM_today(self):
+        Q = self.new_TM
+        return ratio(self.paid_TM - Q.plan_up, self.ex_collect_TM_today - Q.plan_up,
+                dec=0, pc=True, toStr=True)
     @property
     def collectR_LM(self):
         Q = self.new_LM
-        return (self.paid_LM - Q.plan_up) / (self.ex_collect_LM - Q.plan_up)
+        return ratio(self.paid_LM - Q.plan_up, self.ex_collect_LM - Q.plan_up,
+                dec=0, pc=True, toStr=True)
 
     # Returns the number of accounts disabled for more than X days
     def AAR(self, days, tol):
@@ -314,12 +354,12 @@ class AccountQuerySet(models.QuerySet):
     # Returns the PCT of outstanding balance for accounts disabled for more
     # than X days
     def PAR(self, days, tol):
-        return ratio(self.at_risk(days,tol).outstanding_balance,
-                self.outstanding_balance, dec=2,pc=True,toStr=True)
+        return ratio(self.at_risk(days,tol).outstanding,
+                self.outstanding, dec=2,pc=True,toStr=True)
     @cached_property
-    def PAR_7(self): return self.PAR(7)
+    def PAR_7(self): return self.PAR(7, tolerance)
     @cached_property
-    def PAR_14(self): return self.PAR(14)
+    def PAR_14(self): return self.PAR(14, tolerance)
 
     # Returns the number of accounts disabled for more than X days
     def ADP(self, days):
@@ -425,7 +465,7 @@ class Account(models.Model):
         try: return self.last_pay.at(date).paid_after
         except: return 0
     @cached_property
-    def paid(self): return self.last_payment.paid_after
+    def paid(self): return self.last_pay.paid_after
     @property
     def paid_EOLM(self): 
         return self.payments.EOLM.sum_amount
@@ -451,35 +491,40 @@ class Account(models.Model):
     @property
     def ex_plan_EOLM(self): return self.ex_plan_at(LM_end)
 
-    # Expected payment according to initial plan or best
+    # Expected payment
     @property
-    def ex_plan_or(self): return max(self.ex_plan_at(today), self.paid)
+    def ex_paid_TM(self): 
+        if not self.is_active_TM: return 0
+        if self.is_new_TM: return self.ex_plan_at(TM_end)
+        return max(0,
+                int((TM_days - self.credit_at(TM_start))/7 + 1)*self.plan_week)
     @property
-    def ex_plan_EOLM_or(self): return max(self.ex_plan_at(LM_end),
-            self.paid_at(LM_end))
+    def ex_paid_TM_today(self):
+        if not self.is_active_TM: return 0
+        if self.is_new_TM: return self.ex_plan_at(TM_end)
+        days = to_days(today - TM_start)
+        return max(0,
+                int((days - self.credit_at(TM_start))/7 + 1)*self.plan_week)
+    @property
+    def ex_paid_LM(self):
+        if not self.is_active_LM: return 0
+        if self.is_new_LM: return self.ex_plan_at(LM_end)
+        return max(0,
+                int((LM_days - self.credit_at(LM_start))/7 + 1)*self.plan_week)
 
     # Expected collection
     @property
+    def ex_collect(self):
+        return max(self.ex_plan,self.paid)
+    @property
     def ex_collect_TM(self):
-        if not self.is_active_TM: return 0
-        if self.is_new_TM: return self.ex_plan_at(TM_end)
-        return max(int((TM_days - self.credit_at(TM_start))/7 + 1)*
-                self.plan_week, self.paid_TM)
-
+        return max(self.ex_paid_TM,self.paid_TM)
     @property
     def ex_collect_TM_today(self):
-        if not self.is_active_TM: return 0
-        if self.is_new_TM: return self.ex_plan_at(today)
-        days = to_days(today - TM_start)
-        return max(int((days - self.credit_at(TM_start))/7 + 1)*
-                self.plan_week, self.paid_TM)
-
+        return max(self.ex_paid_TM_today,self.paid_TM)
     @property
     def ex_collect_LM(self):
-        if not self.is_active_LM: return 0
-        if self.is_new_LM: return self.ex_plan_at(LM_end)
-        return max(int((LM_days - self.credit_at(LM_start))/7 + 1)*
-                self.plan_week, self.paid_LM)
+        return max(self.ex_paid_LM,self.paid_LM)
 
     # Repayment ratios
     @property
@@ -489,18 +534,9 @@ class Account(models.Model):
     def repayR(self):
         return ratio(self.paid - self.plan_up, self.ex_plan - self.plan_up)
     @property
-    def soft_repayR_EOLM(self): 
-        return ratio(self.paid_EOLM, self.ex_plan_EOLM)
-    @property
     def repayR_EOLM(self):
         if self.is_new_TM: return 0
         return (self.paid_EOLM - self.plan_up) / (self.ex_plan_EOLM - self.plan_up)
-    @property
-    def soft_collectR_TM(self):
-        return self.paid_TM / self.ex_collect_TM
-    @property
-    def soft_collectR_LM(self):
-        return self.paid_LM / self.ex_collect_LM
     @property
     def collectR_TM(self):
         if self.is_new_TM:
@@ -697,10 +733,12 @@ def ratio(top, bottom, dec=0, pc=False, toStr=False):
         if bottom == 0:
             return "n.a."
         elif pc:
-            return str((int(round(top/bottom,2+dec)*math.pow(10,dec+2))
-                    /math.pow(10,dec))) + " %"
+            if dec!= 0:
+                return str((int(round(top/bottom,2+dec)*math.pow(10,dec+2))
+                        /math.pow(10,dec))) + " %"
+            return str(int(round(top/bottom,2)*100)) + " %"
         else:
             if dec != 0:
                 return str("{:,}".format(int(round(top/bottom,dec)
                     *math.pow(10,dec))/math.pow(10,dec)))
-            return str("{:,}".format(int(round(top/bottom,dec))))
+            return str("{:,}".format(int(round(top/bottom,0))))
