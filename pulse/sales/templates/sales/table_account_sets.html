@@ -1,8 +1,12 @@
+{% load humanize %}
+
+<div style="margin-left:15px; margin-right:15px">
 <table class="sort table">
   <thead>
     <tr>
       <th>Name</th>
       <th></th>
+      <th>Active</th>
       <th colspan="2">Collection this month</th>
       <th style="display: none">Collection ratio</th>
       <th colspan="2">PAR-7</th>
@@ -22,40 +26,36 @@
         {% autoescape off %}{{ line_title }}{% endautoescape %}
       </th>
       <td></td>
+      <td>{{ accounts.active.nb }}</td>
 
       <td class="progress-cell">
         <div class="progress">
-          <div class="progress-bar progress-bar-info" role="progressbar" 
-            aria-valuenow="{{ accounts.collected_upfront_TM_PCT }}" 
-            aria-valuemin="0" aria-valuemax="100" 
-            style="width: {{ accounts.collected_upfront_TM_PCT }}%;" 
-            title="Upfront payments"></div>
           <div class="progress-bar progress-bar-success" role="progressbar" 
-            aria-valuenow="{{ accounts.collected_instalments_TM_PCT }}" 
+            aria-valuenow="{{ accounts.graph_collectR_TM }}" 
             aria-valuemin="0" aria-valuemax="100" 
-            style="width: {{ accounts.collected_instalments_TM_PCT }}%;" 
-            title="Instalments"></div>
+            style="width: {{ accounts.graph_collectR_TM }}%;" 
+            title="{{ accounts.graph_collect_TM|intcomma }}"></div>
           <div class="progress-bar progress-bar-warning" role="progressbar" 
-            aria-valuenow="{{ accounts.collected_late_TM_PCT }}" 
+            aria-valuenow="{{ accounts.graph_lateR_TM|intcomma }}" 
             aria-valuemin="0" aria-valuemax="100" 
-            style="width: {{ accounts.collected_late_TM_PCT }}%;" 
-            title="Late payments"></div>
+            style="width: {{ accounts.graph_lateR_TM }}%;" 
+            title="{{ accounts.graph_late_TM|intcomma }}"></div>
         </div>
       </td>
 
-      <td style="text-align:left">{{ accounts.collected_upfront_TM_PCT|add:accounts.collected_instalments_TM_PCT }}%</td>
+      <td style="text-align:left">{{ accounts.collectR_TM }}</td>
 
       <td>{{ accounts.AAR_7 }}</td>
       <td style="text-align:left">({{ accounts.PAR_7 }})</td>
       <td>{{ accounts.ADP_14 }}</td>
       <td style="text-align:left">({{ accounts.PDP_14 }})</td>
       <td></td>
-      <td>{{ accounts.nb_sold }}</td>
-      <td>{{ accounts.new_TM.nb_sold }}</td>
-      <td>{{ accounts.new_LM.nb_sold }}</td>
+      <td>{{ accounts.nb }}</td>
+      <td>{{ accounts.new_TM.nb }}</td>
+      <td>{{ accounts.new_LM.nb }}</td>
     </tr>
     {% endfor %}
 
   </tbody>
 </table>
-
+</div>

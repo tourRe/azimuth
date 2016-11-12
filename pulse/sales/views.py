@@ -378,7 +378,7 @@ def account_number_by_disable(request, agent=None):
     serie_e = [0] * 51
     serie_d = [0] * 51
     for acc in accounts:
-        index = int(min(50,max(0,acc.days_credit*(-1)+25)))
+        index = int(min(50,max(0,acc.credit_relative+25)))
         if index >= 25: serie_e[index] += 1
         else: serie_d[index] += 1
 
@@ -401,9 +401,9 @@ def account_outstanding_by_disable(request, agent=None):
     serie_e = [0] * 51
     serie_d = [0] * 51
     for acc in accounts:
-        index = int(min(50,max(0,acc.days_credit*(-1)+25)))
-        if index >= 25: serie_e[index] += acc.left_to_pay
-        else: serie_d[index] += acc.left_to_pay
+        index = int(min(50,max(0,acc.credit_relative+25)))
+        if index >= 25: serie_e[index] += acc.outstanding
+        else: serie_d[index] += acc.outstanding
 
     #Format
     labels = []

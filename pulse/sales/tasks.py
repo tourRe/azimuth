@@ -139,7 +139,7 @@ def collect(online=False):
     for i in range(0,len(payments_raw)):
         bar.next()
         j = len(payments_raw) - i - 1
-        pay_read = payments_raw[j]
+        pay_read = payments_raw[i]
 
         # Identifying agent
         agent = Agent.objects.get(login = pay_read['recorder'])
