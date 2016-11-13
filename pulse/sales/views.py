@@ -107,36 +107,30 @@ def agent(request, agent_login):
     context['account_table'] = account_table
 
     # Adding PAR7 table to context
-    par7_table = collections.OrderedDict()
-    Q = Account.objects.filter(agent=agent).order_by('account_GLP')
-    for acc in Q:
-        if acc.is_active and acc.days_disabled_current >= 7:
-            key = ("<a href='/sales/accounts/" + acc.account_Angaza + "/'>"
-                    + " " + acc.account_GLP + " (" + acc.account_Angaza 
-                    + ")</a>")
-            par7_table[key] = acc
+    par7_table = {}
+    for acc in accounts.at_risk(7,0):
+        key = ("<a href='/sales/accounts/" + acc.account_Angaza + "/'>"
+                + " " + acc.account_GLP + " (" + acc.account_Angaza 
+                + ")</a>")
+        par7_table[key] = acc
     context['par7_table'] = par7_table
 
     # Adding PDP14 table to context
-    pdp14_table = collections.OrderedDict()
-    Q = Account.objects.filter(agent=agent).order_by('account_GLP')
-    for acc in Q:
-        if acc.is_active and acc.days_disabled >= 14:
-            key = ("<a href='/sales/accounts/" + acc.account_Angaza + "/'>"
-                    + " " + acc.account_GLP + " (" + acc.account_Angaza 
-                    + ")</a>")
-            pdp14_table[key] = acc
+    pdp14_table = {}
+    for acc in accounts.delayed_payment(14,0):
+        key = ("<a href='/sales/accounts/" + acc.account_Angaza + "/'>"
+                + " " + acc.account_GLP + " (" + acc.account_Angaza 
+                + ")</a>")
+        pdp14_table[key] = acc
     context['pdp14_table'] = pdp14_table
 
     # Adding PDP14 table to context
-    pdp30_table = collections.OrderedDict()
-    Q = Account.objects.filter(agent=agent).order_by('account_GLP')
-    for acc in Q:
-        if acc.is_active and acc.days_disabled >= 30:
-            key = ("<a href='/sales/accounts/" + acc.account_Angaza + "/'>"
-                    + " " + acc.account_GLP + " (" + acc.account_Angaza 
-                    + ")</a>")
-            pdp30_table[key] = acc
+    pdp30_table = {}
+    for acc in accounts.delayed_payment(30,0):
+        key = ("<a href='/sales/accounts/" + acc.account_Angaza + "/'>"
+                + " " + acc.account_GLP + " (" + acc.account_Angaza 
+                + ")</a>")
+        pdp30_table[key] = acc
     context['pdp30_table'] = pdp30_table
 
     return render(request, 'sales/agent.html', context)

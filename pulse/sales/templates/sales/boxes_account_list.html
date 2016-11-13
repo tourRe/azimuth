@@ -33,15 +33,15 @@
           </tr>
           <tr>
             <th>Current disabled</th>
-            <td>{{ account.days_disabled_current|floatformat }}</td>
+            <td>{{ account.days_disabled_now|floatformat }}</td>
           </tr>
           <tr>
             <th>Total disabled</th>
-            <td>{{ account.days_disabled|floatformat }}</td>
+            <td>{{ account.days_disabled_tot|floatformat }}</td>
           </tr>
           <tr>
             <th>Left to pay</th>
-            <td>{{ account.left_to_pay|intcomma }}</td>
+            <td>{{ account.outstanding|intcomma }}</td>
           </tr>
           <tr>
             <th>Credit Score</th>

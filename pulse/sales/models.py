@@ -220,7 +220,7 @@ class AccountQuerySet(models.QuerySet):
     @cached_property
     def avg_price(self): 
         if not self.exists(): return 0
-        return ratio(self.plan_tot,self.nb_sold)
+        return ratio(self.plan_tot,self.nb)
 
     # *** METHODS ***
 
@@ -487,6 +487,9 @@ class Account(models.Model):
 
     @cached_property
     def credit_relative(self): return to_days(self.last_pay.next_disable -today)
+
+    @cached_property
+    def days_disabled_now(self): return -to_days(self.last_pay.next_disable -today)
 
     # Total days disabled
     @cached_property
