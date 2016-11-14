@@ -684,6 +684,7 @@ class Payment(models.Model):
     paid_after = models.PositiveIntegerField(default=0, null=True)
     paid_left = models.PositiveIntegerField(default=0, null=True)
     is_last = models.NullBooleanField()
+    is_upfront = models.NullBooleanField()
     # manager
     objects = PaymentQuerySet.as_manager()
 
@@ -695,11 +696,6 @@ class Payment(models.Model):
     def is_TM(self): return is_this_month(self.date,0)
     @property
     def is_LM(self): return is_this_month(self.date,-1)
-
-    # Returns True is the payment is an upfront payment
-    @property
-    def is_upfront(self):
-        return self.account.payments.filter(date__lt = self.date).count() == 0
 
     # Returns the value in days of credit for a "normal" payment
     @property
@@ -724,6 +720,7 @@ def record_payment(sender, instance, created, *args, **kwargs):
             instance.next_disable = instance.date + datetime.timedelta(
                     days=instance.days_value_up)
             instance.perfect_date = instance.next_disable
+            instance.is_upfront = True
 
         else:
             last_pay = payments[0]
@@ -736,6 +733,7 @@ def record_payment(sender, instance, created, *args, **kwargs):
                     + datetime.timedelta(days=instance.days_value))
             last_pay.is_last = False
             last_pay.save()
+            instance.is_upfront = False
 
         instance.paid_left = instance.account.plan_tot - instance.paid_after
         instance.is_last = True

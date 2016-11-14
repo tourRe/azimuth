@@ -9,6 +9,31 @@ import datetime, pytz
 from .models import Agent, Manager, Account, Client, Payment
 from inventory.models import Product
 
+# ****************************************************************
+# ********************** GLOBAL VARIABLES ************************
+# ****************************************************************
+
+today = datetime.datetime.today().replace(tzinfo=pytz.utc)
+
+# Calculating labels for weekly graphs
+last_monday = today - datetime.timedelta(0
+        ,today.hour*60*60+today.minute*60+today.second,0)
+while last_monday.weekday() != 0:
+    last_monday -= datetime.timedelta(1,0,0)
+date_start = last_monday - datetime.timedelta(7*51,0,0)
+labels_weekly = []
+dates = []
+for idx in range(0,52):
+    dates.append(date_start + datetime.timedelta((idx+1)*7,0,0))
+    if idx == 0:
+        labels_weekly.append(str(dates[idx].month) + '/' + str(dates[idx].year))
+    elif dates[idx].month != dates[idx-1].month:
+        labels_weekly.append(str(dates[idx].month) + '/' + str(dates[idx].year))
+    else:
+        labels_weekly.append('')
+
+# VIEWS
+
 def index(request):
     # Adding menu content to context
     agent_list = Agent.objects.order_by('location')
@@ -225,112 +250,62 @@ def payment_index(request):
 
 def payment_season_hour(request):
     payments = Payment.objects.all()
-    #Computing the nb of payments per week
-    parse = [0] * 24
-    for pay in payments:
-        index = pay.date.hour
-        parse[index] += 1
-    #Format
-    serie = []
+    #Computing the nb of payments per hour of the day
+    serie = [0] * 24
+    for pay in payments: serie[pay.date.hour] += 1
+    #Labels
     labels = []
-    for idx,dummy in enumerate(parse):
-        serie.append(dummy)
-        labels.append(str(idx)+'h')
-
-    return JsonResponse(
-            data={'series': [serie], 'labels': labels})
+    for idx in range(0,24): labels.append(str(idx)+'h')
+    #Returning Graph
+    return JsonResponse(data={'series': [serie], 'labels': labels})
 
 def payment_season_day(request):
     payments = Payment.objects.all()
-    #Computing the nb of payments per week
-    parse = [0] * 7
-    for pay in payments:
-        parse[pay.date.weekday()-1] += 1
-    #Format
-    serie = []
-    labels = ['Monday','Tuesday','Wednesday','Thursday'
-            ,'Friday','Saturday','Sunday']
-    for idx,dummy in enumerate(parse):
-        serie.append(dummy)
-
-    return JsonResponse(
-            data={'series': [serie], 'labels': labels})
+    #Computing the nb of payments per day of the week
+    serie = [0] * 7
+    for pay in payments: serie[pay.date.weekday()-1] += 1
+    #Labels
+    labels = ['Monday','Tuesday','Wednesday','Thursday',
+            'Friday','Saturday','Sunday']
+    #Returning Graph
+    return JsonResponse(data={'series': [serie], 'labels': labels})
 
 def payment_volume_weekly(request, agent=None):
-    today = datetime.datetime.today().replace(tzinfo=pytz.utc)
-    last_monday = today - datetime.timedelta(0
-            ,today.hour*60*60+today.minute*60+today.second,0)
-    while last_monday.weekday() != 0:
-        last_monday -= datetime.timedelta(1,0,0)
-    date_start = last_monday - datetime.timedelta(7*51,0,0)
     payments = Payment.objects.filter(date__gt = date_start)
     if not agent: pass
     else:
         this_agent = Agent.objects.get(login=agent)
         payments = payments.filter(account__agent = this_agent)
     #Computing the nb of payments per week
-    parse = [0] * 52
+    serie_down = [0] * 52
+    serie_inst = [0] * 52
     for pay in payments:
         index = int((pay.date - date_start).days/7)
-        parse[index] += pay.amount
-    #Format
-    serie = []
-    labels = []
-    dates = []
-    for idx,dummy in enumerate(parse):
-        serie.append(dummy)
-        dates.append(date_start + datetime.timedelta((idx+1)*7,0,0))
-        if idx == 0:
-            labels.append(str(dates[idx].month) + '/' + str(dates[idx].year))
-        elif dates[idx].month != dates[idx-1].month:
-            labels.append(str(dates[idx].month) + '/' + str(dates[idx].year))
-        else:
-            labels.append('')
-
+        if pay.is_upfront: serie_down[index] += pay.amount
+        else: serie_inst[index] += pay.amount
+    #Returning Graph
     return JsonResponse(
-            data={'series': [serie], 'labels': labels})
+            data={'series': [serie_inst,serie_down], 'labels': labels_weekly})
 
 def payment_number_weekly(request, agent=None):
-    today = datetime.datetime.today().replace(tzinfo=pytz.utc)
-    last_monday = today - datetime.timedelta(0
-            ,today.hour*60*60+today.minute*60+today.second,0)
-    while last_monday.weekday() != 0:
-        last_monday -= datetime.timedelta(1,0,0)
-    date_start = last_monday - datetime.timedelta(7*51,0,0)
     payments = Payment.objects.filter(date__gt = date_start)
     if not agent: pass
     else:
         this_agent = Agent.objects.get(login=agent)
         payments = payments.filter(account__agent = this_agent)
-    #Computing the nb of payments per week
-    parse = [0] * 52
-    for pay in payments:
+    #Computing the volume of payments per week
+    serie_down = [0] * 52
+    serie_inst = [0] * 52
+    for pay in payments: 
         index = int((pay.date - date_start).days/7)
-        parse[index] += 1
-    #Format
-    serie = []
-    labels = []
-    dates = []
-    for idx,dummy in enumerate(parse):
-        serie.append(dummy)
-        dates.append(date_start + datetime.timedelta((idx+1)*7,0,0))
-        if idx == 0:
-            labels.append(str(dates[idx].month) + '/' + str(dates[idx].year))
-        elif dates[idx].month != dates[idx-1].month:
-            labels.append(str(dates[idx].month) + '/' + str(dates[idx].year))
-        else: labels.append('')
-
+        if pay.is_upfront: serie_down[index] += 1
+        else: serie_inst[index] += 1
+    #Returning Graph
     return JsonResponse(
-            data={'series': [serie], 'labels': labels})
+            data={'series': [serie_inst,serie_down], 'labels': labels_weekly})
 
 def account_new_week(request, agent=None):
     # Grabbing accounts in the relevant period
-    today = datetime.datetime.today().replace(tzinfo=pytz.utc)
-    last_monday = today - datetime.timedelta(0
-            ,today.hour*60*60+today.minute*60+today.second,0)
-    while last_monday.weekday() != 0:
-        last_monday -= datetime.timedelta(1,0,0)
-    date_start = last_monday - datetime.timedelta(7*51,0,0)
     accounts = Account.objects.filter(reg_date__gt = date_start)
     if not agent: pass
     else:
@@ -339,8 +314,7 @@ def account_new_week(request, agent=None):
     accounts_ecos = accounts.filter(plan_product__name = 'Sunking Eco')
     accounts_pros = accounts.filter(plan_product__name = 'Sunking Pro')
     accounts_shs = accounts.filter(plan_product__name = 'Sunking Home')
-
-    # Computing the nb of payments per week
+    # Computing the nb of accounts creation per week
     parse_eco = [0] * 52
     parse_pro = [0] * 52
     parse_shs = [0] * 52
@@ -352,16 +326,39 @@ def account_new_week(request, agent=None):
         parse_eco[i] = accounts_ecos.new(week_start,week_end).count()
         parse_pro[i] = accounts_pros.new(week_start,week_end).count()
         parse_shs[i] = accounts_shs.new(week_start,week_end).count()
-        if i == 0:
-            labels.append(str(week_end.month) + '/' + str(week_end.year))
-        elif week_end.month != week_start.month:
-            labels.append(str(week_end.month) + '/' + str(week_end.year))
-        else: labels.append('')
         week_start = week_end
         week_end = week_start + week
+    #Returning Graph
+    return JsonResponse(data={'series': [parse_eco,parse_pro,parse_shs],
+        'labels': labels_weekly})
 
-    return JsonResponse(
-            data={'series': [parse_eco,parse_pro,parse_shs], 'labels': labels})
+def revenue_new_week(request, agent=None):
+    # Grabbing accounts in the relevant period
+    accounts = Account.objects.filter(reg_date__gt = date_start)
+    if not agent: pass
+    else:
+        this_agent = Agent.objects.get(login=agent)
+        accounts = accounts.filter(agent = this_agent)
+    accounts_ecos = accounts.filter(plan_product__name = 'Sunking Eco')
+    accounts_pros = accounts.filter(plan_product__name = 'Sunking Pro')
+    accounts_shs = accounts.filter(plan_product__name = 'Sunking Home')
+    # Computing the nb of accounts creation per week
+    parse_eco = [0] * 52
+    parse_pro = [0] * 52
+    parse_shs = [0] * 52
+    week = datetime.timedelta(7,0,0)
+    week_start = date_start
+    week_end = date_start + week
+    labels = []
+    for i in range(0,52):
+        parse_eco[i] = accounts_ecos.new(week_start,week_end).plan_tot
+        parse_pro[i] = accounts_pros.new(week_start,week_end).plan_tot
+        parse_shs[i] = accounts_shs.new(week_start,week_end).plan_tot
+        week_start = week_end
+        week_end = week_start + week
+    #Returning Graph
+    return JsonResponse(data={'series': [parse_eco,parse_pro,parse_shs],
+        'labels': labels_weekly})
 
 def account_number_by_disable(request, agent=None):
     accounts = Account.objects.all().active

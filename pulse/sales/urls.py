@@ -48,6 +48,11 @@ urlpatterns = [
         url(r'^accounts/graph/new_week/' + AGENT + '$',
             views.account_new_week, name='acc_new_week'),
 
+        url(r'^accounts/graph/rev_week/$',
+            views.revenue_new_week, name='rev_new_week'),
+        url(r'^accounts/graph/rev_week/' + AGENT + '$',
+            views.revenue_new_week, name='rev_new_week'),
+
         url(r'^accounts/graph/number_by_disable/$',
             views.account_number_by_disable, name='acc_num_dis'),
         url(r'^accounts/graph/number_by_disable/' + AGENT + '$',

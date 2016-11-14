@@ -109,7 +109,7 @@ function loadActivityChart(element) {
     $.ajax({
         url: element.data('pay_vol_week'),
         success: function(data) {
-            Chartist.Bar('#pay-vol-week', data);
+            new Chartist.Bar('#pay-vol-week', data, {stackBars: true});
             configureChart($('#pay-vol-week'));
             decreaseLoading('#activity-loading');
         },
@@ -120,7 +120,7 @@ function loadActivityChart(element) {
     $.ajax({
         url: element.data('pay_num_week'),
         success: function(data) {
-            Chartist.Bar('#pay-num-week', data);
+            new Chartist.Bar('#pay-num-week', data, {stackBars: true});
             configureChart($('#pay-num-week'));
             decreaseLoading('#activity-loading');
         },
@@ -131,7 +131,7 @@ function loadActivityChart(element) {
     $.ajax({
         url: element.data('pay_seas_hour'),
         success: function(data) {
-            Chartist.Bar('#pay-seas-hour', data);
+            new Chartist.Bar('#pay-seas-hour', data);
             configureChart($('#pay-seas-hour'));
             decreaseLoading('#activity-loading');
         },
@@ -142,7 +142,7 @@ function loadActivityChart(element) {
     $.ajax({
         url: element.data('pay_seas_day'),
         success: function(data) {
-            Chartist.Bar('#pay-seas-day', data);
+            new Chartist.Bar('#pay-seas-day', data);
             configureChart($('#pay-seas-day'));
             decreaseLoading('#activity-loading');
         },
@@ -155,6 +155,17 @@ function loadActivityChart(element) {
         success: function(data) {
             new Chartist.Bar('#acc-new-week', data, {stackBars: true});
             configureChart($('#acc-new-week'));
+            decreaseLoading('#activity-loading');
+        },
+        dataType: 'json'
+    });
+
+    increaseLoading('#activity-loading');
+    $.ajax({
+        url: element.data('rev_new_week'),
+        success: function(data) {
+            new Chartist.Bar('#rev-new-week', data, {stackBars: true});
+            configureChart($('#rev-new-week'));
             decreaseLoading('#activity-loading');
         },
         dataType: 'json'
