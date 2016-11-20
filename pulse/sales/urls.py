@@ -15,7 +15,7 @@ urlpatterns = [
             views.manager, name='manager'),
         url(r'^agents/$', 
             views.agent_index, name='agent_index'),
-        url(r'^agents/(?P<agent_login>[A-Za-z _.]+)/$', 
+        url(r'^agents/(?P<agent_login>[A-Za-z0-9 _.]+)/$', 
             views.agent, name='agent'),
         url(r'^clients/$', 
             views.client_index, name='client_index'),

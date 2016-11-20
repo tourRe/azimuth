@@ -32,17 +32,19 @@ for idx in range(0,52):
     else:
         labels_weekly.append('')
 
+# ****************************************************************
+# ************************ MENU CONTEXT **************************
+# ****************************************************************
+agent_list = Agent.objects.order_by('location')
+manager_list = Manager.objects.order_by('firstname')
+context = {
+        'manager_list' : manager_list,
+        'agent_list' : agent_list
+        }
+
 # VIEWS
 
 def index(request):
-    # Adding menu content to context
-    agent_list = Agent.objects.order_by('location')
-    manager_list = Manager.objects.order_by('firstname')
-    context = {
-            'manager_list' : manager_list,
-            'agent_list' : agent_list
-            }
-
     # Preparing tables
     context['all_clients'] = Client.objects.all()
     context['all_accounts'] = Account.objects.all()
@@ -51,14 +53,6 @@ def index(request):
     return render(request, 'sales/index.html', context)
 
 def manager_index(request):
-    # Adding menu content to context
-    agent_list = Agent.objects.order_by('location')
-    manager_list = Manager.objects.order_by('firstname')
-    context = {
-            'manager_list' : manager_list,
-            'agent_list' : agent_list
-            }
-
     # Preparing table for account_sets display
     account_table = collections.OrderedDict()
     for manager in manager_list:
@@ -70,14 +64,6 @@ def manager_index(request):
     return render(request, 'sales/manager_index.html', context)
 
 def manager(request, manager_firstname):
-    # Adding menu content to context
-    agent_list = Agent.objects.order_by('location')
-    manager_list = Manager.objects.order_by('firstname')
-    context = {
-            'manager_list' : manager_list,
-            'agent_list' : agent_list
-            }
-
     # Preparing table for account_sets display
     account_table = collections.OrderedDict()
     manager = Manager.objects.get(firstname = manager_firstname)
@@ -92,14 +78,6 @@ def manager(request, manager_firstname):
     return render(request, 'sales/manager.html', context)
 
 def agent_index(request):
-    # Adding menu content to context
-    agent_list = Agent.objects.order_by('location')
-    manager_list = Manager.objects.order_by('firstname')
-    context = {
-            'manager_list' : manager_list,
-            'agent_list' : agent_list,
-            }
-
     # Preparing table for account_sets display
     account_table = collections.OrderedDict()
     for agent in agent_list:
@@ -111,14 +89,6 @@ def agent_index(request):
     return render(request, 'sales/agent_index.html', context)
 
 def agent(request, agent_login):
-    # Adding menu content to context
-    agent_list = Agent.objects.order_by('location')
-    manager_list = Manager.objects.order_by('firstname')
-    context = {
-            'manager_list' : manager_list,
-            'agent_list' : agent_list
-            }
-
     # Identifying agent and adding it to context
     agent = Agent.objects.get(login = agent_login)
     context['agent'] = agent
@@ -161,23 +131,9 @@ def agent(request, agent_login):
     return render(request, 'sales/agent.html', context)
 
 def client_index(request):
-    # Adding menu content to context
-    agent_list = Agent.objects.order_by('location')
-    manager_list = Manager.objects.order_by('firstname')
-    context = {
-            'manager_list' : manager_list,
-            'agent_list' : agent_list
-            }
     return render(request, 'sales/client_index.html', context)
 
 def client(request, client_pk):
-    # Adding menu content to context
-    agent_list = Agent.objects.order_by('location')
-    manager_list = Manager.objects.order_by('firstname')
-    context = {
-            'manager_list' : manager_list,
-            'agent_list' : agent_list
-            }
     client = Client.objects.get(pk = client_pk)
     context['client'] = client
 
@@ -193,14 +149,6 @@ def client(request, client_pk):
     return render(request, 'sales/client.html', context)
 
 def account_index(request):
-    # Adding menu content to context
-    agent_list = Agent.objects.order_by('location')
-    manager_list = Manager.objects.order_by('firstname')
-    context = {
-            'manager_list' : manager_list,
-            'agent_list' : agent_list
-            }
-
     # Sending accounts and payments to context
     context['accounts'] = Account.objects.all()
     context['payments'] = Payment.objects.all()
@@ -223,25 +171,11 @@ def account_index(request):
     return render(request, 'sales/account_index.html', context)
 
 def account(request, account_Angaza):
-    # Adding menu content to context
-    agent_list = Agent.objects.order_by('location')
-    manager_list = Manager.objects.order_by('firstname')
-    context = {
-            'manager_list' : manager_list,
-            'agent_list' : agent_list
-            }
     account = Account.objects.get(account_Angaza = account_Angaza)
     context['account'] = account
     return render(request, 'sales/account.html', context)
 
 def payment_index(request):
-    agent_list = Agent.objects.order_by('location')
-    manager_list = Manager.objects.order_by('firstname')
-    context = {
-            'manager_list' : manager_list,
-            'agent_list' : agent_list
-            }
-
     return render(request, 'sales/payment_index.html', context)
 
 #***************************************************************
