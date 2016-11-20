@@ -38,6 +38,7 @@ ALLOWED_HOSTS = []
 INSTALLED_APPS = [
     # My Apps
     'sales.apps.SalesConfig',
+    'system.apps.SystemConfig',
     'inventory.apps.InventoryConfig',
     # Other Apps
     'djcelery',

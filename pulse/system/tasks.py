@@ -3,20 +3,24 @@ from __future__ import absolute_import
 from django.core.exceptions import ValidationError
 from celery import app, shared_task
 from sales.models import Client, Account, Payment, Agent
+from system.models import Update
 from inventory.models import (
         Product, Transaction, TransactionItem, InventoryItem, Warehouse
         )
 from progress.bar import Bar
-import csv, datetime
-import pytz
-import requests
+import csv, datetime, pytz, requests
 from requests.auth import HTTPBasicAuth
 
+today = datetime.datetime.today().replace(tzinfo=pytz.utc)
+
 @app.shared_task
-def collect(online=False):
+def collect(online=True):
+
+    # DOWNLOADING/IMPORTING RAW ANGAZA FILES
 
     print('Importing dump files')
     if online:
+        print(' > Fetching dump files online...')
         login = 'op=alex@azimuth-solar.com'
         pw = 'raw=Lapoudre2009'
         url1 = 'https://payg.angazadesign.com/api/snapshots/accounts'
@@ -35,6 +39,7 @@ def collect(online=False):
             decoded_content = download.content.decode('utf-8')
             payments_raw = csvToList2(decoded_content.splitlines())
     else:
+        print(' > Fetching dump files in Media folder...')
         accounts_raw = csvToList('media/accounts.csv')
         payments_raw = csvToList('media/payments.csv')
 
@@ -42,12 +47,43 @@ def collect(online=False):
     updated_clients = []
     updated_accounts = []
     updated_payments = []
+    new_clients = 0
+    new_accounts = 0
+    new_payments = 0
 
-    # IMPORTING ACCOUNTS
+    # MANAGING UPDATE
 
-    bar = Bar('Updating Accounts', max=len(accounts_raw))
+    print('Updating database')
 
-    for i in range(0,len(accounts_raw)):
+    full = True
+    try:
+        last_update = Update.objects.all().order_by('date').reverse()[0]
+        hours_since = last_update.hours_since
+        print(' > Time since last update: ' + str(round(hours_since,2)) + 'h')
+        if hours_since < 24:
+            full = False
+    except: hours_since = 24
+
+    if full:
+        nb_accs = len(accounts_raw)
+        nb_pays = len(payments_raw)
+        print(' > Full update...')
+    else:
+        nb_accs = max(int(last_update.new_accs / last_update.hours *
+                last_update.hours_since * 5),100)
+        nb_pays = max(int(last_update.new_pays / last_update.hours *
+                last_update.hours_since * 5),100)
+        print(' > partial update for last ' + str(nb_accs) + ' accounts...')
+        print(' > partial update for last ' + str(nb_pays) + ' payments...')
+
+    accs_start = max(0,len(accounts_raw) - nb_accs)
+    pays_start = max(0,len(payments_raw) - nb_pays)
+
+    # IMPORTING ACCOUNTS INTO DATABASE
+
+    bar = Bar('Updating Accounts', max=(len(accounts_raw)-accs_start))
+
+    for i in range(accs_start,len(accounts_raw)):
         bar.next()
         acc_read = accounts_raw[i]
 
@@ -55,14 +91,12 @@ def collect(online=False):
         agent = Agent.objects.get(label = acc_read['responsible_user'])
 
         # Identifying product
-        try: 
-            product = Product.objects.get(
-                    label = acc_read['attached_unit_type'])
+        try: product = Product.objects.get(
+                label = acc_read['attached_unit_type'])
         # in case the account is "detached", there is no 'attached_unit_type
         # the exception is catched in except and the rest of the loop is
         # skipped so that the account gets deleted
-        except:
-            pass
+        except: pass
 
         # Creating or identifying client
         try: gender = acc_read['customer_gender'][0]
@@ -82,6 +116,7 @@ def collect(online=False):
                     phone = acc_read['owner_msisdn'],
                     location = acc_read['owner_location']
                     )
+            new_clients += 1
         updated_clients.append(client.phone)
 
         # Creating or identifying account
@@ -120,6 +155,7 @@ def collect(online=False):
                     )
             try:
                 acc.save()
+                new_accounts += 1
             except ValidationError as e:
                 # deleting the account in case tranItem couldn't be saved
                 # this also deletes the related Transaction
@@ -133,9 +169,9 @@ def collect(online=False):
 
     # IMPORTING PAYMENTS
 
-    bar = Bar('Updating Payments', max=len(payments_raw))
+    bar = Bar('Updating Payments', max=(len(payments_raw)-pays_start))
 
-    for i in range(0,len(payments_raw)):
+    for i in range(pays_start,len(payments_raw)):
         bar.next()
         pay_read = payments_raw[i]
 
@@ -165,22 +201,34 @@ def collect(online=False):
                         agent = agent,
                         id_Angaza = pay_read['angaza_id']
                         )
+                new_payments += 1
         updated_payments.append(pay.id_Angaza)
         pay.save()
 
     bar.finish()
+
+    Update.objects.create(date=today,is_full=full,hours=hours_since,
+            new_clients = new_clients,
+            new_accs = new_accounts,
+            new_pays = new_payments)
+
+    print('Update summary:')
+    print(' > ' + str(new_clients) + ' new clients created')
+    print(' > ' + str(new_accounts) + ' new accounts created')
+    print(' > ' + str(new_payments) + ' new payments created')
     
-    # Deleting all clients (+ accounts) not found in the dump
-    print('Deleting deprecated entries')
-    print(' > deleting {} clients'.format(
-        Client.objects.exclude(phone__in = updated_clients).count()))
-    Client.objects.exclude(phone__in = updated_clients).delete()
-    print(' > deleting {} accounts'.format(
-        Account.objects.exclude(account_Angaza__in = updated_accounts).count()))
-    Account.objects.exclude(account_Angaza__in = updated_accounts).delete()
-    print(' > deleting {} payments'.format(
-        Payment.objects.exclude(id_Angaza__in = updated_payments).count()))
-    Payment.objects.exclude(id_Angaza__in = updated_payments).delete()
+    if full:
+        # Deleting all clients (+ accounts) not found in the dump
+        print('Deleting deprecated entries')
+        print(' > deleting {} clients'.format(
+            Client.objects.exclude(phone__in = updated_clients).count()))
+        Client.objects.exclude(phone__in = updated_clients).delete()
+        print(' > deleting {} accounts'.format(
+            Account.objects.exclude(account_Angaza__in = updated_accounts).count()))
+        Account.objects.exclude(account_Angaza__in = updated_accounts).delete()
+        print(' > deleting {} payments'.format(
+            Payment.objects.exclude(id_Angaza__in = updated_payments).count()))
+        Payment.objects.exclude(id_Angaza__in = updated_payments).delete()
 
 def csvToList(path):
     reader = csv.DictReader(open(path))
