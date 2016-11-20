@@ -1,6 +1,6 @@
 from django.db import models
 # Imports to receive the pre_delete signal and revert transaction in inventory
-from django.db.models.signals import pre_delete
+from django.db.models.signals import pre_delete, post_save
 from django.dispatch import receiver
 # Time packages for dates with timezone management
 import datetime, pytz
@@ -25,6 +25,14 @@ class Warehouse(models.Model):
         except:
             return 0
         return item.qty
+
+@receiver(post_save, sender=Warehouse, 
+        dispatch_uid='Warehouse_postsave_signal')
+def initiate_warehouse(sender, instance, created, *args, **kwargs):
+    if created:
+        prods = Product.objects.all()
+        for prod in prods:
+            InventoryItem.objects.create(product=prod,warehouse=instance)
 
 # SIMPLE PRODUCTS CLASS, INCLUDING POWER
 class Product(models.Model):

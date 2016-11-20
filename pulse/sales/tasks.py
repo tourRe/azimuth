@@ -49,7 +49,6 @@ def collect(online=False):
 
     for i in range(0,len(accounts_raw)):
         bar.next()
-        j = len(accounts_raw) - i - 1
         acc_read = accounts_raw[i]
 
         # Identifying agent
@@ -138,7 +137,6 @@ def collect(online=False):
 
     for i in range(0,len(payments_raw)):
         bar.next()
-        j = len(payments_raw) - i - 1
         pay_read = payments_raw[i]
 
         # Identifying agent
