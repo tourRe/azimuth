@@ -248,9 +248,9 @@ def account_new_week(request, agent=None):
     else:
         this_agent = Agent.objects.get(login=agent)
         accounts = accounts.filter(agent = this_agent)
-    accounts_ecos = accounts.filter(plan_product__name = 'Sunking Eco')
-    accounts_pros = accounts.filter(plan_product__name = 'Sunking Pro')
-    accounts_shs = accounts.filter(plan_product__name = 'Sunking Home')
+    accounts_ecos = accounts.filter(plan_product__name = 'Eco EB')
+    accounts_pros = accounts.filter(plan_product__name = 'Pro EB')
+    accounts_shs = accounts.filter(plan_product__name = 'Home EB')
     # Computing the nb of accounts creation per week
     parse_eco = [0] * 52
     parse_pro = [0] * 52
@@ -276,9 +276,9 @@ def revenue_new_week(request, agent=None):
     else:
         this_agent = Agent.objects.get(login=agent)
         accounts = accounts.filter(agent = this_agent)
-    accounts_ecos = accounts.filter(plan_product__name = 'Sunking Eco')
-    accounts_pros = accounts.filter(plan_product__name = 'Sunking Pro')
-    accounts_shs = accounts.filter(plan_product__name = 'Sunking Home')
+    accounts_ecos = accounts.filter(plan_product__name = 'Eco EB')
+    accounts_pros = accounts.filter(plan_product__name = 'Pro EB')
+    accounts_shs = accounts.filter(plan_product__name = 'Home EB')
     # Computing the nb of accounts creation per week
     parse_eco = [0] * 52
     parse_pro = [0] * 52

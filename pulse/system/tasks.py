@@ -181,7 +181,6 @@ def collect(online=True):
         # Identifying account
         acc = Account.objects.get(
                 account_Angaza = pay_read['account_angaza_id'])
-
         try:
             pay = Payment.objects.get(
                     id_Angaza = pay_read['angaza_id'])
