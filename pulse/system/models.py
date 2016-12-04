@@ -3,6 +3,14 @@ import datetime, pytz
 
 today = datetime.datetime.today().replace(tzinfo=pytz.utc)
 
+class UpdateQuerySet(models.QuerySet):
+
+    def last_update(self):
+        return self.order_by('date').reverse()[0]
+
+    def last_full_update(self):
+        return self.filter(is_full = True).order_by('date').reverse()[0]
+
 class Update(models.Model):
     date = models.DateTimeField('update date')
     is_full = models.BooleanField()
@@ -10,6 +18,7 @@ class Update(models.Model):
     new_clients = models.IntegerField(default=0)
     new_accs = models.IntegerField(default=0)
     new_pays = models.IntegerField(default=0)
+    objects = UpdateQuerySet.as_manager()
    
     @property
     def hours_since(self):

@@ -8,5 +8,13 @@
     <li><a href="{% url 'index' %}">Dashboard</a></li>
     <li><a href="{% url 'sales:index' %}">Sales</a></li>
     <li><a href="{% url 'inventory:index' %}">Inventory</a></li>
+    <li class="dropdown">
+      <a href="#" class="dropdown-toggle" data-toggle="dropdown">System<b class="caret"></b></a>
+        <ul class="dropdown-menu">
+          <li><a href="{% url 'admin:index' %}">Admin</a></li>
+          <li><a href="{% url 'admin:index' %}">Launch Update</a></li>
+          <li><a href="{% url 'admin:index' %}">Force Full Update</a></li>
+        </ul>
+    </li>
   </ul>
 </div>

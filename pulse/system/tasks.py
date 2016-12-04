@@ -14,12 +14,16 @@ from requests.auth import HTTPBasicAuth
 today = datetime.datetime.today().replace(tzinfo=pytz.utc)
 
 @app.shared_task
-def collect(online=True):
+def fetch_data(option=""):
 
     # DOWNLOADING/IMPORTING RAW ANGAZA FILES
 
     print('Importing dump files')
-    if online:
+    if option == "offline":
+        print(' > Fetching dump files in Media folder...')
+        accounts_raw = csvToList('media/accounts.csv')
+        payments_raw = csvToList('media/payments.csv')
+    else:
         print(' > Fetching dump files online...')
         login = 'op=alex@azimuth-solar.com'
         pw = 'raw=Lapoudre2009'
@@ -38,10 +42,6 @@ def collect(online=True):
             download = s.get(url2, auth=(login,pw))
             decoded_content = download.content.decode('utf-8')
             payments_raw = csvToList2(decoded_content.splitlines())
-    else:
-        print(' > Fetching dump files in Media folder...')
-        accounts_raw = csvToList('media/accounts.csv')
-        payments_raw = csvToList('media/payments.csv')
 
     # List of updated clients + accounts to delete those not found in the dumps
     updated_clients = []
@@ -56,35 +56,35 @@ def collect(online=True):
     print('Updating database')
 
     full = True
-    try:
-        last_update = Update.objects.all().order_by('date').reverse()[0]
-        hours_since = last_update.hours_since
-        print(' > Time since last update: ' + str(round(hours_since,2)) + 'h')
-        if hours_since < 24:
-            full = False
-    except: hours_since = 24
+    if option != "force_full":
+        try:
+            updates = Update.objects.all()
+            last_full_update = updates.last_full_update()
+            hours_since = last_full_update.hours_since
+            print(' > Time since last full update: ' +
+                    str(round(hours_since,2)) + 'h')
+            if hours_since < 24:
+                full = False
+                last_update = updates.last_update()
+        except: hours_since = 24
 
     if full:
-        nb_accs = len(accounts_raw)
         nb_pays = len(payments_raw)
         print(' > Full update...')
     else:
-        nb_accs = max(int(last_update.new_accs / last_update.hours *
-                last_update.hours_since * 5),100)
         nb_pays = max(int(last_update.new_pays / last_update.hours *
                 last_update.hours_since * 5),100)
-        print(' > partial update for last ' + str(nb_accs) + ' accounts...')
         print(' > partial update for last ' + str(nb_pays) + ' payments...')
 
-    accs_start = max(0,len(accounts_raw) - nb_accs)
     pays_start = max(0,len(payments_raw) - nb_pays)
 
     # IMPORTING ACCOUNTS INTO DATABASE
 
-    bar = Bar('Updating Accounts', max=(len(accounts_raw)-accs_start))
+    bar = Bar('Updating Accounts', max=len(accounts_raw))
 
-    for i in range(accs_start,len(accounts_raw)):
+    for i in range(0,len(accounts_raw)):
         bar.next()
+        
         acc_read = accounts_raw[i]
 
         # Identifying agent

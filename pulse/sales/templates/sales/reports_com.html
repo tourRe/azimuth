@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+<head>
+  <title>Pulse > Commissions report</title>
+  <meta name="description" content="Commissions report" />
+</head>
+
+{% block menu %}
+  {% include "sales/menu.html" %}
+{% endblock %}
+
+{% block breadcrumbs %}
+  <li>
+    Commissions Report
+  </li>
+{% endblock %}
+
+{% block content %}
+
+<div class="content">
+
+  <div class="panel panel-primary">
+    <div class="panel-heading"><h4 class="panel-title">Unlocked units for Last Month</h4></div>
+    <div class="panel-body">
+
+      <table class="table table-condensed table-striped">
+        {% for header, list in com_table.items %}
+          <tr>
+            <th>{{ header }}</th>
+            {% for item in list %}
+              <td>{{ item }}</td>
+            {% endfor %}
+          </tr>
+        {% endfor %}
+      </table>
+
+    </div>
+  </div>
+
+</div>
+
+{% endblock %}

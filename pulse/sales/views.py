@@ -181,6 +181,51 @@ def account(request, account_Angaza):
 def payment_index(request):
     return render(request, 'sales/payment_index.html', context)
 
+# ****************************************************************
+# *************************** REPORTS ****************************
+# ****************************************************************
+
+def reports_revenue(request):
+    accounts = Account.objects.all().new_LM
+    rev_table = collections.OrderedDict()
+    for a in accounts.values('plan_name').order_by('plan_name').distinct():
+        name = a['plan_name']
+        rev_table[name] = accounts.filter(plan_name = name)
+    rev_table['TOTAL'] = accounts
+    context['rev_table'] = rev_table
+    return render(request, 'sales/reports_revenue.html', context)
+
+def reports_AR(request):
+    accounts = Account.objects.all().active_LM
+    AR_table = collections.OrderedDict()
+    for a in accounts.values('plan_name').order_by('plan_name').distinct():
+        name = a['plan_name']
+        AR_table[name] = accounts.filter(plan_name = name)
+    AR_table['TOTAL'] = accounts
+    context['AR_table'] = AR_table
+    return render(request, 'sales/reports_AR.html', context)
+
+def reports_com(request):
+    real_agents = agent_list.exclude(login = 'hq.demo')
+    real_agents = real_agents.exclude(login = 'hq.marketing')
+    accounts = Account.objects.all().active_LM
+    com_table = collections.OrderedDict()
+    com_table['Payment plan'] = []
+    for agent in real_agents:
+        com_table['Payment plan'].append(agent.login)
+    for a in accounts.values('plan_name').order_by('plan_name').distinct():
+        name = a['plan_name']
+        com_table[name] = []
+        for agent in real_agents:
+            com_table[name].append(
+                    accounts.filter(plan_name = name, agent = agent).unlocked_LM.nb)
+    com_table['TOTAL'] = []
+    for agent in real_agents:
+        com_table['TOTAL'].append(
+                accounts.filter(agent = agent).unlocked_LM.nb)
+    context['com_table'] = com_table
+    return render(request, 'sales/reports_com.html', context)
+
 # ***************************************************************
 # ************************* GRAPHS ******************************
 # ***************************************************************

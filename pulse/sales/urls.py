@@ -28,6 +28,13 @@ urlpatterns = [
         url(r'^payments/$', 
             views.payment_index, name='payment_index'),
 
+        url(r'^reports/revenue/$', 
+            views.reports_revenue, name='reports_revenue'),
+        url(r'^reports/AR/$', 
+            views.reports_AR, name='reports_AR'),
+        url(r'^reports/com/$', 
+            views.reports_com, name='reports_com'),
+
         url(r'^payments/graph/season_hour/$',
             views.payment_season_hour, name='pay_seas_hour'),
         url(r'^payments/graph/season_day/$',

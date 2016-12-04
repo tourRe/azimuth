@@ -20,7 +20,13 @@ from django.db.models import F, Q, Sum
 
 # Return the last second of the last day of the month of a given date
 def month_end(date):
-    result = datetime.datetime(date.year, date.month+1, 1,
+    if date.month == 12:
+        next_year = date.year + 1
+        next_month = 1
+    else:
+        next_year = date.year
+        next_month = date.month + 1
+    result = datetime.datetime(next_year, next_month, 1,
             00,00,00,000000).replace(tzinfo=pytz.utc)
     return result - datetime.timedelta(0,1,0)
 
@@ -172,6 +178,28 @@ class AccountQuerySet(models.QuerySet):
     def new_LM(self): return self.filter(
             reg_date__gt = LM_start,
             reg_date__lt = LM_end)
+    @cached_property
+    def not_new_LM(self): return self.exclude(
+            reg_date__gt = LM_start,
+            reg_date__lt = LM_end)
+
+    # Credit and cash accounts
+    @property
+    def cash(self):
+        return self.filter(plan_up = F('plan_tot'))
+    @property
+    def credit(self):
+        return self.exclude(plan_up = F('plan_tot'))
+
+    # Unlocked accounts
+    def unlocked_between(self, start, end):
+        return self.filter(unlock_date__gt = start, unlock_date__lt = end)
+    @property
+    def unlocked_TM(self):
+        return self.unlocked_between(TM_start,today)
+    @property
+    def unlocked_LM(self):
+        return self.unlocked_between(LM_start, LM_end)
 
     # Active accounts
     @cached_property
@@ -191,7 +219,7 @@ class AccountQuerySet(models.QuerySet):
                 self.active.last_payments.filter(next_disable__lt = 
                     today - datetime.timedelta(days = days + tol)))
 
-    # Accounts at risk
+    # Accounts with delayed payments
     def delayed_payment(self, days, tol):
         return self.filter(payment__in = 
                 self.active.last_payments.filter(
@@ -220,7 +248,7 @@ class AccountQuerySet(models.QuerySet):
     @cached_property
     def avg_price(self): 
         if not self.exists(): return 0
-        return ratio(self.plan_tot,self.nb)
+        return int(ratio(self.plan_tot,self.nb))
 
     # *** METHODS ***
 
@@ -251,6 +279,29 @@ class AccountQuerySet(models.QuerySet):
         Q = self.active.last_payments
         if Q.exists(): return Q.aggregate(Sum('paid_left'))['paid_left__sum']
         return 0
+    @property
+    def outstanding_at_EOLM(self):
+        result = 0
+        for acc in self.active_LM:
+            result += acc.outstanding_at(LM_end)
+        return result
+    @property
+    def outstanding_at_EOLLM(self):
+        result = 0
+        for acc in self.active_LM:
+            result += acc.outstanding_at(LM_start)
+        return result
+
+    @property
+    def nb_active_at_EOLM(self):
+        result = 0
+        return len([acc for 
+            acc in self.active_LM if acc.is_active_at(LM_end)])
+    @property
+    def nb_active_at_EOLLM(self):
+        result = 0
+        return len([acc for 
+            acc in self.active_LM if acc.is_active_at(LM_start)])
 
     # Expected payment according to initial plan
     def ex_plan_at(self, date):
@@ -437,6 +488,7 @@ class Account(models.Model):
     plan_tot = models.PositiveIntegerField(default=0)
     plan_week = models.PositiveIntegerField(default=0)
     reg_date = models.DateTimeField('registration date')
+    unlock_date = models.DateTimeField('unlock date', null=True)
     agent = models.ForeignKey(Agent)
     status = models.CharField(max_length=1,choices=STATUS)
     objects = AccountQuerySet.as_manager()
@@ -453,6 +505,10 @@ class Account(models.Model):
 
     @property
     def is_active(self): return self.last_pay.paid_left > 0
+    def is_active_at(self,date): 
+        if self.reg_date < date:
+            return self.last_pay_at(date).paid_left > 0
+        return False
     @property
     def is_active_TM(self): 
         if self.is_new_TM: return True
@@ -499,7 +555,7 @@ class Account(models.Model):
 
     # Total amount paid
     def paid_at(self, date):
-        try: return self.last_pay.at(date).paid_after
+        try: return self.last_pay_at(date).paid_after
         except: return 0
     @cached_property
     def paid(self): return self.last_pay.paid_after
@@ -515,6 +571,10 @@ class Account(models.Model):
     def paid_LM(self): return self.payments.LM.sum_amount
 
     # Outstanding balance
+    def outstanding_at(self, date): 
+        if self.reg_date <= date:
+            return self.plan_tot - self.paid_at(date)
+        return 0
     @property
     def outstanding(self): return self.plan_tot - self.paid
 
@@ -736,6 +796,11 @@ def record_payment(sender, instance, created, *args, **kwargs):
             instance.is_upfront = False
 
         instance.paid_left = instance.account.plan_tot - instance.paid_after
+
+        if instance.paid_left == 0:
+            instance.account.unlock_date = instance.date
+            instance.account.save()
+
         instance.is_last = True
         instance.save()
 

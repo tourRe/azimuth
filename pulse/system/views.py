@@ -1,3 +1,5 @@
 from django.shortcuts import render
+from system.tasks import fetch_data
 
-# Create your views here.
+def collect(request, option=""):
+    fetch_data(option)

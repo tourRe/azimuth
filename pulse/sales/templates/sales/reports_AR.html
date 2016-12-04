@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+<head>
+  <title>Pulse > Accounts Receivable report</title>
+  <meta name="description" content="Accounts Receivable report" />
+</head>
+
+{% block menu %}
+  {% include "sales/menu.html" %}
+{% endblock %}
+
+{% block breadcrumbs %}
+  <li>
+    Accounts Receivable Report
+  </li>
+{% endblock %}
+
+{% block content %}
+
+<div class="content">
+
+  <div class="panel panel-primary">
+    <div class="panel-heading"><h4 class="panel-title">Last Month Receivables</h4></div>
+    <div class="panel-body">
+
+      <table class="table table-condensed table-striped">
+        <tr>
+          <th>Payment Plan</th>
+          <th style="text-align:right">Opening nb</th>
+          <th style="text-align:right">Opening balance</th>
+          <th></th>
+          <th></th>
+          <th style="text-align:right">Closing nb</th>
+          <th style="text-align:right">Closing balance</th>
+        </tr>
+
+        {% for plan_name, accounts in AR_table.items %}
+        <tr>
+          <th>{{ plan_name }}</th>
+          <td>{{ accounts.nb_active_at_EOLLM|intcomma }}</td>
+          <td>{{ accounts.outstanding_at_EOLLM|intcomma }}</td>
+          <td></td>
+          <td></td>
+          <td>{{ accounts.nb_active_at_EOLM|intcomma }}</td>
+          <td>{{ accounts.outstanding_at_EOLM|intcomma }}</td>
+        </tr>
+        {% endfor %}
+      </table>
+
+    </div>
+  </div>
+
+  <div class="panel panel-primary">
+    <div class="panel-heading"><h4 class="panel-title">Last Month Payments</h4></div>
+    <div class="panel-body">
+
+      <table class="table table-condensed table-striped">
+        <tr>
+          <th>Payment Plan</th>
+          <th style="text-align:right">New accounts</th>
+          <th style="text-align:right">Existing accounts</th>
+          <th style="text-align:right">Total</th>
+        </tr>
+
+        {% for plan_name, accounts in AR_table.items %}
+        <tr>
+          <th>{{ plan_name }}</th>
+          <td>{{ accounts.new_LM.paid_LM|intcomma }}</td>
+          <td>{{ accounts.not_new_LM.paid_LM|intcomma }}</td>
+          <td>{{ accounts.paid_LM|intcomma }}</td>
+        </tr>
+        {% endfor %}
+      </table>
+
+    </div>
+  </div>
+
+</div>
+
+{% endblock %}

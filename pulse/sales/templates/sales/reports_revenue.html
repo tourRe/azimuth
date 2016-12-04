@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+<head>
+  <title>Pulse > Revenue report</title>
+  <meta name="description" content="Revenue report" />
+</head>
+
+{% block menu %}
+  {% include "sales/menu.html" %}
+{% endblock %}
+
+{% block breadcrumbs %}
+  <li>
+    Revenue Report
+  </li>
+{% endblock %}
+
+{% block content %}
+
+<div class="content">
+
+  <div class="panel panel-primary">
+    <div class="panel-heading"><h4 class="panel-title">Last Month</h4></div>
+    <div class="panel-body">
+
+      <table class="table table-condensed table-striped">
+        <tr>
+          <th>Payment Plan</th>
+          <th style="text-align:right">Number</th>
+          <th style="text-align:right">Revenue</th>
+          <th style="text-align:right">Average</th>
+        </tr>
+
+        {% for plan_name, accounts in rev_table.items %}
+        <tr>
+          <th>{{ plan_name }}</th>
+          <td>{{ accounts.nb|intcomma }}</td>
+          <td>{{ accounts.plan_tot|intcomma }}</td>
+          <td>{{ accounts.avg_price|intcomma }}</td>
+        </tr>
+        {% endfor %}
+      </table>
+
+    </div>
+  </div>
+
+</div>
+
+{% endblock %}
