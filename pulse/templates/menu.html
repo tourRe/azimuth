@@ -12,8 +12,10 @@
       <a href="#" class="dropdown-toggle" data-toggle="dropdown">System<b class="caret"></b></a>
         <ul class="dropdown-menu">
           <li><a href="{% url 'admin:index' %}">Admin</a></li>
-          <li><a href="{% url 'admin:index' %}">Launch Update</a></li>
-          <li><a href="{% url 'admin:index' %}">Force Full Update</a></li>
+          <li><a href="{% url 'admin:index' %}">
+              Last update: {{ last_update.hours_since|floatformat }}h ago</a></li>
+          <li><a href="{% url 'admin:index' %}">
+              Last full update: {{ last_full_update.hours_since|floatformat }}h ago</a></li>
         </ul>
     </li>
   </ul>
