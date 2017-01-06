@@ -140,6 +140,13 @@ def client(request, client_pk):
     client = Client.objects.get(pk = client_pk)
     context['client'] = client
 
+    # Adding table with client for summary display
+    the_client = collections.OrderedDict()
+    key = ("<a href='/sales/clients/" + client_pk + "/'>"
+            + client.name +"</a>")
+    the_client[key] = client
+    context['the_client'] = the_client
+
     # Adding related accounts to context
     related_accounts = collections.OrderedDict()
     Q = Account.objects.filter(client=client).order_by('account_GLP')

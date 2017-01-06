@@ -100,6 +100,10 @@ class Client(models.Model):
             result = min(acc.reg_date,result)
         return result
 
+    @property
+    def nb_accounts(self):
+        return Account.objects.filter(client=self).count()
+
     # Returns True if the client was created a given month offset from today
     def is_new_by_month(self,offset): 
         return is_this_month(self.first_registration,offset)
@@ -545,7 +549,9 @@ class Account(models.Model):
     def credit_relative(self): return to_days(self.last_pay.next_disable -today)
 
     @cached_property
-    def days_disabled_now(self): return -to_days(self.last_pay.next_disable -today)
+    def days_disabled_now(self): 
+        if self.is_active: return -to_days(self.last_pay.next_disable -today)
+        return 0
 
     # Total days disabled
     @cached_property
@@ -766,7 +772,7 @@ class Payment(models.Model):
         return ((self.amount - self.account.plan_up)
                 / self.account.plan_week + 1) * 7
 
-# UPDATES THE CREDIT_AFTER FIELD WHEN A PAYMENT IS CREATED
+# UPDATES FIELDS WHEN A PAYMENT IS CREATED
 @receiver(post_save, sender=Payment,
         dispatch_uid='Payment_save_signal')
 def record_payment(sender, instance, created, *args, **kwargs):

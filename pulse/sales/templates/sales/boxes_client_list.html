@@ -1,0 +1,38 @@
+{% load humanize %}
+{% for line_title, account in active_table.items %}
+  <div class="col-lg-4">
+    <div class="panel panel-primary">
+      <div class="panel-heading"><h4 class="panel-title">
+          {% autoescape off %}{{ line_title }}{% endautoescape %}
+      </h4></div>
+      <div class="panel-body">
+        <table class="table table-condensed table-striped">
+          <tr>
+            <th>Name</th>
+            <td>{{ client.name|title }}</td>
+          </tr>
+          <tr>
+            <th>Gender</th>
+            <td>{{ client.gender|title }}</td>
+          </tr>
+          <tr>
+            <th>Phone number</th>
+            <td>{{ client.phone }}</td>
+          </tr>
+          <tr>
+            <th>Location</th>
+            <td>{{ client.location|title }}</td>
+          </tr>
+          <tr>
+            <th>Registration</th>
+            <td>{{ client.first_registration }}</td>
+          </tr>
+          <tr>
+            <th>Nb of accounts</th>
+            <td>{{ client.nb_accounts }}</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+  </div>
+{% endfor %}

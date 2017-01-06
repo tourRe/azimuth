@@ -56,16 +56,23 @@ def fetch_data(option=""):
     print('Updating database')
 
     full = True
-    if option != "force_full":
+    updates = Update.objects.all()
+    if option == "force_full":
+        full = True
+        try: hours_since = updates.last_update().hours_since
+        except: hours_since = 24
+    else:
         try:
-            updates = Update.objects.all()
             last_full_update = updates.last_full_update()
-            hours_since = last_full_update.hours_since
+            hours_since_full = last_full_update.hours_since
             print(' > Time since last full update: ' +
-                    str(round(hours_since,2)) + 'h')
-            if hours_since < 24:
+                    str(round(hours_since_full,2)) + 'h')
+            if hours_since_full < 24: 
                 full = False
-                last_update = updates.last_update()
+            else: 
+                full = True
+            last_update = updates.last_update()
+            hours_since = last_update.hours_since
         except: hours_since = 24
 
     if full:
@@ -134,8 +141,12 @@ def fetch_data(option=""):
             acc.plan_week = int(float(acc_read['hour_price'])*24*7)
             acc.reg_date = toDate_ms(acc_read['registration_date_utc'])
             acc.agent = agent
-            if acc_read['account_status'] == 'Detached':
+            if acc_read['account_status'] == 'DETACHED':
                 acc.status = 'r'
+                acc.unlock_date = today
+            elif acc_read['account_status'] == 'WRITTEN_OFF':
+                acc.status = 'w'
+                acc.unlock_date = today
             else:
                 acc.status = acc_read['account_status'][0].lower()
         # otherwise creates a new account
@@ -153,15 +164,15 @@ def fetch_data(option=""):
                     agent = agent,
                     status = acc_read['account_status'][0].lower()
                     )
-            try:
-                acc.save()
-                new_accounts += 1
-            except ValidationError as e:
-                # deleting the account in case tranItem couldn't be saved
-                # this also deletes the related Transaction
-                acc.delete()
-                for key, value in e.message_dict.items():
-                    print("error in " + key + ": " + value)
+            new_accounts += 1
+        try:
+            acc.save()
+        except ValidationError as e:
+            # deleting the account in case tranItem couldn't be saved
+            # this also deletes the related Transaction
+            acc.delete()
+            for key, value in e.message_dict.items():
+                print("error in " + key + ": " + value)
 
         updated_accounts.append(acc.account_Angaza)
 

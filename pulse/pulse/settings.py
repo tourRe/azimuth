@@ -41,7 +41,6 @@ INSTALLED_APPS = [
     'system.apps.SystemConfig',
     'inventory.apps.InventoryConfig',
     # Other Apps
-    'djcelery',
     'kombu.transport.django',
     # System Apps
     'django.contrib.admin',
@@ -144,9 +143,3 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = [
             os.path.join(BASE_DIR, "static"),
                 ]
-
-# Celerybeat config
-# https://www.caktusgroup.com/blog/2014/06/23/scheduling-tasks-celery/
-
-CELERYBEAT_SCHEDULER = 'djcelery.schedulers.DatabaseScheduler'
-CELERY_RESULT_BACKEND = 'djcelery.backends.database:DatabaseBackend'
