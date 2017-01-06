@@ -20,15 +20,12 @@
   <ul class="nav nav-pills">
     <li class="active"><a href="#summary" data-toggle="tab">Summary</a></li>
     <li><a href="#accounts" data-toggle="tab">Accounts</a></li>
-    <li><a href="#credit" data-toggle="tab">Credit Scoring</a></li>
+    <li><a href="#score" data-toggle="tab">Credit Scoring</a></li>
   </ul>
 
   <div class="tab-content">
 
     <div class="tab-pane active" id="summary">
-      <div class="panel panel-primary">
-        <div class="panel-heading"><h4 class="panel-title">Client information</h4></div>
-      </div>
       {% with active_table=the_client %}
       {% include "sales/boxes_client_list.html" %}
       {% endwith %}
@@ -43,7 +40,7 @@
       {% endwith %}
     </div>
 
-    <div class="tab-pane" id="credit">
+    <div class="tab-pane" id="score">
       <div class="panel panel-primary">
         <div class="panel-heading"><h4 class="panel-title">Credit scoring details</h4></div>
       </div>

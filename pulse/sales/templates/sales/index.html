@@ -60,12 +60,12 @@
       <div class="col-lg-4">
         <div class="panel panel-primary">
           <div class="panel-heading"><h4 class="panel-title">
-              <a href="{% url 'sales:manager_index' %}">Managers</a></h4></div>
+              <a href="{% url 'sales:managers' %}">Managers</a></h4></div>
           <div class="panel-body">
             <table class="table table-condensed table-striped">
               <tr>
                 <th>Number</th>
-                <td>{{ manager_list|length|add:"-1" }}</td>
+                <td>{{ all_managers|length|add:"-1" }}</td>
               </tr>
               <tr>
                 <th>Top sales (curr.)</th>
@@ -94,12 +94,12 @@
       <div class="col-lg-4">
         <div class="panel panel-primary">
           <div class="panel-heading"><h4 class="panel-title">
-              <a href="{% url 'sales:agent_index' %}">Agents</a></h4></div>
+              <a href="{% url 'sales:agents' %}">Agents</a></h4></div>
           <div class="panel-body">
             <table class="table table-condensed table-striped">
               <tr>
                 <th>Number</th>
-                <td>{{ agent_list|length|add:"-4" }}</td>
+                <td>{{ all_agents|length|add:"-4" }}</td>
               </tr>
               <tr>
                 <th>Top sales (curr.)</th>
@@ -131,7 +131,7 @@
       <div class="col-lg-4">
         <div class="panel panel-primary">
           <div class="panel-heading"><h4 class="panel-title">
-              <a href="{% url 'sales:client_index' %}">Clients</a></h4></div>
+              <a href="{% url 'sales:clients' %}">Clients</a></h4></div>
           <div class="panel-body">
             <table class="table table-condensed table-striped">
               <tr>
@@ -157,7 +157,7 @@
       <div class="col-lg-4">
         <div class="panel panel-primary">
           <div class="panel-heading"><h4 class="panel-title">
-              <a href="{% url 'sales:account_index' %}">Accounts</a></h4></div>
+              <a href="{% url 'sales:accounts' %}">Accounts</a></h4></div>
           <div class="panel-body">
             <table class="table table-condensed table-striped">
               <tr>
@@ -183,7 +183,7 @@
       <div class="col-lg-4">
         <div class="panel panel-primary">
           <div class="panel-heading"><h4 class="panel-title">
-              <a href="{% url 'sales:payment_index' %}">Payments</a></h4></div>
+              <a href="{% url 'sales:payments' %}">Payments</a></h4></div>
           <div class="panel-body">
             <table class="table table-condensed table-striped">
               <tr>

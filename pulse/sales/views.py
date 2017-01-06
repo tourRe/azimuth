@@ -36,12 +36,9 @@ for idx in range(0,52):
 # ************************ MENU CONTEXT **************************
 # ****************************************************************
 
-agent_list = Agent.objects.order_by('location')
-manager_list = Manager.objects.order_by('firstname')
-context = {
-        'manager_list' : manager_list,
-        'agent_list' : agent_list
-        }
+context = {}
+context['all_agents'] = Agent.objects.order_by('location')
+context['all_managers'] = Manager.objects.order_by('firstname')
 
 # ****************************************************************
 # **************************** VIEWS *****************************
@@ -55,16 +52,16 @@ def index(request):
 
     return render(request, 'sales/index.html', context)
 
-def manager_index(request):
+def managers(request):
     # Preparing table for account_sets display
     account_table = collections.OrderedDict()
-    for manager in manager_list:
+    for manager in all_managers:
         key = ("<a href='/sales/managers/" + manager.firstname + "/'>"
                 + " " + manager.firstname + " " + manager.lastname + "</a>")
         agents = Agent.objects.filter(manager = manager)
         account_table[key] = Account.objects.filter(agent__in = agents)
     context['account_table'] = account_table
-    return render(request, 'sales/manager_index.html', context)
+    return render(request, 'sales/managers.html', context)
 
 def manager(request, manager_firstname):
     # Preparing table for account_sets display
@@ -80,16 +77,16 @@ def manager(request, manager_firstname):
     context['manager'] = manager
     return render(request, 'sales/manager.html', context)
 
-def agent_index(request):
+def agents(request):
     # Preparing table for account_sets display
     account_table = collections.OrderedDict()
-    for agent in agent_list:
+    for agent in all_agents:
         key = ("<a href='/sales/agents/" + agent.login + "/'>"
                 + " " + agent.location + " (" + agent.firstname + " "
                 + agent.lastname + ")</a>")
         account_table[key] = Account.objects.filter(agent=agent)
     context['account_table'] = account_table
-    return render(request, 'sales/agent_index.html', context)
+    return render(request, 'sales/agents.html', context)
 
 def agent(request, agent_login):
     # Identifying agent and adding it to context
@@ -133,8 +130,8 @@ def agent(request, agent_login):
 
     return render(request, 'sales/agent.html', context)
 
-def client_index(request):
-    return render(request, 'sales/client_index.html', context)
+def clients(request):
+    return render(request, 'sales/clients.html', context)
 
 def client(request, client_pk):
     client = Client.objects.get(pk = client_pk)
@@ -158,7 +155,7 @@ def client(request, client_pk):
     context['related_accounts'] = related_accounts
     return render(request, 'sales/client.html', context)
 
-def account_index(request):
+def accounts(request):
     # Sending accounts and payments to context
     context['accounts'] = Account.objects.all()
     context['payments'] = Payment.objects.all()
@@ -178,15 +175,15 @@ def account_index(request):
     # table_1['Average days disabled'] = ratio(days_disabled,account_number)
     # table_1['Average unit price (SLL)'] = ratio(paid+outstanding,account_number)
 
-    return render(request, 'sales/account_index.html', context)
+    return render(request, 'sales/accounts.html', context)
 
 def account(request, account_Angaza):
     account = Account.objects.get(account_Angaza = account_Angaza)
     context['account'] = account
     return render(request, 'sales/account.html', context)
 
-def payment_index(request):
-    return render(request, 'sales/payment_index.html', context)
+def payments(request):
+    return render(request, 'sales/payments.html', context)
 
 # ****************************************************************
 # *************************** REPORTS ****************************
