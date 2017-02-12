@@ -102,7 +102,7 @@ def fetch_data(force_full = False, online = True):
         # skipped so that the account gets deleted
         except: pass
 
-        # Creating or identifying client
+        # Reading client information
         try: gender = acc_read['customer_gender'][0]
         except: gender = acc_read['customer_gender']
         # if the client exists (based on phone), updates info
@@ -118,9 +118,10 @@ def fetch_data(force_full = False, online = True):
                     name = acc_read['owner_name'],
                     gender = gender,
                     phone = acc_read['owner_msisdn'],
-                    location = acc_read['owner_location']
+                    location = acc_read['location']
                     )
             new_clients += 1
+
         updated_clients.append(client.phone)
 
         # Creating or identifying account
