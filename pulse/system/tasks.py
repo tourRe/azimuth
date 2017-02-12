@@ -52,35 +52,30 @@ def fetch_data(force_full = False, online = True):
     new_accounts = 0
     new_payments = 0
 
-    # trying to define whether we need a full update but need to manage the
-    # exception where there's no last update because this is the first one...
-
     print('Updating database')
 
+    # Defining whether it's a full update
     updates = Update.objects.all()
-    # checking if no previous updates exist
-    if not updates:
+    if not updates: 
         full = True
-        hours_since = 24
-    elif force_full:
+        print(' > No previous update > Forcing full update')
+    elif force_full: 
         full = True
-        hours_since = updates.last_update().hours_since
+        print(' > Forcing full update')
     else:
         last_full_update = updates.last_full_update()
         hours_since_full = last_full_update.hours_since
         print(' > Time since last full update: ' +
                 str(round(hours_since_full,2)) + 'h')
-        if hours_since_full < 24: 
-            full = False
-        else: 
-            full = True
-        last_update = updates.last_update()
-        hours_since = last_update().hours_since
+        full = hours_since_full >= 24
 
+    # Calculating the number of payments to look through
     if full:
         nb_pays = len(payments_raw)
         print(' > Full update...')
     else:
+        last_update = updates.last_update()
+        hours_since = last_update().hours_since
         nb_pays = max(int(last_update.new_pays / last_update.hours *
                 last_update.hours_since * 5),100)
         print(' > partial update for last ' + str(nb_pays) + ' payments...')
