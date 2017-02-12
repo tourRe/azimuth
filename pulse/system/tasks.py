@@ -14,15 +14,16 @@ from requests.auth import HTTPBasicAuth
 today = datetime.datetime.today().replace(tzinfo=pytz.utc)
 
 @app.shared_task
-def fetch_data(option=""):
+def fetch_data(force_full = False, online = True):
 
     # DOWNLOADING/IMPORTING RAW ANGAZA FILES
 
     print('Importing dump files')
-    if option == "offline":
+    if not online:
         print(' > Fetching dump files in Media folder...')
         accounts_raw = csvToList('media/accounts.csv')
         payments_raw = csvToList('media/payments.csv')
+
     else:
         print(' > Fetching dump files online...')
         login = 'op=alex@azimuth-solar.com'
@@ -32,18 +33,18 @@ def fetch_data(option=""):
         url3 = 'https://payg.angazadesign.com/api/snapshots/users'
         url4 = 'https://payg.angazadesign.com/api/snapshots/sms_messages'
         with requests.Session() as s:
-
             print(' > downloading accounts')
             download = s.get(url1, auth=(login,pw))
             decoded_content = download.content.decode('utf-8')
             accounts_raw = csvToList2(decoded_content.splitlines())
-
             print(' > downloading payments')
             download = s.get(url2, auth=(login,pw))
             decoded_content = download.content.decode('utf-8')
             payments_raw = csvToList2(decoded_content.splitlines())
 
-    # List of updated clients + accounts to delete those not found in the dumps
+    # MANAGING UPDATE
+
+    # Counters to track update actions
     updated_clients = []
     updated_accounts = []
     updated_payments = []
@@ -51,29 +52,30 @@ def fetch_data(option=""):
     new_accounts = 0
     new_payments = 0
 
-    # MANAGING UPDATE
+    # trying to define whether we need a full update but need to manage the
+    # exception where there's no last update because this is the first one...
 
     print('Updating database')
 
-    full = True
     updates = Update.objects.all()
-    if option == "force_full":
+    # checking if no previous updates exist
+    if not updates:
         full = True
-        try: hours_since = updates.last_update().hours_since
-        except: hours_since = 24
+        hours_since = 24
+    elif force_full:
+        full = True
+        hours_since = updates.last_update().hours_since
     else:
-        try:
-            last_full_update = updates.last_full_update()
-            hours_since_full = last_full_update.hours_since
-            print(' > Time since last full update: ' +
-                    str(round(hours_since_full,2)) + 'h')
-            if hours_since_full < 24: 
-                full = False
-            else: 
-                full = True
-            last_update = updates.last_update()
-            hours_since = last_update.hours_since
-        except: hours_since = 24
+        last_full_update = updates.last_full_update()
+        hours_since_full = last_full_update.hours_since
+        print(' > Time since last full update: ' +
+                str(round(hours_since_full,2)) + 'h')
+        if hours_since_full < 24: 
+            full = False
+        else: 
+            full = True
+        last_update = updates.last_update()
+        hours_since = last_update().hours_since
 
     if full:
         nb_pays = len(payments_raw)

@@ -20,29 +20,25 @@ from django.db.models import F, Q, Sum
 
 # Return the last second of the last day of the month of a given date
 def month_end(date):
-    if date.month == 12:
-        next_year = date.year + 1
-        next_month = 1
-    else:
-        next_year = date.year
-        next_month = date.month + 1
-    result = datetime.datetime(next_year, next_month, 1,
-            00,00,00,000000).replace(tzinfo=pytz.utc)
+    result = datetime.datetime(
+            date.year + int(date.month/12),
+            date.month % 12 + 1,
+            1,00,00,00,000000).replace(tzinfo=pytz.utc)
     return result - datetime.timedelta(0,1,0)
 
 # Converts a timedelta into days, with decimals
-def to_days(delta):
-    return delta / datetime.timedelta(days=1)
+def to_days(delta): return delta / datetime.timedelta(days=1)
 
 # Adds months to a given date
-def add_months(sourcedate,months):
-    month = sourcedate.month - 1 + months
-    year = int(sourcedate.year + month / 12 )
+def add_months(date,months):
+    month = date.month - 1 + months
+    year = int(date.year + month / 12 )
     month = month % 12 + 1
-    day = min(sourcedate.day,calendar.monthrange(year,month)[1])
+    day = min(date.day,calendar.monthrange(year,month)[1])
     return datetime.datetime(year,month,day,
-            sourcedate.hour,sourcedate.minute,sourcedate.second)
+            date.hour,date.minute,date.second)
 
+# Global time variables
 today = datetime.datetime.today().replace(tzinfo=pytz.utc)
 TM_end = month_end(today)
 LM_end = month_end(add_months(today,-1))
@@ -51,13 +47,14 @@ LM_start = month_end(add_months(today,-2))
 TM_days = to_days(TM_end - TM_start)
 LM_days = to_days(LM_end - LM_start)
 
+# Threshold in days after ways the number of disabled days starts increasing
 tolerance = 0
 
 # ****************************************************************
 # ************************** CLIENT ******************************
 # ****************************************************************
 
-# CUSTOM QUERYSET CLASS FOR THE ACCOUNT CLASS TO DEFINE TABLE LEVEL METHODS
+# CUSTOM QUERYSET CLASS FOR THE CLIENT CLASS TO DEFINE TABLE LEVEL METHODS
 class ClientQuerySet(models.QuerySet):
 
     @cached_property
@@ -79,7 +76,7 @@ class ClientQuerySet(models.QuerySet):
 # At the moment only handles 1 phone number per client and uses it as the main
 # key (used to identify duplicates, never updated)
 # Would probably need to implement a double search on update to manage that
-# properly (update phone if other fields are similar)
+# properly (update phone if other fields are similar?)
 # Also have to look into addons to identify and merge duplicates
 class Client(models.Model):
     name = models.CharField(max_length=30)
@@ -151,6 +148,9 @@ class Agent(models.Model):
     start_date = models.DateTimeField('date hired')
     gender = models.CharField(max_length=1,
             choices=(('M', 'Male'),('F', 'Female')), null=True)
+    category = models.CharField(max_length=1,
+            choices=(('R', 'Rural'), ('F', 'Freetown'), ('H', 'HQ'), 
+                ('O', 'Other')), null=True)
     location = models.CharField(max_length=30)
     warehouse = models.ForeignKey(Warehouse)
     phone = models.CharField(max_length=16)
@@ -160,6 +160,11 @@ class Agent(models.Model):
 
     def __str__(self):
         return ('%s (%s %s)' % (self.location, self.firstname, self.lastname))
+
+    # Returns the queryset of accounts managed by a given agent
+    @cached_property
+    def accounts(self):
+        return Account.objects.filter(agent=self)
 
 # ****************************************************************
 # ************************* ACCOUNT ******************************
@@ -179,9 +184,7 @@ class AccountQuerySet(models.QuerySet):
     @cached_property
     def not_new_TM(self): return self.filter(reg_date__lt = TM_start)
     @cached_property
-    def new_LM(self): return self.filter(
-            reg_date__gt = LM_start,
-            reg_date__lt = LM_end)
+    def new_LM(self): return self.new(LM_start,LM_end)
     @cached_property
     def not_new_LM(self): return self.exclude(
             reg_date__gt = LM_start,
