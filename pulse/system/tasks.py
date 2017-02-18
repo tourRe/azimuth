@@ -42,9 +42,8 @@ def fetch_data(force_full = False, online = True):
             decoded_content = download.content.decode('utf-8')
             payments_raw = csvToList2(decoded_content.splitlines())
 
-    # MANAGING UPDATE
-
-    # Counters to track update actions
+    # SETTING UP COUNTERS TO TRACK UPDATE ACTIONS 
+    
     updated_clients = []
     updated_accounts = []
     updated_payments = []
@@ -54,13 +53,16 @@ def fetch_data(force_full = False, online = True):
 
     print('Updating database')
 
-    # Defining whether it's a full update
+    # SETTING UP UPDATE PARAMETERS
+
     updates = Update.objects.all()
     if not updates: 
         full = True
+        hours_since = 24
         print(' > No previous update > Forcing full update')
     elif force_full: 
         full = True
+        hours_since = updates.last_update().hours_since
         print(' > Forcing full update')
     else:
         last_full_update = updates.last_full_update()
@@ -68,21 +70,20 @@ def fetch_data(force_full = False, online = True):
         print(' > Time since last full update: ' +
                 str(round(hours_since_full,2)) + 'h')
         full = hours_since_full >= 24
+        last_update = updates.last_update()
+        hours_since = last_update.hours_since
 
-    # Calculating the number of payments to look through
     if full:
         nb_pays = len(payments_raw)
         print(' > Full update...')
     else:
-        last_update = updates.last_update()
-        hours_since = last_update().hours_since
-        nb_pays = max(int(last_update.new_pays / last_update.hours *
-                last_update.hours_since * 5),100)
+        nb_pays = max(int(last_update.new_pays / last_update.hours * 
+            last_update.hours_since * 5),100)
         print(' > partial update for last ' + str(nb_pays) + ' payments...')
 
     pays_start = max(0,len(payments_raw) - nb_pays)
 
-    # IMPORTING ACCOUNTS INTO DATABASE
+    # UPDATING CLIENTS AND ACCOUNTS
 
     bar = Bar('Updating Accounts', max=len(accounts_raw))
 
@@ -137,6 +138,7 @@ def fetch_data(force_full = False, online = True):
             acc.plan_up = int(acc_read['upfront_price'])
             acc.plan_tot = int(acc_read['unlock_price'])
             acc.plan_week = int(float(acc_read['hour_price'])*24*7)
+            acc.plan_iscash = (acc.plan_up == acc.plan_tot)
             acc.reg_date = toDate_ms(acc_read['registration_date_utc'])
             acc.agent = agent
             if acc_read['account_status'] == 'DETACHED':
@@ -158,6 +160,8 @@ def fetch_data(force_full = False, online = True):
                     plan_up = int(acc_read['upfront_price']),
                     plan_tot = int(acc_read['unlock_price']),
                     plan_week = int(float(acc_read['hour_price'])*24*7),
+                    plan_iscash = (int(acc_read['upfront_price']) == 
+                        int(acc_read['unlock_price'])),
                     reg_date = toDate_ms(acc_read['registration_date_utc']),
                     agent = agent,
                     status = acc_read['account_status'][0].lower()

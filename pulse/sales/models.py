@@ -12,7 +12,7 @@ from django.dispatch import receiver
 # Used to cache properties and improve performance
 from django.utils.functional import cached_property
 # Complex queries and filters
-from django.db.models import F, Q, Sum
+from django.db.models import F, Q, Sum, FloatField
 
 # ****************************************************************
 # ********************** GLOBAL VARIABLES ************************
@@ -83,7 +83,7 @@ class Client(models.Model):
     gender = models.CharField(max_length=1,
             choices=(('M', 'Male'),('F', 'Female')), null=True)
     phone = models.CharField(max_length=16, null=True)
-    location = models.CharField(max_length=30, null=True)
+    location = models.CharField(max_length=50, null=True)
     objects = ClientQuerySet.as_manager()
 
     def __str__(self):
@@ -192,11 +192,9 @@ class AccountQuerySet(models.QuerySet):
 
     # Credit and cash accounts
     @property
-    def cash(self):
-        return self.filter(plan_up = F('plan_tot'))
+    def cash(self): return self.filter(plan_iscash = True)
     @property
-    def credit(self):
-        return self.exclude(plan_up = F('plan_tot'))
+    def credit(self): return self.exclude(plan_iscash = True)
 
     # Unlocked accounts
     def unlocked_between(self, start, end):
@@ -284,8 +282,8 @@ class AccountQuerySet(models.QuerySet):
     @cached_property
     def outstanding(self):
         Q = self.active.last_payments
-        if Q.exists(): return Q.aggregate(Sum('paid_left'))['paid_left__sum']
-        return 0
+        if not Q.exists(): return 0
+        return Q.aggregate(Sum('paid_left'))['paid_left__sum']
     @property
     def outstanding_at_EOLM(self):
         result = 0
@@ -309,6 +307,15 @@ class AccountQuerySet(models.QuerySet):
         result = 0
         return len([acc for 
             acc in self.active_LM if acc.is_active_at(LM_start)])
+
+    # Expected payment according to initial plan
+    def ex_plan_at2(self, date):
+        Q = self.filter(reg_date__lt = date)
+        return Q.aggregate(ex_plan = Sum(F('plan_up') +
+            F('plan_week')*int(to_weeks(date - F('reg_date')))),
+            output_field=FloatField())
+    @property
+    def ex_plan2(self): return self.ex_plan_at2(today)
 
     # Expected payment according to initial plan
     def ex_plan_at(self, date):
@@ -441,8 +448,6 @@ class AccountQuerySet(models.QuerySet):
     def AAR(self, days, tol):
         return self.at_risk(days,tol).count()
     @cached_property
-    def AAR_7(self): return self.AAR(7, tolerance)
-    @cached_property
     def AAR_14(self): return self.AAR(14, tolerance)
 
     # Returns the PCT of outstanding balance for accounts disabled for more
@@ -451,15 +456,11 @@ class AccountQuerySet(models.QuerySet):
         return ratio(self.at_risk(days,tol).outstanding,
                 self.outstanding, dec=2,pc=True,toStr=True)
     @cached_property
-    def PAR_7(self): return self.PAR(7, tolerance)
-    @cached_property
     def PAR_14(self): return self.PAR(14, tolerance)
 
     # Returns the number of accounts disabled for more than X days
     def ADP(self, days, tol):
         return self.delayed_payment(days,tol).count()
-    @cached_property
-    def ADP_14(self): return self.ADP(14, tolerance)
     @cached_property
     def ADP_30(self): return self.ADP(30, tolerance)
 
@@ -468,8 +469,6 @@ class AccountQuerySet(models.QuerySet):
     def PDP(self, days, tol):
         return ratio(self.delayed_payment(days,tol).outstanding,
                 self.outstanding, dec=2,pc=True,toStr=True)
-    @cached_property
-    def PDP_14(self): return self.PDP(14, tolerance)
     @cached_property
     def PDP_30(self): return self.PDP(30, tolerance)
 
@@ -494,6 +493,7 @@ class Account(models.Model):
     plan_up = models.PositiveIntegerField(default=0)
     plan_tot = models.PositiveIntegerField(default=0)
     plan_week = models.PositiveIntegerField(default=0)
+    plan_iscash = models.NullBooleanField()
     reg_date = models.DateTimeField('registration date')
     unlock_date = models.DateTimeField('unlock date', null=True)
     agent = models.ForeignKey(Agent)
@@ -786,8 +786,11 @@ def record_payment(sender, instance, created, *args, **kwargs):
         if not payments:
             instance.credit_before = 0
             instance.paid_after = instance.amount
-            instance.next_disable = instance.date + datetime.timedelta(
-                    days=instance.days_value_up)
+            if instance.account.plan_iscash:
+                instance.next_disable = instance.date
+            else:
+                instance.next_disable = instance.date + datetime.timedelta(
+                        days=instance.days_value_up)
             instance.perfect_date = instance.next_disable
             instance.is_upfront = True
 

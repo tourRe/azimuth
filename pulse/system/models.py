@@ -20,6 +20,9 @@ class Update(models.Model):
     new_pays = models.IntegerField(default=0)
     objects = UpdateQuerySet.as_manager()
    
+    def __str__(self):
+        return ('%s - Is Full = %s' % (str(self.date), str(self.is_full)))
+
     @property
     def hours_since(self):
         delta = today - self.date

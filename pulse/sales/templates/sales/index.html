@@ -27,102 +27,18 @@
         <div class="panel panel-primary">
           <div class="panel-heading"><h4 class="panel-title">
               <a href="{% url 'sales:index' %}">General</a></h4></div>
-          <div class="panel-body">
-            <table class="table table-condensed table-striped">
-              <tr>
-                <th>Overall repayment ratio</th>
-                <td>{{ all_accounts.repayR }}</td>
-              </tr>
-              <tr>
-                <th>&nbsp> this month</th>
-                <td>{{ all_accounts.repayR_TM_today }}</td>
-              </tr>
-              <tr>
-                <th>&nbsp> last month</th>
-                <td>{{ all_accounts.repayR_LM }}</td>
-              </tr>
-              <tr>
-                <th>Overall collection ratio</th>
-                <td>{{ all_accounts.collectR }}</td>
-              </tr>
-              <tr>
-                <th>&nbsp> this month</th>
-                <td>{{ all_accounts.collectR_TM_today }}</td>
-              </tr>
-              <tr>
-                <th>&nbsp> last month</th>
-                <td>{{ all_accounts.collectR_LM }}</td>
-              </tr>
-            </table>
-          </div>
         </div>
       </div>
       <div class="col-lg-4">
         <div class="panel panel-primary">
           <div class="panel-heading"><h4 class="panel-title">
               <a href="{% url 'sales:managers' %}">Managers</a></h4></div>
-          <div class="panel-body">
-            <table class="table table-condensed table-striped">
-              <tr>
-                <th>Number</th>
-                <td>{{ all_managers|length|add:"-1" }}</td>
-              </tr>
-              <tr>
-                <th>Top sales (curr.)</th>
-                <td>James Koroma</td>
-              </tr>
-              <tr>
-                <th>Top sales (last)</th>
-                <td>HQ Easy Solar</td>
-              </tr>
-              <tr>
-                <th>Top perf (curr.)</th>
-                <td>James Koroma</td>
-              </tr>
-              <tr>
-                <th>Top perf (last)</th>
-                <td>HQ Easy Solar</td>
-              </tr>
-              <tr>
-                <th>TBD</th>
-                <td>tbd</td>
-              </tr>
-            </table>
-          </div>
         </div>
       </div>
       <div class="col-lg-4">
         <div class="panel panel-primary">
           <div class="panel-heading"><h4 class="panel-title">
               <a href="{% url 'sales:agents' %}">Agents</a></h4></div>
-          <div class="panel-body">
-            <table class="table table-condensed table-striped">
-              <tr>
-                <th>Number</th>
-                <td>{{ all_agents|length|add:"-4" }}</td>
-              </tr>
-              <tr>
-                <th>Top sales (curr.)</th>
-                <td>Abu Bakkar Mansaray</td>
-              </tr>
-              <tr>
-                <th>Top sales (last)</th>
-                <td>Abu Bakkar Mansaray</td>
-              </tr>
-              <tr>
-                <th>Top perf (curr.)</th>
-                <td>Alie Kargbo</td>
-              </tr>
-              <tr>
-                <th>Top perf (last)</th>
-                <td>Abu Bakkar Mansaray</td>
-              </tr>
-              <tr>
-                <th>TBD</th>
-                <td>tbd</td>
-              </tr>
-            </table>
-          </div>
         </div>
       </div>
     </div>

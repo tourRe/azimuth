@@ -48,7 +48,7 @@ class Product(models.Model):
 class InventoryItem(models.Model):
     product = models.ForeignKey(Product)
     warehouse = models.ForeignKey(Warehouse)
-    qty = models.PositiveIntegerField(default=0)
+    qty = models.IntegerField(default=0)
 
     def __str__(self):
         return ('%s in %s: %s' 
@@ -122,10 +122,6 @@ class TransactionItem(models.Model):
         if self.qty == 0:
             raise ValidationError(_(
                 'Error: No quantity selected'))
-        # transaction items where there's not enough products not allowed
-        elif self.qty > self.item.qty:
-            raise ValidationError(_(
-                'Error: Not enough products to perform that transfer'))
 
     # Overrides the Django save function to update inventory items on save
     # Also calls to clean function through "full_clean()"
