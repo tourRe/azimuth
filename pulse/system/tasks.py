@@ -139,7 +139,7 @@ def fetch_data(force_full = False, online = True):
             acc.plan_tot = int(acc_read['unlock_price'])
             acc.plan_week = int(float(acc_read['hour_price'])*24*7)
             acc.plan_iscash = (acc.plan_up == acc.plan_tot)
-            acc.reg_date = toDate_ms(acc_read['registration_date_utc'])
+            acc.reg_date = toDate(acc_read['registration_date_utc'])
             acc.agent = agent
             if acc_read['account_status'] == 'DETACHED':
                 acc.status = 'r'
@@ -162,7 +162,7 @@ def fetch_data(force_full = False, online = True):
                     plan_week = int(float(acc_read['hour_price'])*24*7),
                     plan_iscash = (int(acc_read['upfront_price']) == 
                         int(acc_read['unlock_price'])),
-                    reg_date = toDate_ms(acc_read['registration_date_utc']),
+                    reg_date = toDate(acc_read['registration_date_utc']),
                     agent = agent,
                     status = acc_read['account_status'][0].lower()
                     )

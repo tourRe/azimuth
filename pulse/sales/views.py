@@ -210,6 +210,7 @@ def reports_AR(request):
     return render(request, 'sales/reports_AR.html', context)
 
 def reports_com(request):
+    agent_list = Agent.objects.order_by('location')
     real_agents = agent_list.exclude(login = 'hq.demo')
     real_agents = real_agents.exclude(login = 'hq.marketing')
     accounts = Account.objects.all().active_LM
