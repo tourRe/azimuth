@@ -16,14 +16,17 @@ from inventory.models import Product
 today = datetime.datetime.today().replace(tzinfo=pytz.utc)
 
 # Calculating labels for weekly graphs
+
 last_monday = today - datetime.timedelta(0
         ,today.hour*60*60+today.minute*60+today.second,0)
 while last_monday.weekday() != 0:
     last_monday -= datetime.timedelta(1,0,0)
+
 last_friday = today - datetime.timedelta(0
         ,today.hour*60*60+today.minute*60+today.second,0)
 while last_friday.weekday() != 4:
     last_friday -= datetime.timedelta(1,0,0)
+
 date_start = last_monday - datetime.timedelta(7*51,0,0)
 labels_weekly = []
 dates = []
@@ -97,11 +100,12 @@ def agents(request):
         sales = []
         for idx in range(0,9):
             if idx == 0:
-                sales.append(accs.new(last_friday,today).count())
+                sales.append(accs.new(last_friday,today).nb)
             else:
                 sales.append(accs.new(
-                    last_friday - datetime.timedelta((idx+1)*7,0,0),
-                    last_friday - datetime.timedelta((idx)*7,0,0)).count())
+                    last_friday - datetime.timedelta((idx)*7,0,0),
+                    last_friday - datetime.timedelta((idx-1)*7,0,0)).nb)
+                print(last_friday - datetime.timedelta((idx)*7,0,0))
         sales_table[key] = sales
 
     context['account_table'] = account_table
