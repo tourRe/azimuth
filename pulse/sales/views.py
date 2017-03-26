@@ -90,6 +90,7 @@ def agents(request):
     # Preparing table for account_sets display
     account_table = collections.OrderedDict()
     sales_table = collections.OrderedDict()
+    com_table = collections.OrderedDict()
     for agent in all_agents:
 
         key = ("<a href='/sales/agents/" + agent.login + "/'>"
@@ -102,8 +103,14 @@ def agents(request):
             sales.append(agent.sales_week(idx))
         sales_table[key] = sales
 
+        com = []
+        for idx in range(0,9):
+            com.append(agent.com_week(idx))
+        com_table[key] = com
+
     context['account_table'] = account_table
     context['sales_table'] = sales_table
+    context['com_table'] = com_table
     return render(request, 'sales/agents.html', context)
 
 def agent(request, agent_login):

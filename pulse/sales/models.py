@@ -83,6 +83,24 @@ class Manager(models.Model):
         return ('%s %s (%s)' % (self.firstname, self.lastname, self.district))
 
 # ****************************************************************
+# ************************ AGENT COM *****************************
+# ****************************************************************
+
+# CLASS TO MANAGE AGENT COMMISSION
+class ComPlan(models.Model):
+    name = models.CharField(max_length=30)
+    stipend = models.PositiveIntegerField(default=0)
+    top_up = models.PositiveIntegerField(default=0)
+    transport = models.PositiveIntegerField(default=0)
+    trigger1 = models.PositiveIntegerField(default=0)
+    bonus1 = models.PositiveIntegerField(default=0)
+    trigger2 = models.PositiveIntegerField(default=0)
+    bonus2 = models.PositiveIntegerField(default=0)
+
+    def __str__(self):
+        return self.name
+
+# ****************************************************************
 # ************************** AGENT *******************************
 # ****************************************************************
 
@@ -102,6 +120,7 @@ class Agent(models.Model):
     manager = models.ForeignKey(Manager)
     login = models.CharField(max_length=30, null=True)
     label = models.CharField(max_length=50, null=True)
+    com = models.ForeignKey(ComPlan, null=True)
 
     def __str__(self):
         return ('%s (%s %s)' % (self.location, self.firstname, self.lastname))
@@ -121,6 +140,14 @@ class Agent(models.Model):
                 last_friday - datetime.timedelta((delta)*7,0,0),
                 last_friday - datetime.timedelta((delta-1)*7,0,0)).
                 exclude(status = 'r').exclude(status = 'w').nb)
+
+    def com_week(self, delta):
+        value = self.com.stipend + self.com.top_up + self.com.transport
+        if self.sales_week(delta) >= self.com.trigger1:
+            value += self.com.bonus1
+        if self.sales_week(delta) >= self.com.trigger2:
+            value += self.com.bonus2
+        return value
 
 # ****************************************************************
 # ************************** CLIENT ******************************
