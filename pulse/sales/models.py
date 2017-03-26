@@ -87,7 +87,6 @@ class Manager(models.Model):
 # ****************************************************************
 
 # AGENT CLASS, SELLS PRODUCTS FROM A UNIQUE WAREHOUSE
-# Could look into geolocalization...
 class Agent(models.Model):
     firstname = models.CharField(max_length=30)
     lastname = models.CharField(max_length=30)
