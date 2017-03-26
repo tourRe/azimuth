@@ -47,8 +47,81 @@ LM_start = month_end(add_months(today,-2))
 TM_days = to_days(TM_end - TM_start)
 LM_days = to_days(LM_end - LM_start)
 
+last_friday = today - datetime.timedelta(0
+        ,today.hour*60*60+today.minute*60+today.second,0)
+while last_friday.weekday() != 4:
+    last_friday -= datetime.timedelta(1,0,0)
+
 # Threshold in days after ways the number of disabled days starts increasing
 tolerance = 0
+
+# ****************************************************************
+# ************************* MANAGER ******************************
+# ****************************************************************
+
+# CUSTOM QUERYSET CLASS FOR THE MANAGER CLASS TO DEFINE TABLE LEVEL METHODS
+class ManagerQuerySet(models.QuerySet):
+    
+    def top_seller_list(self):
+        managers = Manager.objects.all()
+        accounts = Account.objects.all()
+        for man in managers:
+            rev = (accounts.filter(agent__manager = man)).revenue
+
+# MANAGER CLASS, RESPONSIBLE FOR SEVERAL AGENTS
+class Manager(models.Model):
+    firstname = models.CharField(max_length=30)
+    lastname = models.CharField(max_length=30)
+    start_date = models.DateTimeField('date hired')
+    gender = models.CharField(max_length=1,
+            choices=(('M', 'Male'),('F', 'Female')))
+    district = models.CharField(max_length=30)
+    phone = models.CharField(max_length=16)
+    objects = ManagerQuerySet.as_manager()
+
+    def __str__(self):
+        return ('%s %s (%s)' % (self.firstname, self.lastname, self.district))
+
+# ****************************************************************
+# ************************** AGENT *******************************
+# ****************************************************************
+
+# AGENT CLASS, SELLS PRODUCTS FROM A UNIQUE WAREHOUSE
+# Could look into geolocalization...
+class Agent(models.Model):
+    firstname = models.CharField(max_length=30)
+    lastname = models.CharField(max_length=30)
+    start_date = models.DateTimeField('date hired')
+    gender = models.CharField(max_length=1,
+            choices=(('M', 'Male'),('F', 'Female')), null=True)
+    category = models.CharField(max_length=1,
+            choices=(('R', 'Rural'), ('F', 'Freetown'), ('H', 'HQ'), 
+                ('O', 'Other')), null=True)
+    location = models.CharField(max_length=30)
+    warehouse = models.ForeignKey(Warehouse)
+    phone = models.CharField(max_length=16)
+    manager = models.ForeignKey(Manager)
+    login = models.CharField(max_length=30, null=True)
+    label = models.CharField(max_length=50, null=True)
+
+    def __str__(self):
+        return ('%s (%s %s)' % (self.location, self.firstname, self.lastname))
+
+    # Returns the queryset of accounts managed by a given agent
+    @cached_property
+    def accounts(self):
+        return Account.objects.filter(agent=self)
+
+    # Returns the number of sales made 'delta' weeks before the current one
+    def sales_week(self, delta):
+        if delta == 0:
+            return (self.accounts.new(last_friday,today).
+                    exclude(status = 'r').exclude(status = 'w').nb)
+        else:
+            return (self.accounts.new(
+                last_friday - datetime.timedelta((delta)*7,0,0),
+                last_friday - datetime.timedelta((delta-1)*7,0,0)).
+                exclude(status = 'r').exclude(status = 'w').nb)
 
 # ****************************************************************
 # ************************** CLIENT ******************************
@@ -108,63 +181,6 @@ class Client(models.Model):
     def is_new_TM(self): return self.is_new_by_month(0)
     @property
     def is_new_LM(self): return self.is_new_by_month(-1)
-
-# ****************************************************************
-# ************************* MANAGER ******************************
-# ****************************************************************
-
-# CUSTOM QUERYSET CLASS FOR THE MANAGER CLASS TO DEFINE TABLE LEVEL METHODS
-class ManagerQuerySet(models.QuerySet):
-    
-    def top_seller_list(self):
-        managers = Manager.objects.all()
-        accounts = Account.objects.all()
-        for man in managers:
-            rev = (accounts.filter(agent__manager = man)).revenue
-
-# MANAGER CLASS, RESPONSIBLE FOR SEVERAL AGENTS
-class Manager(models.Model):
-    firstname = models.CharField(max_length=30)
-    lastname = models.CharField(max_length=30)
-    start_date = models.DateTimeField('date hired')
-    gender = models.CharField(max_length=1,
-            choices=(('M', 'Male'),('F', 'Female')))
-    district = models.CharField(max_length=30)
-    phone = models.CharField(max_length=16)
-    objects = ManagerQuerySet.as_manager()
-
-    def __str__(self):
-        return ('%s %s (%s)' % (self.firstname, self.lastname, self.district))
-
-# ****************************************************************
-# ************************** AGENT *******************************
-# ****************************************************************
-
-# AGENT CLASS, SELLS PRODUCTS FROM A UNIQUE WAREHOUSE
-# Could look into geolocalization...
-class Agent(models.Model):
-    firstname = models.CharField(max_length=30)
-    lastname = models.CharField(max_length=30)
-    start_date = models.DateTimeField('date hired')
-    gender = models.CharField(max_length=1,
-            choices=(('M', 'Male'),('F', 'Female')), null=True)
-    category = models.CharField(max_length=1,
-            choices=(('R', 'Rural'), ('F', 'Freetown'), ('H', 'HQ'), 
-                ('O', 'Other')), null=True)
-    location = models.CharField(max_length=30)
-    warehouse = models.ForeignKey(Warehouse)
-    phone = models.CharField(max_length=16)
-    manager = models.ForeignKey(Manager)
-    login = models.CharField(max_length=30, null=True)
-    label = models.CharField(max_length=50, null=True)
-
-    def __str__(self):
-        return ('%s (%s %s)' % (self.location, self.firstname, self.lastname))
-
-    # Returns the queryset of accounts managed by a given agent
-    @cached_property
-    def accounts(self):
-        return Account.objects.filter(agent=self)
 
 # ****************************************************************
 # ************************* ACCOUNT ******************************

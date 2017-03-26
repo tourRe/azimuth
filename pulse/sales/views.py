@@ -94,18 +94,12 @@ def agents(request):
 
         key = ("<a href='/sales/agents/" + agent.login + "/'>"
                 + " " + agent.location+ "</a>")
-        accs = Account.objects.filter(agent=agent)
+        accs = agent.accounts
         account_table[key] = accs
 
         sales = []
         for idx in range(0,9):
-            if idx == 0:
-                sales.append(accs.new(last_friday,today).nb)
-            else:
-                sales.append(accs.new(
-                    last_friday - datetime.timedelta((idx)*7,0,0),
-                    last_friday - datetime.timedelta((idx-1)*7,0,0)).nb)
-                print(last_friday - datetime.timedelta((idx)*7,0,0))
+            sales.append(agent.sales_week(idx))
         sales_table[key] = sales
 
     context['account_table'] = account_table
