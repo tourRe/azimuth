@@ -5,9 +5,12 @@ Hi there, it's Pulse :)
 ** LATEST UPDATES **
 
 - Clean up templates names and general context variables
+- Fix difference in number of systems reposessed on the hub and on the
+  database
 
 ** FUTURE DEVELOPMENTS (ORDERED BY CURRENT LEVEL OF PRIORITY) **
 
+- Color code PAR in the PAR table
 - Add summary table for all agents with number of disabled per category (total,
   0 to 3, 3 to 7, 7 to 14, 14+)
 - Develop a template to display a list of accounts, ideally with pages

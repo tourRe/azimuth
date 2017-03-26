@@ -20,6 +20,10 @@ last_monday = today - datetime.timedelta(0
         ,today.hour*60*60+today.minute*60+today.second,0)
 while last_monday.weekday() != 0:
     last_monday -= datetime.timedelta(1,0,0)
+last_friday = today - datetime.timedelta(0
+        ,today.hour*60*60+today.minute*60+today.second,0)
+while last_friday.weekday() != 4:
+    last_friday -= datetime.timedelta(1,0,0)
 date_start = last_monday - datetime.timedelta(7*51,0,0)
 labels_weekly = []
 dates = []
@@ -37,8 +41,10 @@ for idx in range(0,52):
 # ****************************************************************
 
 context = {}
-context['all_agents'] = Agent.objects.order_by('location')
-context['all_managers'] = Manager.objects.order_by('firstname')
+all_agents = Agent.objects.exclude(category = 'H').order_by('location')
+context['all_agents'] = all_agents
+all_managers = Manager.objects.order_by('firstname')
+context['all_managers'] = all_managers 
 
 # ****************************************************************
 # **************************** VIEWS *****************************
@@ -80,12 +86,26 @@ def manager(request, manager_firstname):
 def agents(request):
     # Preparing table for account_sets display
     account_table = collections.OrderedDict()
+    sales_table = collections.OrderedDict()
     for agent in all_agents:
+
         key = ("<a href='/sales/agents/" + agent.login + "/'>"
-                + " " + agent.location + " (" + agent.firstname + " "
-                + agent.lastname + ")</a>")
-        account_table[key] = Account.objects.filter(agent=agent)
+                + " " + agent.location+ "</a>")
+        accs = Account.objects.filter(agent=agent)
+        account_table[key] = accs
+
+        sales = []
+        for idx in range(0,9):
+            if idx == 0:
+                sales.append(accs.new(last_friday,today).count())
+            else:
+                sales.append(accs.new(
+                    last_friday - datetime.timedelta((idx+1)*7,0,0),
+                    last_friday - datetime.timedelta((idx)*7,0,0)).count())
+        sales_table[key] = sales
+
     context['account_table'] = account_table
+    context['sales_table'] = sales_table
     return render(request, 'sales/agents.html', context)
 
 def agent(request, agent_login):

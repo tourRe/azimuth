@@ -1,0 +1,52 @@
+{% load humanize %}
+
+<div style="margin-left:15px; margin-right:15px">
+<table class="sort table">
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th></th>
+      <th style="text-align:right">Active</th>
+      <th></th>
+      <th style="text-align:right">DIS0</th>
+      <th style="text-align:right">PAR0</th>
+      <th></th>
+      <th style="text-align:right">DIS7</th>
+      <th style="text-align:right">PAR7</th>
+      <th></th>
+      <th style="text-align:right">DIS14</th>
+      <th style="text-align:right">PAR14</th>
+      <th></th>
+      <th style="text-align:right">DIS31</th>
+      <th style="text-align:right">PAR31</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for line_title, accounts in account_table.items %}
+    <tr>
+      <th>
+        {% autoescape off %}{{ line_title }}{% endautoescape %}
+      </th>
+      <td></td>
+      <td>{{ accounts.active.nb }}</td>
+      <td></td>
+      <td>{{ accounts.AAR_0 }}</td>
+      <td>{{ accounts.PAR_0 }}</td>
+      <td></td>
+      <td>{{ accounts.AAR_7 }}</td>
+      <td>{{ accounts.PAR_7 }}</td>
+      <td></td>
+      <td>{{ accounts.AAR_14 }}</td>
+      <td>
+        {{ accounts.PAR_14 }}
+      </td>
+      <td></td>
+      <td>{{ accounts.AAR_31 }}</td>
+      <td>{{ accounts.PAR_31 }}</td>
+      <td></td>
+    </tr>
+    {% endfor %}
+
+  </tbody>
+</table>
+</div>

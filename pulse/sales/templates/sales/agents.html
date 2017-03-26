@@ -10,12 +10,19 @@
 {% endblock %}
 
 {% block breadcrumbs %}
-Agents
+All Agents
 {% endblock %}
 
 {% block content %}
 <div class="content">
-  {% include "sales/table_account_sets.html" %}
+  <div class = "panel panel-primary">
+    <div class="panel-heading"><h4 class="panel-title">Weekly sales per agent</h4></div>
+    {% include "sales/table_accounts_sales.html" %}
+  </div>
+  <div class = "panel panel-primary">
+    <div class="panel-heading"><h4 class="panel-title">PAR per agent</h4></div>
+    {% include "sales/table_accounts_PAR.html" %}
+  </div>
 </div>
 
 {% endblock %}

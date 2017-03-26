@@ -448,15 +448,27 @@ class AccountQuerySet(models.QuerySet):
     def AAR(self, days, tol):
         return self.at_risk(days,tol).count()
     @cached_property
+    def AAR_0(self): return self.AAR(0, tolerance)
+    @cached_property
+    def AAR_7(self): return self.AAR(7, tolerance)
+    @cached_property
     def AAR_14(self): return self.AAR(14, tolerance)
+    @cached_property
+    def AAR_31(self): return self.AAR(31, tolerance)
 
     # Returns the PCT of outstanding balance for accounts disabled for more
     # than X days
     def PAR(self, days, tol):
         return ratio(self.at_risk(days,tol).outstanding,
-                self.outstanding, dec=2,pc=True,toStr=True)
+                self.outstanding, dec=1,pc=True,toStr=True)
+    @cached_property
+    def PAR_0(self): return self.PAR(0, tolerance)
+    @cached_property
+    def PAR_7(self): return self.PAR(7, tolerance)
     @cached_property
     def PAR_14(self): return self.PAR(14, tolerance)
+    @cached_property
+    def PAR_31(self): return self.PAR(31, tolerance)
 
     # Returns the number of accounts disabled for more than X days
     def ADP(self, days, tol):
@@ -851,8 +863,8 @@ def ratio(top, bottom, dec=0, pc=False, toStr=False):
         elif pc:
             if dec!= 0:
                 return str((int(round(top/bottom,2+dec)*math.pow(10,dec+2))
-                        /math.pow(10,dec))) + " %"
-            return str(int(round(top/bottom,2)*100)) + " %"
+                        /math.pow(10,dec))) + "%"
+            return str(int(round(top/bottom,2)*100)) + "%"
         else:
             if dec != 0:
                 return str("{:,}".format(int(round(top/bottom,dec)
