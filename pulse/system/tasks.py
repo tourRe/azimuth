@@ -137,7 +137,7 @@ def fetch_data(force_full = False, online = True):
         # Identifying responsible agent
         agent = Agent.objects.get(label = acc_read['responsible_user'])
 
-        # Identifying attached product
+        # Identifying/creating attached product
         try: product = Product.objects.get(
                 label = acc_read['attached_unit_type'])
         except: 
