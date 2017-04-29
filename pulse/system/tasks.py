@@ -8,7 +8,7 @@ from inventory.models import (
         Product, Transaction, TransactionItem, InventoryItem, Warehouse
         )
 from progress.bar import Bar
-import csv, datetime, pytz, requests
+import csv, datetime, pytz, requests, sys
 from requests.auth import HTTPBasicAuth
 
 today = datetime.datetime.today().replace(tzinfo=pytz.utc)
@@ -105,7 +105,7 @@ def fetch_data(force_full = False, online = True):
             agent.lastname = usr_read['last_name']
             agent.phone = usr_read['primary_phone']
             agent.login = usr_read['email']
-            agent.label = '%s %s (%s)' %(usr_read['first_name'],
+            agent.label_angaza = '%s %s (%s)' %(usr_read['first_name'],
                     usr_read['last_name'], usr_read['email'])
             agent.save()
 
@@ -117,13 +117,18 @@ def fetch_data(force_full = False, online = True):
                     phone = usr_read['primary_phone'],
                     start_date = toDate(usr_read['created_utc']),
                     login = usr_read['email'],
-                    label = '%s %s (%s)' %(usr_read['first_name'],
+                    label_angaza = '%s %s (%s)' %(usr_read['first_name'],
                             usr_read['last_name'],
                             usr_read['email'])
                     )
             new_agents += 1
 
     bar.finish()
+
+    if new_agents != 0:
+        print(' > New agents were added to the database')
+        print(' > Please configure them before moving forward')
+        sys.exit()
 
     # UPDATING CLIENTS AND ACCOUNTS
 
@@ -134,7 +139,7 @@ def fetch_data(force_full = False, online = True):
         acc_read = accounts_raw[i]
 
         # Identifying responsible agent
-        agent = Agent.objects.get(label = acc_read['responsible_user'])
+        agent = Agent.objects.get(label_angaza = acc_read['responsible_user'])
 
         # Identifying/creating attached product
         try: product = Product.objects.get(
@@ -188,6 +193,8 @@ def fetch_data(force_full = False, online = True):
                 acc.unlock_date = today
             acc.status = status
             acc.plan_iscash = (acc.plan_up == acc.plan_tot)
+
+            acc.save()
 
         # NEW ACCOUNT
         except:
@@ -246,8 +253,6 @@ def fetch_data(force_full = False, online = True):
         pay_read = payments_raw[i]
 
         # Identifying account
-        acc = Account.objects.get(
-                account_Angaza = pay_read['account_angaza_id'])
 
         # EXISTING PAYMENT
         try:
@@ -256,8 +261,11 @@ def fetch_data(force_full = False, online = True):
 
         # NEW PAYMENT
         except:
-
             if pay_read['reversal'] == 'None':
+                # identifying account
+                acc = Account.objects.get(
+                        account_Angaza = pay_read['account_angaza_id'])
+
                 # determinig the type of payment
                 if pay_read['type'] == 'Telerivet':
                     pay_type = 'M'
@@ -269,7 +277,7 @@ def fetch_data(force_full = False, online = True):
                 # creating the new payment
                 pay = Payment(
                         id_Angaza = pay_read['angaza_id'],
-                        amount = int(pay_read['amount']),
+                        amount = int(float(pay_read['amount'])),
                         date = toDate(pay_read['recorded_utc']),
                         pay_type = pay_type,
                         account = acc,

@@ -831,7 +831,7 @@ class Payment(models.Model):
     objects = PaymentQuerySet.as_manager()
 
     def __str__(self): 
-        return ('%s, %s (%s))' % (str(self.amount), self.account,
+        return ('%s, %s (%s)' % (str(self.amount), self.account,
             self.pay_type))
 
     # Returns True if the payment was collected this month
@@ -850,9 +850,12 @@ class Payment(models.Model):
                 / self.account.plan_week + 1) * 7
 
 # UPDATES FIELDS WHEN A PAYMENT IS CREATED
-@receiver(post_save, sender=Payment,
-        dispatch_uid='Payment_save_signal')
+#@receiver(post_save, sender=Payment,
+#        dispatch_uid='Payment_save_signal')
 def record_payment(sender, instance, created, *args, **kwargs):
+    pass
+
+def fortherec():
     if created:
         payments = (instance.account.payments.filter(date__lt = instance.date)
                 .order_by('date'))
