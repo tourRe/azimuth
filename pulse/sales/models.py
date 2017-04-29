@@ -105,7 +105,7 @@ class ComPlan(models.Model):
 # AGENT CLASS, SELLS PRODUCTS FROM A UNIQUE WAREHOUSE
 class Agent(models.Model):
     # static parameters
-    uid = models.CharField(max_length=8, defaut='US000000')
+    uid = models.CharField(max_length=8, default='US000000')
     start_date = models.DateTimeField('date hired')
     # dynamic parameters
     login = models.CharField(max_length=30)
