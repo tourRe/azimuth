@@ -106,6 +106,7 @@ class ComPlan(models.Model):
 class Agent(models.Model):
     uid = models.CharField(max_length=8, null=True)
     login = models.CharField(max_length=30)
+    phone = models.CharField(max_length=16)
     firstname = models.CharField(max_length=30)
     lastname = models.CharField(max_length=30)
     start_date = models.DateTimeField('date hired')
@@ -116,7 +117,6 @@ class Agent(models.Model):
                 ('H', 'HQ'), ('O', 'Other')), null=True)
     location = models.CharField(max_length=30, null=True)
     warehouse = models.ForeignKey(Warehouse, null=True)
-    phone = models.CharField(max_length=16)
     manager = models.ForeignKey(Manager, null=True)
     label_angaza = models.CharField(max_length=50)
     com = models.ForeignKey(ComPlan, null=True)
@@ -800,11 +800,16 @@ class PaymentQuerySet(models.QuerySet):
 
 # SIMPLE PAYMENT CLASS, INCLUDES ANGAZA ID TO USE AS PRIMARY KEY WHEN UPDATING
 class Payment(models.Model):
-    account = models.ForeignKey(Account, on_delete=models.CASCADE)
+    TYPE = (('F', 'Manual (Field)'), ('H', 'Manual (HQ)'), 
+            ('M', 'Mobile Money'))
+
+    id_Angaza = models.CharField(max_length=8, default='PA000000')
     amount = models.PositiveIntegerField(default=0)
     date = models.DateTimeField('payment date')
-    id_Angaza = models.CharField(max_length=8, null=True)
-    agent = models.ForeignKey(Agent)
+    pay_type = models.CharField(max_length=1, choices=TYPE, default='F')
+    account = models.ForeignKey(Account, on_delete=models.CASCADE)
+    agent = models.ForeignKey(Agent, null=True)
+
     # convenience fields to avoid querying all the payments each time
     days_left_before = models.FloatField(default=0, null=True)
     next_disable = models.DateTimeField('next disable date', null=True)
@@ -813,11 +818,13 @@ class Payment(models.Model):
     paid_left = models.IntegerField(default=0, null=True)
     is_last = models.NullBooleanField()
     is_upfront = models.NullBooleanField()
+
     # manager
     objects = PaymentQuerySet.as_manager()
 
-    def __str__(self):
-        return ('%s (%s)' % (str(self.amount), self.account))
+    def __str__(self): 
+        return ('%s, %s (%s))' % (str(self.amount), self.account,
+            self.pay_type))
 
     # Returns True if the payment was collected this month
     @property
