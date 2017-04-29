@@ -131,7 +131,6 @@ def fetch_data(force_full = False, online = True):
 
     for i in range(0,len(accounts_raw)):
         bar.next()
-
         acc_read = accounts_raw[i]
 
         # Identifying responsible agent
@@ -151,8 +150,6 @@ def fetch_data(force_full = False, online = True):
             status = 'r'
         else:
             status = status_db[0].lower()
-
-        updated_clients.append(client.phone)
 
         # EXISTING ACCOUNT
         try: 
@@ -186,12 +183,10 @@ def fetch_data(force_full = False, online = True):
             acc.plan_up = int(acc_read['upfront_price'])
             acc.plan_tot = int(acc_read['unlock_price'])
             acc.plan_week = int(float(acc_read['hour_price'])*24*7)
-            acc.client = client
 
             if status_db in ['r', 'w'] and acc.status not in ['r', 'w', 'u']:
                 acc.unlock_date = today
             acc.status = status
-
             acc.plan_iscash = (acc.plan_up == acc.plan_tot)
 
         # NEW ACCOUNT
@@ -237,6 +232,7 @@ def fetch_data(force_full = False, online = True):
                     )
             new_accounts += 1
 
+        updated_clients.append(client.phone)
         updated_accounts.append(acc.account_Angaza)
 
     bar.finish()
@@ -249,34 +245,42 @@ def fetch_data(force_full = False, online = True):
         bar.next()
         pay_read = payments_raw[i]
 
-        # Identifying agent
-        agent = Agent.objects.get(login = pay_read['recorder'])
-
         # Identifying account
         acc = Account.objects.get(
                 account_Angaza = pay_read['account_angaza_id'])
+
+        # EXISTING PAYMENT
         try:
-            pay = Payment.objects.get(
-                    id_Angaza = pay_read['angaza_id'])
-            if pay_read['reversal'] != 'None':
-                pay.delete()
-            else:
-                pay.account = acc
-                pay.amount = int(pay_read['amount'])
-                pay.date = toDate(pay_read['recorded_utc'])
-                pay.agent = agent
+            pay = Payment.objects.get(id_Angaza = pay_read['angaza_id'])
+            if pay_read['reversal'] != 'None': pay.delete()
+
+        # NEW PAYMENT
         except:
+
             if pay_read['reversal'] == 'None':
+                # determinig the type of payment
+                if pay_read['type'] == 'Telerivet':
+                    pay_type = 'M'
+                elif pay_read['type'] == 'Manual(Hub)':
+                    pay_type = 'H'
+                else: 
+                    pay_type = 'F'
+
+                # creating the new payment
                 pay = Payment(
-                        account = acc,
+                        id_Angaza = pay_read['angaza_id'],
                         amount = int(pay_read['amount']),
                         date = toDate(pay_read['recorded_utc']),
-                        agent = agent,
-                        id_Angaza = pay_read['angaza_id']
+                        pay_type = pay_type,
+                        account = acc,
                         )
+
+                try: pay.agent = Agent.objects.get(login = pay_read['recorder'])
+                except: pass
+                pay.save()
                 new_payments += 1
+
         updated_payments.append(pay.id_Angaza)
-        pay.save()
 
     bar.finish()
 

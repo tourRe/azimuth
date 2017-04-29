@@ -810,6 +810,7 @@ class Payment(models.Model):
     TYPE = (('F', 'Manual (Field)'), ('H', 'Manual (HQ)'), 
             ('M', 'Mobile Money'))
 
+    # static parameters
     id_Angaza = models.CharField(max_length=8, default='PA000000')
     amount = models.PositiveIntegerField(default=0)
     date = models.DateTimeField('payment date')
