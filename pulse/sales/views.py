@@ -326,10 +326,12 @@ def account_new_week(request, agent=None):
     accounts_ecos = accounts.filter(plan_product__name = 'Eco EB')
     accounts_pros = accounts.filter(plan_product__name = 'Pro EB')
     accounts_shs = accounts.filter(plan_product__name = 'Home EB')
+    accounts_shs120 = accounts.filter(plan_product__name = 'glp_sk409_v1')
     # Computing the nb of accounts creation per week
     parse_eco = [0] * 52
     parse_pro = [0] * 52
     parse_shs = [0] * 52
+    parse_shs120 = [0] * 52
     week = datetime.timedelta(7,0,0)
     week_start = date_start
     week_end = date_start + week
@@ -338,10 +340,11 @@ def account_new_week(request, agent=None):
         parse_eco[i] = accounts_ecos.new(week_start,week_end).count()
         parse_pro[i] = accounts_pros.new(week_start,week_end).count()
         parse_shs[i] = accounts_shs.new(week_start,week_end).count()
+        parse_shs120[i] = accounts_shs120.new(week_start,week_end).count()
         week_start = week_end
         week_end = week_start + week
     #Returning Graph
-    return JsonResponse(data={'series': [parse_eco,parse_pro,parse_shs],
+    return JsonResponse(data={'series': [parse_eco,parse_pro,parse_shs,parse_shs120],
         'labels': labels_weekly})
 
 def revenue_new_week(request, agent=None):
@@ -354,6 +357,7 @@ def revenue_new_week(request, agent=None):
     accounts_ecos = accounts.filter(plan_product__name = 'Eco EB')
     accounts_pros = accounts.filter(plan_product__name = 'Pro EB')
     accounts_shs = accounts.filter(plan_product__name = 'Home EB')
+    accounts_shs120 = accounts.filter(plan_product__name = 'glp_sk409_v1')
     # Computing the nb of accounts creation per week
     parse_eco = [0] * 52
     parse_pro = [0] * 52
@@ -366,10 +370,11 @@ def revenue_new_week(request, agent=None):
         parse_eco[i] = accounts_ecos.new(week_start,week_end).plan_tot
         parse_pro[i] = accounts_pros.new(week_start,week_end).plan_tot
         parse_shs[i] = accounts_shs.new(week_start,week_end).plan_tot
+        parse_shs120[i] = accounts_shs120.new(week_start,week_end).plan_tot()
         week_start = week_end
         week_end = week_start + week
     #Returning Graph
-    return JsonResponse(data={'series': [parse_eco,parse_pro,parse_shs],
+    return JsonResponse(data={'series': [parse_eco,parse_pro,parse_shs,parse_shs120],
         'labels': labels_weekly})
 
 def account_number_by_disable(request, agent=None):

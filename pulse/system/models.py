@@ -6,9 +6,11 @@ today = datetime.datetime.today().replace(tzinfo=pytz.utc)
 class UpdateQuerySet(models.QuerySet):
 
     def last_update(self):
+        if not self.exists(): return []
         return self.order_by('date').reverse()[0]
 
     def last_full_update(self):
+        if not self.exists(): return []
         return self.filter(is_full = True).order_by('date').reverse()[0]
 
 class Update(models.Model):

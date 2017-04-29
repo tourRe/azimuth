@@ -23,6 +23,7 @@ def fetch_data(force_full = False, online = True):
         print(' > Fetching dump files in Media folder...')
         accounts_raw = csvToList('media/accounts.csv')
         payments_raw = csvToList('media/payments.csv')
+        users_raw = csvToList('media/users.csv')
 
     else:
         print(' > Fetching dump files online...')
@@ -32,7 +33,12 @@ def fetch_data(force_full = False, online = True):
         url2 = 'https://payg.angazadesign.com/api/snapshots/payments'
         url3 = 'https://payg.angazadesign.com/api/snapshots/users'
         url4 = 'https://payg.angazadesign.com/api/snapshots/sms_messages'
+        url5 = 'https://payg.angazadesign.com/api/organizations/OR000029'
         with requests.Session() as s:
+            print(' > downloading users')
+            download = s.get(url3, auth=(login,pw))
+            decoded_content = download.content.decode('utf-8')
+            users_raw = csvToList2(decoded_content.splitlines())
             print(' > downloading accounts')
             download = s.get(url1, auth=(login,pw))
             decoded_content = download.content.decode('utf-8')
@@ -47,6 +53,7 @@ def fetch_data(force_full = False, online = True):
     updated_clients = []
     updated_accounts = []
     updated_payments = []
+    new_agents = 0
     new_clients = 0
     new_accounts = 0
     new_payments = 0
@@ -83,6 +90,43 @@ def fetch_data(force_full = False, online = True):
 
     pays_start = max(0,len(payments_raw) - nb_pays)
 
+    # UPDATING AGENTS
+
+    bar = Bar('Updating Agents', max=len(users_raw))
+
+    for i in range(0,len(users_raw)):
+        bar.next()
+
+        usr_read = users_raw[i]
+
+        try: 
+            agent = Agent.objects.get(aid = usr_read['angaza_id'])
+            agent.firstname = usr_read['first_name']
+            agent.lastname = usr_read['last_name']
+            agent.phone = usr_read['primary_phone']
+            agent.start_date = toDate(usr_read['created_utc'])
+            agent.login = usr_read['email']
+            agent.label = '%s %s (%s)' %(usr_read['first_name'],
+                    usr_read['last_name'],
+                    usr_read['email'])
+            agent.save()
+
+        except:
+            agent = Agent.objects.create(
+                    aid = usr_read['angaza_id'],
+                    firstname = usr_read['first_name'],
+                    lastname = usr_read['last_name'],
+                    phone = usr_read['primary_phone'],
+                    start_date = toDate(usr_read['created_utc']),
+                    login = usr_read['email'],
+                    label = '%s %s (%s)' %(usr_read['first_name'],
+                            usr_read['last_name'],
+                            usr_read['email'])
+                    )
+            new_agents += 1
+
+    bar.finish()
+
     # UPDATING CLIENTS AND ACCOUNTS
 
     bar = Bar('Updating Accounts', max=len(accounts_raw))
@@ -98,10 +142,10 @@ def fetch_data(force_full = False, online = True):
         # Identifying product
         try: product = Product.objects.get(
                 label = acc_read['attached_unit_type'])
-        # in case the account is "detached", there is no 'attached_unit_type
-        # the exception is catched in except and the rest of the loop is
-        # skipped so that the account gets deleted
-        except: pass
+        except: 
+            product = Product.objects.create(
+                    name = acc_read['attached_unit_name'],
+                    label = acc_read['attached_unit_type'])
 
         # Reading client information
         try: gender = acc_read['customer_gender'][0]

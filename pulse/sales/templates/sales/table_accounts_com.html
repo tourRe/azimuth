@@ -1,0 +1,35 @@
+{% load humanize %}
+
+<div style="margin-left:15px; margin-right:15px">
+<table class="sort table">
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th></th>
+      <th style="text-align:right">W0</th>
+      <th style="text-align:right">W1</th>
+      <th style="text-align:right">W2</th>
+      <th style="text-align:right">W3</th>
+      <th style="text-align:right">W4</th>
+      <th style="text-align:right">W5</th>
+      <th style="text-align:right">W6</th>
+      <th style="text-align:right">W7</th>
+      <th style="text-align:right">W8</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for line_title, line in com_table.items %}
+    <tr>
+      <th>
+        {% autoescape off %}{{ line_title }}{% endautoescape %}
+      </th>
+      <td></td>
+      {% for com in line %}
+      <td>{{ com }}</td>
+      {% endfor %}
+    </tr>
+    {% endfor %}
+
+  </tbody>
+</table>
+</div>

@@ -72,15 +72,13 @@ class ManagerQuerySet(models.QuerySet):
 class Manager(models.Model):
     firstname = models.CharField(max_length=30)
     lastname = models.CharField(max_length=30)
-    start_date = models.DateTimeField('date hired')
-    gender = models.CharField(max_length=1,
-            choices=(('M', 'Male'),('F', 'Female')))
     district = models.CharField(max_length=30)
     phone = models.CharField(max_length=16)
+    is_active = models.NullBooleanField()
     objects = ManagerQuerySet.as_manager()
 
     def __str__(self):
-        return ('%s %s (%s)' % (self.firstname, self.lastname, self.district))
+        return ('%s %s' % (self.firstname, self.lastname))
 
 # ****************************************************************
 # ************************ AGENT COM *****************************
@@ -106,24 +104,25 @@ class ComPlan(models.Model):
 
 # AGENT CLASS, SELLS PRODUCTS FROM A UNIQUE WAREHOUSE
 class Agent(models.Model):
+    uid = models.CharField(max_length=8, null=True)
+    login = models.CharField(max_length=30)
     firstname = models.CharField(max_length=30)
     lastname = models.CharField(max_length=30)
     start_date = models.DateTimeField('date hired')
-    gender = models.CharField(max_length=1,
-            choices=(('M', 'Male'),('F', 'Female')), null=True)
     category = models.CharField(max_length=1,
-            choices=(('R', 'Rural'), ('F', 'Freetown'), ('H', 'HQ'), 
-                ('O', 'Other')), null=True)
-    location = models.CharField(max_length=30)
-    warehouse = models.ForeignKey(Warehouse)
+            choices=(('A', 'Agent'), ('F', 'Freelancer'), ('M', 'Manager'), 
+                ('D', 'Distributor'), ('C', 'Call Center'), 
+                ('T', 'Technical Team'), ('R', 'Field Rep'),
+                ('H', 'HQ'), ('O', 'Other')), null=True)
+    location = models.CharField(max_length=30, null=True)
+    warehouse = models.ForeignKey(Warehouse, null=True)
     phone = models.CharField(max_length=16)
-    manager = models.ForeignKey(Manager)
-    login = models.CharField(max_length=30, null=True)
-    label = models.CharField(max_length=50, null=True)
+    manager = models.ForeignKey(Manager, null=True)
+    label_angaza = models.CharField(max_length=50)
     com = models.ForeignKey(ComPlan, null=True)
 
     def __str__(self):
-        return ('%s (%s %s)' % (self.location, self.firstname, self.lastname))
+        return ('%s, %s (%s)' % (self.firstname, self.location, self.category))
 
     # Returns the queryset of accounts managed by a given agent
     @cached_property
@@ -752,11 +751,17 @@ def log_transactions(sender, instance, created, *args, **kwargs):
                 account = instance,
                 comment = "sale"
                 )
+        try:
+            item = InventoryItem.objects.get(
+                product = instance.plan_product,
+                warehouse = instance.agent.warehouse)
+        except:
+            item = InventoryItem.objects.create(
+                    product = instance.plan_product,
+                    warehouse = instance.agent.warehouse)
         transItem = TransactionItem.objects.create(
                 transaction = transaction,
-                item = InventoryItem.objects.get(
-                    product = instance.plan_product,
-                    warehouse = instance.agent.warehouse),
+                item = item,
                 qty = 1
                 )
 
@@ -805,7 +810,7 @@ class Payment(models.Model):
     next_disable = models.DateTimeField('next disable date', null=True)
     perfect_date = models.DateTimeField('perfect disable date', null=True)
     paid_after = models.PositiveIntegerField(default=0, null=True)
-    paid_left = models.PositiveIntegerField(default=0, null=True)
+    paid_left = models.IntegerField(default=0, null=True)
     is_last = models.NullBooleanField()
     is_upfront = models.NullBooleanField()
     # manager

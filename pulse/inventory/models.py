@@ -37,8 +37,8 @@ def initiate_warehouse(sender, instance, created, *args, **kwargs):
 # SIMPLE PRODUCTS CLASS, INCLUDING POWER
 class Product(models.Model):
     name = models.CharField(max_length=30)
-    brand = models.CharField(max_length=30)
-    power = models.FloatField(default=0)
+    brand = models.CharField(max_length=30, null=True)
+    power = models.FloatField(default=0, null=True)
     label = models.CharField(max_length=30, null=True)
 
     def __str__(self):
