@@ -104,12 +104,15 @@ class ComPlan(models.Model):
 
 # AGENT CLASS, SELLS PRODUCTS FROM A UNIQUE WAREHOUSE
 class Agent(models.Model):
-    uid = models.CharField(max_length=8, null=True)
+    # static parameters
+    uid = models.CharField(max_length=8, defaut='US000000')
+    start_date = models.DateTimeField('date hired')
+    # dynamic parameters
     login = models.CharField(max_length=30)
     phone = models.CharField(max_length=16)
     firstname = models.CharField(max_length=30)
     lastname = models.CharField(max_length=30)
-    start_date = models.DateTimeField('date hired')
+    # admin input parameters (should all be "null=True")
     category = models.CharField(max_length=1,
             choices=(('A', 'Agent'), ('F', 'Freelancer'), ('M', 'Manager'), 
                 ('D', 'Distributor'), ('C', 'Call Center'), 
@@ -118,7 +121,7 @@ class Agent(models.Model):
     location = models.CharField(max_length=30, null=True)
     warehouse = models.ForeignKey(Warehouse, null=True)
     manager = models.ForeignKey(Manager, null=True)
-    label_angaza = models.CharField(max_length=50)
+    label_angaza = models.CharField(max_length=50, null=True)
     com = models.ForeignKey(ComPlan, null=True)
 
     def __str__(self):
@@ -538,19 +541,23 @@ class Account(models.Model):
             ('u', 'Unlocked'), ('w', 'Written Off'),
             ('r', 'Reposessed'))
 
+    # static parameters
     account_Angaza = models.CharField(max_length=8)
-    account_GLP = models.CharField(max_length=7)
-    client = models.ForeignKey(Client, on_delete=models.CASCADE)
-    plan_name = models.CharField(max_length=40)
+    reg_date = models.DateTimeField('registration date')
     plan_product = models.ForeignKey(Product)
+    # dynamic paramters
+    account_GLP = models.CharField(max_length=7)
+    agent = models.ForeignKey(Agent)
+    status = models.CharField(max_length=1,choices=STATUS)
+    plan_name = models.CharField(max_length=40)
     plan_up = models.PositiveIntegerField(default=0)
     plan_tot = models.PositiveIntegerField(default=0)
     plan_week = models.PositiveIntegerField(default=0)
+    client = models.ForeignKey(Client, on_delete=models.CASCADE)
+    # convenience parameters
     plan_iscash = models.NullBooleanField()
-    reg_date = models.DateTimeField('registration date')
     unlock_date = models.DateTimeField('unlock date', null=True)
-    agent = models.ForeignKey(Agent)
-    status = models.CharField(max_length=1,choices=STATUS)
+    # manager
     objects = AccountQuerySet.as_manager()
 
     def __str__(self):

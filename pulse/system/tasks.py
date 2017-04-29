@@ -100,20 +100,18 @@ def fetch_data(force_full = False, online = True):
         usr_read = users_raw[i]
 
         try: 
-            agent = Agent.objects.get(aid = usr_read['angaza_id'])
+            agent = Agent.objects.get(uid = usr_read['angaza_id'])
             agent.firstname = usr_read['first_name']
             agent.lastname = usr_read['last_name']
             agent.phone = usr_read['primary_phone']
-            agent.start_date = toDate(usr_read['created_utc'])
             agent.login = usr_read['email']
             agent.label = '%s %s (%s)' %(usr_read['first_name'],
-                    usr_read['last_name'],
-                    usr_read['email'])
+                    usr_read['last_name'], usr_read['email'])
             agent.save()
 
         except:
             agent = Agent.objects.create(
-                    aid = usr_read['angaza_id'],
+                    uid = usr_read['angaza_id'],
                     firstname = usr_read['first_name'],
                     lastname = usr_read['last_name'],
                     phone = usr_read['primary_phone'],
@@ -136,16 +134,25 @@ def fetch_data(force_full = False, online = True):
         
         acc_read = accounts_raw[i]
 
-        # Identifying agent
+        # Identifying responsible agent
         agent = Agent.objects.get(label = acc_read['responsible_user'])
 
-        # Identifying product
+        # Identifying attached product
         try: product = Product.objects.get(
                 label = acc_read['attached_unit_type'])
         except: 
             product = Product.objects.create(
                     name = acc_read['attached_unit_name'],
                     label = acc_read['attached_unit_type'])
+
+        # Computing account status
+        status_db = acc_read['account_status']
+        if status_db == 'WRITTEN_OFF':
+            status = 'w'
+        elif status_db == 'DETACHED':
+            status = 'r'
+        else:
+            status = status_db[0].lower()
 
         # Reading client information
         try: gender = acc_read['customer_gender'][0]
@@ -195,30 +202,24 @@ def fetch_data(force_full = False, online = True):
                 acc.status = acc_read['account_status'][0].lower()
         # otherwise creates a new account
         except:
-            acc = Account(
+
+            acc = Account.objects.create(
                     account_Angaza = acc_read['angaza_id'],
+                    reg_date = toDate(acc_read['registration_date_utc']),
+                    plan_product = product,
+
                     account_GLP = acc_read['account_number'],
+                    agent = agent,
+                    status = status,
                     client = client,
                     plan_name = acc_read['group_name'],
-                    plan_product = product,
                     plan_up = int(acc_read['upfront_price']),
                     plan_tot = int(acc_read['unlock_price']),
                     plan_week = int(float(acc_read['hour_price'])*24*7),
                     plan_iscash = (int(acc_read['upfront_price']) == 
                         int(acc_read['unlock_price'])),
-                    reg_date = toDate(acc_read['registration_date_utc']),
-                    agent = agent,
-                    status = acc_read['account_status'][0].lower()
                     )
             new_accounts += 1
-        try:
-            acc.save()
-        except ValidationError as e:
-            # deleting the account in case tranItem couldn't be saved
-            # this also deletes the related Transaction
-            acc.delete()
-            for key, value in e.message_dict.items():
-                print("error in " + key + ": " + value)
 
         updated_accounts.append(acc.account_Angaza)
 
