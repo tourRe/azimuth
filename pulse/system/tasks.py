@@ -147,75 +147,67 @@ def fetch_data(force_full = False, online = True):
 
         # Computing account status
         status_db = acc_read['account_status']
-        if status_db == 'WRITTEN_OFF':
-            status = 'w'
-        elif status_db == 'DETACHED':
+        if status_db == 'DETACHED':
             status = 'r'
         else:
             status = status_db[0].lower()
 
-        # Reading client information
-        try: gender = acc_read['customer_gender'][0]
-        except: gender = acc_read['customer_gender']
-        # if the client exists (based on phone), updates info
-        try:
-            client = Client.objects.get(phone = acc_read['owner_msisdn'])
-            client.name = acc_read['owner_name']
-            client.gender = gender
-            client.location = acc_read['location']
-            client.save()
-        # if not creates a new client
-        except:
-            client = Client.objects.create(
-                    name = acc_read['owner_name'],
-                    gender = gender,
-                    phone = acc_read['owner_msisdn'],
-                    location = acc_read['location']
-                    )
-            new_clients += 1
-
         updated_clients.append(client.phone)
 
-        # Creating or identifying account
-        # if the account exists (based on acc #), updates info
+        # EXISTING ACCOUNT
         try: 
             acc = Account.objects.get(
                 account_Angaza = acc_read['angaza_id'])
             acc.account_GLP = acc_read['account_number']
+            acc.agent = agent
             acc.client = client
             acc.plan_name = acc_read['group_name']
-            # Can safely assume product type won't change
-            # acc.plan_product = product
             acc.plan_up = int(acc_read['upfront_price'])
             acc.plan_tot = int(acc_read['unlock_price'])
             acc.plan_week = int(float(acc_read['hour_price'])*24*7)
             acc.plan_iscash = (acc.plan_up == acc.plan_tot)
-            acc.reg_date = toDate(acc_read['registration_date_utc'])
-            acc.agent = agent
-            if acc_read['account_status'] == 'DETACHED':
-                acc.status = 'r'
+            if status_db in ['r', 'w'] and acc.status not in ['r', 'w', 'u']:
                 acc.unlock_date = today
-            elif acc_read['account_status'] == 'WRITTEN_OFF':
-                acc.status = 'w'
-                acc.unlock_date = today
-            else:
-                acc.status = acc_read['account_status'][0].lower()
-        # otherwise creates a new account
+            acc.status = status
+
+        # NEW ACCOUNT
         except:
 
+            # If the client exists (based on phone), updates info
+            try:
+                client = Client.objects.get(phone = acc_read['owner_msisdn'])
+                client.name = acc_read['owner_name']
+                try: client.gender = acc_read['customer_gender'][0]
+                except: pass
+                client.location = acc_read['location']
+                client.save()
+            # If not creates a new client
+            except:
+                client = Client.objects.create(
+                        name = acc_read['owner_name'],
+                        phone = acc_read['owner_msisdn'],
+                        location = acc_read['location'])
+                try: client.gender = acc_read['customer_gender'][0]
+                except: pass
+                client.save()
+                new_clients += 1
+
+            # Creates the account
             acc = Account.objects.create(
+                    # static parameters
                     account_Angaza = acc_read['angaza_id'],
                     reg_date = toDate(acc_read['registration_date_utc']),
                     plan_product = product,
-
+                    # dynamic parameters
                     account_GLP = acc_read['account_number'],
                     agent = agent,
                     status = status,
-                    client = client,
                     plan_name = acc_read['group_name'],
                     plan_up = int(acc_read['upfront_price']),
                     plan_tot = int(acc_read['unlock_price']),
                     plan_week = int(float(acc_read['hour_price'])*24*7),
+                    client = client,
+                    # convenience parameters
                     plan_iscash = (int(acc_read['upfront_price']) == 
                         int(acc_read['unlock_price'])),
                     )

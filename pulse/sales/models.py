@@ -180,10 +180,10 @@ class ClientQuerySet(models.QuerySet):
 # properly (update phone if other fields are similar?)
 # Also have to look into addons to identify and merge duplicates
 class Client(models.Model):
+    phone = models.CharField(max_length=16, default='0000111122223333')
     name = models.CharField(max_length=30)
     gender = models.CharField(max_length=1,
             choices=(('M', 'Male'),('F', 'Female')), null=True)
-    phone = models.CharField(max_length=16, null=True)
     location = models.CharField(max_length=50, null=True)
     objects = ClientQuerySet.as_manager()
 
