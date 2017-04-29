@@ -131,7 +131,7 @@ def fetch_data(force_full = False, online = True):
 
     for i in range(0,len(accounts_raw)):
         bar.next()
-        
+
         acc_read = accounts_raw[i]
 
         # Identifying responsible agent
@@ -157,18 +157,42 @@ def fetch_data(force_full = False, online = True):
         # EXISTING ACCOUNT
         try: 
             acc = Account.objects.get(
-                account_Angaza = acc_read['angaza_id'])
+                    account_Angaza = acc_read['angaza_id'])
+            
+            # Smart client update (checks phone and name, otherwise creates)
+            client = acc.client
+            if client.phone == acc_read['owner_msisdn']:
+                client.name = acc_read['owner_name']
+            elif client.name == acc_read['owner_name']:
+                client.phone = acc_read['owner_msisdn']
+            else:
+                old_client = client
+                client = Client.objects.create(
+                        name = acc_read['owner_name'],
+                        phone = acc_read['owner_msisdn'],
+                        location = acc_read['location'])
+                acc.client = client
+                new_clients += 1
+                if old_client.nb_accounts == 0:
+                    old_client.delete()
+            client.location = acc_read['location']
+            try: client.gender = acc_read['customer_gender'][0]
+            except: pass
+            client.save()
+
             acc.account_GLP = acc_read['account_number']
             acc.agent = agent
-            acc.client = client
             acc.plan_name = acc_read['group_name']
             acc.plan_up = int(acc_read['upfront_price'])
             acc.plan_tot = int(acc_read['unlock_price'])
             acc.plan_week = int(float(acc_read['hour_price'])*24*7)
-            acc.plan_iscash = (acc.plan_up == acc.plan_tot)
+            acc.client = client
+
             if status_db in ['r', 'w'] and acc.status not in ['r', 'w', 'u']:
                 acc.unlock_date = today
             acc.status = status
+
+            acc.plan_iscash = (acc.plan_up == acc.plan_tot)
 
         # NEW ACCOUNT
         except:
