@@ -251,6 +251,7 @@ def fetch_data(force_full = False, online = True):
     for i in range(pays_start,len(payments_raw)):
         bar.next()
         pay_read = payments_raw[i]
+        print(pay_read['account_angaza_id'])
 
         # Identifying account
 
@@ -281,6 +282,7 @@ def fetch_data(force_full = False, online = True):
                         date = toDate(pay_read['recorded_utc']),
                         pay_type = pay_type,
                         account = acc,
+                        is_downpayment = (pay_read['down_payment'] == 'True'),
                         )
 
                 try: pay.agent = Agent.objects.get(login = pay_read['recorder'])
